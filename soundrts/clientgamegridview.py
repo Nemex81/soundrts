@@ -9,12 +9,22 @@ from .lib.screen import draw_line, draw_rect, get_screen
 from .worldentity import COLLISION_RADIUS
 
 
+# Fallback colors for automatic terrains that have an empty `color` field
+# in style.txt. Improves visual differentiation for sighted players without
+# touching the audio-only mode (Legge IA #8).
+_AUTO_TERRAIN_FALLBACK = {
+    "_meadows": (35, 80, 35),
+    "_forest": (25, 65, 30),
+    "_dense_forest": (15, 50, 25),
+}
+
+
 def terrain_color(terrain: str):
     color = style.get(terrain, "color", warn_if_not_found=False)
     try:
         color = pygame.Color(color[0])
     except (IndexError, TypeError,):
-        color = (0, 25, 0)
+        color = _AUTO_TERRAIN_FALLBACK.get(terrain, (0, 25, 0))
     return color
 
 
@@ -74,7 +84,7 @@ class GridView:
             exits = {e.o for e in sq.exits if not e.is_blocked()}
             walls = {-90, 90, 180, 0} - exits
             x, y = self._xy_coords(sq.x, sq.y)
-            for color, borders in (((0, 0, 0), walls),):
+            for color, borders in (((230, 230, 230), walls),):
                 for o in borders:
                     dx = cos(radians(o)) * self.square_view_width / 2
                     dy = -sin(radians(o)) * self.square_view_width / 2
@@ -115,13 +125,13 @@ class GridView:
             if o.id in self.interface.group:
                 color = (0, 255, 0)
             elif o.player is self.interface.player:
-                color = (0, 55, 0)
+                color = (60, 140, 60)
             elif o.player in self.interface.player.allied:
                 color = (0, 0, 155)
             elif o.player.player_is_an_enemy(self.interface.player):
                 color = (155, 0, 0)
             else:
-                color = (0, 0, 0)
+                color = (180, 180, 180)
             pygame.draw.circle(get_screen(), color, (x, y), R // 2, 0)
             if getattr(o, "hp", None) is not None and o.hp != o.hp_max:
                 hp_prop = 100 * o.hp // o.hp_max
@@ -195,12 +205,12 @@ class GridView:
         if self.interface.target is None:
             color = (255, 255, 255)
         else:
-            color = (150, 150, 150)
-        draw_rect(color, rect, 1)
+            color = (200, 200, 200)
+        draw_rect(color, rect, 2)
 
-        # display the observer
+        # display the observer (camera position)
         observer_coordinates = self._get_view_coords_from_world_coords(self.interface.x, self.interface.y)
-        pygame.draw.circle(get_screen(), color, observer_coordinates, 1, 1)
+        pygame.draw.circle(get_screen(), (255, 230, 90), observer_coordinates, 4, 2)
 
     def display(self):
         self._update_coefs()

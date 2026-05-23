@@ -53,8 +53,10 @@ def test_hud_event_buffer_keeps_recent_events_first():
 
     snapshot = panel.get_snapshot()
 
-    assert snapshot.events[0] == "under attack: peasant at 2,4"
-    assert snapshot.events[1] == "complete: peasant at 2,4"
+    assert snapshot.events[0].text == "under attack: peasant at 2,4"
+    assert snapshot.events[0].severity == "combat"
+    assert snapshot.events[1].text == "complete: peasant at 2,4"
+    assert snapshot.events[1].severity == "info"
 
 
 def test_hud_event_buffer_is_bounded():
@@ -67,4 +69,29 @@ def test_hud_event_buffer_is_bounded():
     snapshot = panel.get_snapshot()
 
     assert len(snapshot.events) == panel.max_events
-    assert snapshot.events[0].startswith("event {}".format(panel.max_events + 2))
+    assert snapshot.events[0].text.startswith("event {}".format(panel.max_events + 2))
+    # uncategorized events fall back to "alert" severity.
+    assert snapshot.events[0].severity == "alert"
+
+
+def test_hud_handle_mouse_event_is_noop():
+    panel = HudPanel(DummyInterface())
+
+    # Any event-shaped object must be ignored without side effects.
+    fake_event = type("Event", (), {"type": 0, "pos": (0, 0)})()
+    assert panel.handle_mouse_event(fake_event) is False
+
+
+def test_hud_player_line_falls_back_when_missing():
+    panel = HudPanel(DummyInterface())
+    snapshot = panel.get_snapshot()
+    # DummyInterface has no `player` attribute -> fallback string.
+    assert snapshot.player == "Player"
+
+
+def test_hud_player_line_uses_name_and_race():
+    interface = DummyInterface()
+    interface.player = type("P", (), {"name": "Alice", "race": "orc"})()
+    panel = HudPanel(interface)
+    snapshot = panel.get_snapshot()
+    assert snapshot.player == "Alice (orc)"

@@ -850,6 +850,10 @@ class GameInterface:
             chrono.stop("animate")
 
     def _process_fullscreen_mode_mouse_event(self, e):
+        # C1: HUD hit-test hook. Returns False today (no-op); reserved for
+        # future clickable widgets without altering the RTS mouse flow.
+        if self.hud_panel.handle_mouse_event(e):
+            return
         if e.type == MOUSEMOTION:
             square = self.grid_view.square_from_mousepos(e.pos)
             target = self.grid_view.object_from_mousepos(e.pos)

@@ -54,6 +54,58 @@ Criterio di convalida: documentazione aggiornata, changelog in `[Unreleased]`, t
 
 Esito: aggiornati `README.txt`, `CHANGELOG.md` e questo coordinatore.
 
+## UI Grafica - Ottimizzazione estetica per normo vedenti
+
+Avvio: 23 maggio 2026
+Stato globale: in elaborazione (popolato in Fase 4 dopo piano validato)
+
+### Macro-task pianificati
+
+- [x] Fase 0 - Aggiornamento todo coordinatore con nuovo focus
+- [x] Fase 1 - Analisi compartimento UI grafica (rendering, palette, layout)
+- [x] Fase 2 - Elaborazione piano tecnico (Area A griglia, B hud, C pulsanti)
+- [x] Fase 3 - Creazione file di piano in `docs/`
+- [x] Fase 4 - Popolamento roadmap implementativa qui
+- [x] Fase 5 - Implementazione task per task (vedi roadmap sotto)
+- [x] Fase 6 - Revisione finale e regressione audio (nessun import di voice/sound/world*; modifiche additive in 4 file)
+- [x] Fase 7 - Aggiornamento test (6/6 PASS in test_clientgamehud.py)
+- [x] Fase 8 - Aggiornamento documentazione e changelog
+
+Vincoli:
+- Modalita audio-only invariata (Legge IA #8 prompt UI 2026-05-23).
+- Nessuna modifica a `bindings.txt` o assets audio.
+- `clientgamegridview.py` modificabile solo per i task A1-A5 documentati nel piano.
+
+### Roadmap implementativa (Fase 5)
+
+Riferimento dettaglio: `docs/ui-visual-plan.md`, `docs/ui-color-palette.md`,
+`docs/ui-hud-layout.md`.
+
+Pulsanti veri: **PARZIALE** — solo hook no-op C1, popup completi rimandati.
+
+- [x] A2 - Flag faction neutra visibile `(0,0,0)` -> `(180,180,180)` in
+      `clientgamegridview.display_object`
+- [x] A1 - Palette terreni fallback `_meadows/_forest/_dense_forest` in
+      `clientgamegridview.terrain_color`
+- [x] A3 - Muri celle `(0,0,0)` -> `(230,230,230)` in
+      `clientgamegridview._display`
+- [x] A4 - Osservatore raggio 4 width 2 colore `(255,230,90)` in
+      `clientgamegridview._display_active_zone_border`
+- [x] A5 - Bordo zona attiva width 2 in
+      `clientgamegridview._display_active_zone_border`
+- [x] B1 - Font gerarchico `_font_header`/`_font_small` +
+      `screen_render_header`/`screen_render_small` in `lib/screen.py`
+- [x] B2 - Header HUD con `screen_render_header` in
+      `clientgamehud._draw_snapshot`
+- [x] B5 - Valori risorse RES evidenziati in
+      `clientgamehud._draw_snapshot`
+- [x] B6 - Prefisso icona velocita `>`/`>>`/`=` in
+      `clientgamehud._draw_snapshot`
+- [x] B3 - Pannello PLAYER bottom-left in `clientgamehud`
+- [x] B4 - Eventi colorati per severity (`HudEvent` dataclass)
+- [x] C1 - Hook `HudPanel.handle_mouse_event` no-op + chiamata in
+      `clientgame._process_fullscreen_mode_mouse_event`
+
 ## Anomalie e fallback
 
 - Suite pytest ampia bloccata in Python 3.12 da `locale.getdefaultlocale()` trattato come errore via `filterwarnings = error`; fallback documentato in `doc_admin/ANOMALIA-TEST-2026-05-23.md`.
