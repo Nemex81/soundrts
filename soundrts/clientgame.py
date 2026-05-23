@@ -25,6 +25,7 @@ from .animation import noise
 from .clientgameentity import EntityView, SquareView
 from .clientgamefocus import Zoom
 from .clientgamegridview import GridView
+from .clientgamehud import HudPanel
 from .clientgamenews import must_be_said
 from .clientgameorder import OrderTypeView, nb2msg_f, update_orders_list
 from .clienthelp import help_msg
@@ -191,6 +192,7 @@ class GameInterface:
         self._known_resource_places = set()
         server.interface = self
         self.grid_view = GridView(self)
+        self.hud_panel = HudPanel(self)
         psounds.listener = self
         voice.silent_flush()
         self._srv_queue = queue.Queue()
@@ -201,11 +203,14 @@ class GameInterface:
     def __getstate__(self):
         odict = self.__dict__.copy()
         del odict["_srv_queue"]
+        if "hud_panel" in odict:
+            del odict["hud_panel"]
         return odict
 
     def __setstate__(self, dictionary):
         self.__dict__.update(dictionary)
         self._srv_queue = queue.Queue()
+        self.hud_panel = HudPanel(self)
         psounds.listener = self
         self.waiting_for_world_update = False
 
@@ -247,7 +252,9 @@ class GameInterface:
                 and time.time() > self.next_update + EVENT_LIMIT
             ):
                 return
-            EntityView(self, o).notify(e)
+            entity = EntityView(self, o)
+            entity.notify(e)
+            self.hud_panel.on_event(entity, e)
         except:
             exception("problem during srv_event")
 
@@ -2077,6 +2084,7 @@ class GameInterface:
         get_screen().fill((0, 0, 0))
         if self.display_is_active:
             self.grid_view.display()
+            self.hud_panel.display()
             if (
                 self.mouse_select_origin
                 and self.mouse_select_origin != pygame.mouse.get_pos()

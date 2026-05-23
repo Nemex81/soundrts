@@ -1,0 +1,78 @@
+{
+  "schema_version": "2.0",
+  "updated_at": "2026-05-19T12:00:00Z",
+  "packages": [
+    {
+      "id": "spark-base",
+      "display_name": "SPARK Base Layer",
+      "description": "Layer fondazionale SCF con agenti base, skill condivise, instruction comuni e prompt framework general-purpose.",
+      "latest_version": "2.3.1",
+      "version_source": "package-manifest",
+      "status": "stable",
+      "repo_url": "https://github.com/Nemex81/spark-base",
+      "min_engine_version": "3.6.0",
+      "engine_managed_resources": false,
+      "tags": [
+        "base",
+        "foundation",
+        "agents",
+        "skills",
+        "prompts",
+        "general-purpose"
+      ]
+    },
+    {
+      "id": "scf-master-codecrafter",
+      "display_name": "SCF Master CodeCrafter",
+      "description": "Plugin CORE-CRAFT sopra spark-base per design, code routing, code UI e contesto MCP.",
+      "latest_version": "2.7.0",
+      "version_source": "package-manifest",
+      "status": "stable",
+      "repo_url": "https://github.com/Nemex81/scf-master-codecrafter",
+      "min_engine_version": "3.6.0",
+      "engine_managed_resources": false,
+      "tags": [
+        "master",
+        "core-craft",
+        "dispatcher",
+        "design",
+        "spark-base"
+      ]
+    },
+    {
+      "id": "scf-pycode-crafter",
+      "display_name": "SCF Python CodeCrafter",
+      "description": "Pacchetto SCF per progetti Python — agenti, skill e instruction per Copilot Agent mode",
+      "latest_version": "2.3.0",
+      "version_source": "package-manifest",
+      "status": "stable",
+      "repo_url": "https://github.com/Nemex81/scf-pycode-crafter",
+      "min_engine_version": "3.6.0",
+      "engine_managed_resources": false,
+      "tags": [
+        "python",
+        "development",
+        "copilot",
+        "agenti"
+      ]
+    },
+    {
+      "id": "spark-ops",
+      "display_name": "SPARK Ops Layer",
+      "description": "Layer operativo E2E/framework-docs/release. Req spark-base>=2.0.0",
+      "latest_version": "1.4.0",
+      "version_source": "package-manifest",
+      "status": "stable",
+      "repo_url": "https://github.com/Nemex81/spark-framework-engine",
+      "min_engine_version": "3.4.0",
+      "engine_managed_resources": true,
+      "tags": [
+        "ops",
+        "e2e",
+        "release",
+        "docs",
+        "spark-base"
+      ]
+    }
+  ]
+}

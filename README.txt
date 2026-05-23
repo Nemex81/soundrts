@@ -18,6 +18,11 @@ Running soundrts.py requires:
 * pygame
 * accessible_output2
 
+When the visual display is active, the Pygame client also renders a minimal
+HUD overlay with resources, population, selected group status, game time,
+speed, and recent gameplay events. The audio-first interface remains
+unchanged, and the HUD is not rendered when no active display is available.
+
 Building a package requires also:
 * docutils
 * cx_Freeze
