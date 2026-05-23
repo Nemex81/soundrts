@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "spark-framework-engine": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "C:\\Users\\nemex\\OneDrive\\Documenti\\GitHub\\spark-framework-engine\\spark-framework-engine.py"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "packages": [
+    "spark-ops"
+  ],
+  "auto_install": true
+}

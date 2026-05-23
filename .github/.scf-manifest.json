@@ -1,0 +1,110 @@
+{
+  "schema_version": "3.1",
+  "entries": [
+    {
+      "file": "instructions/mcp-context.instructions.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "bde43828dd8c61c1978fd88bdd9992c3005043478f2520a65f368d27665aa33c",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Analyze.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "09657ee40953734858a662af8a6b9c3df9c45d411428417707fd9ff15cf0914a",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Code.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "f6cab46d3a76e636297450e34ae7c1caa2925b455cc0d541ba56211a8f71329a",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-CodeRouter.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "4a0b6d754b8cea3ffe87a62a0665086fa5c9b0eaffe70698a6a9228b149035a1",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-CodeUI.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "3cc756953f4e78416efdc456f0d4f004bb1974179df836fa9ebba36818d0b1ac",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Design.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "4d5e60f0c739c16a87eadd72292c867a51a8caa240663690069a0a7a6305105e",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Docs.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "32f96f118e9ea04c78397e54d4164749a84c327b2e8205cf15d7ac739e032744",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-FrameworkDocs.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "c1c5d56a76006e97af32d4569c805b04706d383c155da7bbc03d29f1e008cd50",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Git.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "8fede614d603758b534352809574d92a5fb02c430a0c1a620c9f5a67d9fb7c15",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Helper.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "bbd7a18e1358711dd09b89291619b1bc23a060ea41c82e91c1ba02d7ce860f47",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Plan.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "82116aa38b340bbf56236182b13a95a1ae37d8d6d281469b770c860f985e3062",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "agents/code-Agent-Research.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "277acfc5cc8010e547c3941d01efa350e43d5d77b8c7411d883bab9187b6d445",
+      "scf_merge_strategy": "replace"
+    },
+    {
+      "file": "AGENTS-master.md",
+      "package": "scf-master-codecrafter",
+      "package_version": "2.7.0",
+      "installed_at": "2026-05-23T16:15:16Z",
+      "sha256": "efe6e621c74ba4b7fd28cf95056fa579968e855e2d04cb5ed23ec1a03a6b8023",
+      "scf_merge_strategy": "replace"
+    }
+  ],
+  "overrides": []
+}
