@@ -1,0 +1,23 @@
+; coding: utf-8
+
+; graphical HUD strings
+
+def hud
+panel_res Risorse
+panel_time Tempo
+panel_events Eventi
+panel_player Giocatore
+panel_group Gruppo
+no_unit Nessuna unita selezionata
+no_events Nessun evento recente
+resources_na Risorse: n/d
+pop_na Pop: n/d
+speed_na Velocita: n/d
+player_na Giocatore
+unit_na unita
+idle inattivo
+object_na oggetto
+resource_n Risorsa {}
+time_fmt Tempo: {:02d}:{:02d}
+pop_fmt Pop: {}/{}
+speed_fmt Velocita: x{:.1f}

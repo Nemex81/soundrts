@@ -728,3 +728,25 @@ title 4334
 
 def human_faction
 title 4301
+
+; graphical HUD strings
+
+def hud
+panel_res RES
+panel_time TIME
+panel_events EVENTS
+panel_player PLAYER
+panel_group GROUP
+no_unit No unit selected
+no_events No recent events
+resources_na Resources: n/a
+pop_na Pop: n/a
+speed_na Speed: n/a
+player_na Player
+unit_na unit
+idle idle
+object_na object
+resource_n Resource {}
+time_fmt Time: {:02d}:{:02d}
+pop_fmt Pop: {}/{}
+speed_fmt Speed: x{:.1f}

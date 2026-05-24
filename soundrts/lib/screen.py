@@ -7,7 +7,7 @@ from .. import version
 from .log import warning
 
 pygame.font.init()
-_font = pygame.font.SysFont("arial", 17, bold=True)
+_font = pygame.font.SysFont("arial", 20, bold=True)
 
 
 def _make_font(size, bold):
@@ -18,8 +18,8 @@ def _make_font(size, bold):
         return _font
 
 
-_font_header = _make_font(21, True)
-_font_small = _make_font(15, False)
+_font_header = _make_font(24, True)
+_font_small = _make_font(18, False)
 
 
 def _render_with(font, text, dest, right=False, center=False, color=(200, 200, 200)):
@@ -93,21 +93,26 @@ def screen_render(text, dest, right=False, center=False, color=(200, 200, 200)):
     _screen.blit(surface, r)
 
 
+def _subtitle_position(screen, rendered_text):
+    x = screen.get_width() - rendered_text.get_width() - 16
+    y = screen.get_height() - rendered_text.get_height() - 4
+    return x, y
+
+
 def screen_render_subtitle():
     ren = _font.render(_subtitle, True, (200, 200, 200), (0, 0, 0))
-    x = _screen.get_width() - ren.get_width() - 16
-    y = _screen.get_height() - ren.get_height() - 4
-    _screen.blit(ren, (x, y))
+    _screen.blit(ren, _subtitle_position(_screen, ren))
 
 
 def screen_subtitle_set(txt):
     global _subtitle
+    _subtitle = txt
     if _game_mode:
         # render later
-        _subtitle = txt
+        pass
     else:
         get_screen().fill((0, 0, 0))
-        screen_render(txt, (0, 0))
+        screen_render_subtitle()
         pygame.display.flip()
 
 

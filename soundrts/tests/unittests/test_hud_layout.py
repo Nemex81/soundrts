@@ -1,5 +1,6 @@
 from itertools import combinations
 import locale
+from pathlib import Path
 import sys
 from types import SimpleNamespace
 
@@ -7,6 +8,7 @@ import pygame
 import pytest
 
 from soundrts.clientgamehud import HudEvent, HudPanel, HudSnapshot, HudUnitSnapshot
+from soundrts.definitions import Style
 
 
 RESOLUTIONS = [
@@ -85,7 +87,7 @@ def _capture_layout(monkeypatch, resolution):
 
 
 def _estimated_content_height(panel, snapshot, panel_name):
-    header_height = 20
+    header_height = panel.panel_header_height
     if panel_name == "res":
         return header_height + (len(snapshot.resources) + 1) * panel.line_height
     if panel_name == "events":
@@ -187,8 +189,53 @@ def test_time_panel_has_minimum_height(monkeypatch, resolution):
     )
 
 
-# T_SUBTITLE_RIGHT: screen_render_subtitle() positions the status bar at
-# x = screen_width - text_width - 16 (bottom-right anchor, outside map area).
-# Requires a running pygame display to verify at runtime; not mockable here.
-# Manual verification: launch a game session and confirm the subtitle appears
-# in the bottom-right quadrant (x > screen_width // 2) at all resolutions.
+def test_hud_panel_font_layout_constants_are_updated():
+    assert HudPanel.line_height == 26
+    assert HudPanel.min_height == 360
+    assert HudPanel.panel_header_height == 36
+    assert HudPanel.time_height == 88
+
+
+def test_hud_i18n_keys_exist_in_italian_style():
+    style = Style()
+    style.load(
+        Path("res/ui/style.txt").read_text(encoding="utf-8"),
+        Path("res/ui-it/style.txt").read_text(encoding="utf-8"),
+    )
+
+    expected = {
+        "panel_res": "Risorse",
+        "panel_time": "Tempo",
+        "panel_events": "Eventi",
+        "panel_player": "Giocatore",
+        "panel_group": "Gruppo",
+        "no_unit": "Nessuna unita selezionata",
+        "no_events": "Nessun evento recente",
+        "resources_na": "Risorse: n/d",
+        "pop_na": "Pop: n/d",
+        "speed_na": "Velocita: n/d",
+        "player_na": "Giocatore",
+        "unit_na": "unita",
+        "idle": "inattivo",
+        "object_na": "oggetto",
+        "resource_n": "Risorsa {}",
+        "time_fmt": "Tempo: {:02d}:{:02d}",
+        "pop_fmt": "Pop: {}/{}",
+        "speed_fmt": "Velocita: x{:.1f}",
+    }
+
+    for key, value in expected.items():
+        assert " ".join(style.get("hud", key)) == value
+
+
+def test_subtitle_position_is_bottom_right():
+    from soundrts.lib.screen import _subtitle_position
+
+    screen = pygame.Surface((800, 600))
+    rendered_text = pygame.Surface((120, 24))
+
+    x, y = _subtitle_position(screen, rendered_text)
+
+    assert x == 800 - 120 - 16
+    assert y == 600 - 24 - 4
+    assert x > screen.get_width() // 2

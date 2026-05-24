@@ -247,3 +247,63 @@ Confronto con le assunzioni del codice:
 - [x] Legge IA #8: `screen_render_subtitle()` e `_font` non sono mai chiamate da path audio.
 - [x] `clientgamegridview.py` invariato.
 - [x] `display_is_active` gate non modificato.
+
+---
+
+## Stato post-fix Round 3 — 2026-05-24
+
+### Fix applicati
+
+| File | Modifica | Fix |
+|------|----------|-----|
+| `soundrts/lib/screen.py` | `screen_subtitle_set()` ora usa `screen_render_subtitle()` nel fallback non-game-mode | FIX-1 percorso runtime status bar |
+| `soundrts/lib/screen.py` | body 17→**20** bold, header 21→**24** bold, small 15→**18** reg | FIX-2 font scale |
+| `soundrts/clientgamehud.py` | `line_height=26`, `min_height=360`, `time_height=88`, `panel_header_height=36` | FIX-2 geometria |
+| `soundrts/clientgamehud.py` | stringhe HUD lette da `style.get("hud", ...)` con fallback EN | FIX-3 i18n |
+| `res/ui/style.txt` / `res/ui-it/style.txt` | 18 chiavi HUD EN/IT aggiunte | FIX-3 localizzazione |
+| `soundrts/tests/unittests/test_hud_layout.py` | aggiunti T_FONT_SIZE, T_I18N_KEYS, T_SUBTITLE_POSITION | test Round 3 |
+
+### Misure font aggiornate
+
+```text
+Arial 19 bold: h=22px | short=122px | long36=361px
+Arial 20 bold: h=23px | short=125px | long36=396px
+Arial 21 bold: h=25px | short=137px | long36=397px
+Arial 22 bold: h=26px | short=138px | long36=433px
+Arial 23 bold: h=27px | short=141px | long36=468px
+Arial 24 bold: h=28px | short=151px | long36=469px
+```
+
+Tradeoff documentato: nessun candidato 19-24 rispetta `long36 <= 254`; è stato scelto Arial 20 bold perché è la massima dimensione con `height <= 24px`. L'overflow EVENTS viene mitigato riducendo `event_text_max_length` a 23 caratteri.
+
+### Tabella risoluzioni post-fix Round 3
+
+| Risoluzione | T1 | T2 | T3 | T4 | T5 | T_TIME | T_FONT | T_I18N | T_SUBTITLE | Esito |
+| ----------- | -- | -- | -- | -- | -- | ------ | ------ | ------ | ---------- | ----- |
+| 400×300 | ✅ | n/a | n/a | n/a | n/a | n/a | ✅ | ✅ | ✅ | SKIP ✅ |
+| 420×260 | ✅ | n/a | n/a | n/a | n/a | n/a | ✅ | ✅ | ✅ | SKIP ✅ |
+| 640×480 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 800×600 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1024×768 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1280×720 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1366×768 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1920×1080 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+
+### Risultati test post-fix Round 3
+
+```text
+py_compile: OK
+imports: IMPORTS OK
+i18n: I18N OK
+pytest test_hud_layout.py: 34 passed, 0 failed
+```
+
+### Note runtime
+
+- Status bar, font 20px e stringhe HUD IT richiedono conferma visiva su partita reale fullscreen.
+
+### Vincoli rispettati Round 3
+
+- [x] Legge IA #8: nessun import verso voice/sound/world* e `display_is_active` invariato.
+- [x] Nessuna stringa italiana hardcoded in Python.
+- [x] Localizzazione integrata nel sistema `style.get(...)` già usato da SoundRTS.

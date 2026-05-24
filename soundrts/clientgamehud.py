@@ -53,11 +53,15 @@ class HudSnapshot:
 
 class HudPanel:
     min_width = 460
-    min_height = 308
+    min_height = 360
     max_units = 8
     max_events = 8
     margin = 8
-    line_height = 23
+    line_height = 26
+    panel_header_height = 36
+    player_height = 36
+    time_height = 88
+    event_text_max_length = 23
 
     def __init__(self, interface: Any) -> None:
         self.interface = interface
@@ -109,11 +113,11 @@ class HudPanel:
         self._panel_rects = {}
 
         # --- RES panel (top-left) ---
-        res_rect = (left, top, 180, 30 + (len(snapshot.resources) + 1) * self.line_height)
+        res_rect = (left, top, 180, self.panel_header_height + (len(snapshot.resources) + 1) * self.line_height)
         self._draw_panel(screen, res_rect)
         self._panel_rects["res"] = pygame.Rect(*res_rect)
-        screen_render_header("RES", (left + 6, top + 4), color=(120, 220, 190))
-        y = top + 25
+        screen_render_header(self._hud_text("panel_res", "RES"), (left + 6, top + 4), color=(120, 220, 190))
+        y = top + self.panel_header_height
         for line in snapshot.resources:
             label, _, value = line.partition(":")
             screen_render(label + ":", (left + 6, y), color=(220, 220, 210))
@@ -124,55 +128,54 @@ class HudPanel:
 
         # --- TIME panel (top-right) ---
         time_width = 175
-        time_rect = (right - time_width, top, time_width, 68)
+        time_rect = (right - time_width, top, time_width, self.time_height)
         self._draw_panel(screen, time_rect)
         self._panel_rects["time"] = pygame.Rect(*time_rect)
-        screen_render_header("TIME", (right - time_width + 6, top + 4), color=(160, 210, 255))
-        screen_render(snapshot.time, (right - time_width + 6, top + 27), color=(220, 235, 245))
-        screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, top + 42), color=(220, 235, 245))
+        screen_render_header(self._hud_text("panel_time", "TIME"), (right - time_width + 6, top + 4), color=(160, 210, 255))
+        screen_render(snapshot.time, (right - time_width + 6, top + self.panel_header_height), color=(220, 235, 245))
+        screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, top + self.panel_header_height + self.line_height), color=(220, 235, 245))
 
         # --- EVENTS panel (right side, below TIME) ---
         event_width = 260
-        event_height = 30 + max(1, len(snapshot.events)) * self.line_height
-        event_top = top + 70
+        event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
+        event_top = top + self.time_height + self.margin
         event_rect = (right - event_width, event_top, event_width, event_height)
         self._draw_panel(screen, event_rect)
         self._panel_rects["events"] = pygame.Rect(*event_rect)
-        screen_render_header("EVENTS", (right - event_width + 6, event_top + 4), color=(255, 190, 120))
-        y = event_top + 25
+        screen_render_header(self._hud_text("panel_events", "EVENTS"), (right - event_width + 6, event_top + 4), color=(255, 190, 120))
+        y = event_top + self.panel_header_height
         events = snapshot.events
         if not events:
-            screen_render("No recent events", (right - event_width + 6, y), color=(230, 220, 205))
+            screen_render(self._hud_text("no_events", "No recent events"), (right - event_width + 6, y), color=(230, 220, 205))
         else:
             for ev in events[: self.max_events]:
                 prefix, ev_color = self._event_style(ev.severity)
                 screen_render(
-                    self._fit("{} {}".format(prefix, ev.text), 36),
+                    self._fit("{} {}".format(prefix, ev.text), self.event_text_max_length),
                     (right - event_width + 6, y),
                     color=ev_color,
                 )
                 y += self.line_height
 
         # --- PLAYER panel (bottom-left, above GROUP) ---
-        player_height = 30
         group_width = 295
         unit_count = max(1, len(snapshot.units))
-        group_height = 30 + unit_count * self.line_height
+        group_height = self.panel_header_height + unit_count * self.line_height
         group_top = bottom - group_height
-        player_top = group_top - player_height - 4
-        player_rect = (left, player_top, group_width, player_height)
+        player_top = group_top - self.player_height - 4
+        player_rect = (left, player_top, group_width, self.player_height)
         self._draw_panel(screen, player_rect)
         self._panel_rects["player"] = pygame.Rect(*player_rect)
-        screen_render_header("PLAYER", (left + 6, player_top + 4), color=(200, 230, 255))
-        screen_render(snapshot.player, (left + 80, player_top + 8), color=(220, 235, 245))
+        screen_render_header(self._hud_text("panel_player", "PLAYER"), (left + 6, player_top + 4), color=(200, 230, 255))
+        screen_render(snapshot.player, (left + 125, player_top + 8), color=(220, 235, 245))
 
         # --- GROUP panel (bottom-left) ---
         group_rect = (left, group_top, group_width, group_height)
         self._draw_panel(screen, group_rect)
         self._panel_rects["group"] = pygame.Rect(*group_rect)
-        screen_render_header("GROUP", (left + 6, group_top + 4), color=(180, 220, 255))
-        y = group_top + 25
-        units = snapshot.units or [HudUnitSnapshot("No unit selected", None, None, "")]
+        screen_render_header(self._hud_text("panel_group", "GROUP"), (left + 6, group_top + 4), color=(180, 220, 255))
+        y = group_top + self.panel_header_height
+        units = snapshot.units or [HudUnitSnapshot(self._hud_text("no_unit", "No unit selected"), None, None, "")]
         for unit in units[: self.max_units]:
             hp = ""
             if unit.hit_points is not None and unit.max_hit_points is not None:
@@ -216,7 +219,7 @@ class HudPanel:
         for index, value in enumerate(resources):
             name = self._resource_name(index)
             lines.append("{}: {}".format(name, value))
-        return lines or ["Resources: n/a"]
+        return lines or [self._hud_text("resources_na", "Resources: n/a")]
 
     def _resource_name(self, index: int) -> str:
         key = "resource_{}_title".format(index)
@@ -225,13 +228,13 @@ class HudPanel:
         except Exception:
             parts = None
         label = self._parts_to_text(parts)
-        return label or "Resource {}".format(index + 1)
+        return label or self._hud_format("resource_n", "Resource {}", index + 1)
 
     def _food_line(self) -> str:
         try:
-            return "Pop: {}/{}".format(self.interface.used_food, self.interface.available_food)
+            return self._hud_format("pop_fmt", "Pop: {}/{}", self.interface.used_food, self.interface.available_food)
         except Exception:
-            return "Pop: n/a"
+            return self._hud_text("pop_na", "Pop: n/a")
 
     def _time_line(self) -> str:
         try:
@@ -239,7 +242,7 @@ class HudPanel:
         except Exception:
             seconds = 0
         minutes, seconds = divmod(seconds, 60)
-        return "Time: {:02d}:{:02d}".format(minutes, seconds)
+        return self._hud_format("time_fmt", "Time: {:02d}:{:02d}", minutes, seconds)
 
     def _speed_line(self) -> str:
         try:
@@ -247,17 +250,17 @@ class HudPanel:
         except Exception:
             speed = getattr(self.interface, "speed", 0)
         try:
-            return "Speed: x{:.1f}".format(speed)
+            return self._hud_format("speed_fmt", "Speed: x{:.1f}", speed)
         except Exception:
-            return "Speed: n/a"
+            return self._hud_text("speed_na", "Speed: n/a")
 
     def _player_line(self) -> str:
         player = getattr(self.interface, "player", None)
         if player is None:
-            return "Player"
+            return self._hud_text("player_na", "Player")
         name = getattr(player, "name", None) or getattr(player, "login", None)
         if not name:
-            name = "Player"
+            name = self._hud_text("player_na", "Player")
         race = getattr(player, "race", None)
         if race:
             return "{} ({})".format(name, race)
@@ -288,7 +291,7 @@ class HudPanel:
             return "{} #{}".format(label, number)
         if label:
             return str(label)
-        return "unit"
+        return self._hud_text("unit_na", "unit")
 
     def _unit_status(self, unit: Any) -> str:
         orders = getattr(unit, "orders", None) or []
@@ -299,11 +302,11 @@ class HudPanel:
         activity = getattr(unit, "activity", None)
         if activity:
             return str(activity)
-        return "idle"
+        return self._hud_text("idle", "idle")
 
     def _format_event(self, entity: Any, event: Any) -> str:
         event_text = str(event).replace("_", " ")
-        label = getattr(entity, "type_name", None) or "object"
+        label = getattr(entity, "type_name", None) or self._hud_text("object_na", "object")
         place = getattr(entity, "place", None)
         place_text = self._place_text(place)
         if place_text:
@@ -332,9 +335,23 @@ class HudPanel:
         if isinstance(parts, str):
             return parts
         if isinstance(parts, (list, tuple)):
-            words = [str(part) for part in parts if isinstance(part, str)]
+            words = [str(part) for part in parts if isinstance(part, str) and not str(part).isdigit()]
             return " ".join(words)
         return ""
+
+    def _hud_text(self, key: str, default: str) -> str:
+        try:
+            text = self._parts_to_text(style.get("hud", key, warn_if_not_found=False))
+        except Exception:
+            text = ""
+        return text or default
+
+    def _hud_format(self, key: str, default: str, *args: Any) -> str:
+        template = self._hud_text(key, default)
+        try:
+            return template.format(*args)
+        except Exception:
+            return default.format(*args)
 
     def _fit(self, text: str, max_length: int) -> str:
         if len(text) <= max_length:

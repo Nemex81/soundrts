@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+<!-- UI Fix Round 3 + i18n IT — 2026-05-24 -->
+
+### Fixed
+
+- [FIX-1] Status bar: corrected the runtime fallback path in `screen_subtitle_set()` so non-game-mode subtitle rendering now uses the same bottom-right anchor as `screen_render_subtitle()` (`x = width - text_width - 16`, `y = height - text_height - 4`).
+
+### Changed
+
+- [FIX-2] Further upgraded HUD body font to Arial 20 bold (from 17), header font to 24 bold, and small font to 18 regular for improved fullscreen readability.
+- Updated HUD geometry for the larger font: `line_height` 23 → 26 px, `min_height` 308 → 360 px, `time_height` 68 → 88 px, and dynamic panel header space to 36 px.
+- Reduced EVENTS text fit length to 23 characters to keep long event labels within the 260 px panel after the font increase.
+
+### Added
+
+- [FIX-3] Added 18 localizable graphical HUD strings through the existing `style.get("hud", ...)` system, with Italian values in `res/ui-it/style.txt` and English base values in `res/ui/style.txt`.
+- Added automated Round 3 layout tests for HUD font constants, subtitle bottom-right positioning, and Italian HUD i18n keys.
+
+### Tests
+
+- `test_hud_layout.py`: 34 passed, 0 failed.
+
 <!-- UI Fix Round 2 — 2026-05-24 -->
 
 ### Fixed

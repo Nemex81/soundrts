@@ -172,3 +172,30 @@ Obiettivo: fix segnalati da test visivo reale su monitor (font ancora piccolo, s
 - [ ] Confermare leggibilità font su monitor reale dopo aggiornamento a 17px bold.
 - [ ] Verificare posizione status bar in partita reale su diverse risoluzioni.
 - [ ] T_SUBTITLE_RIGHT: test manuale (documentato in test_hud_layout.py).
+
+## HUD UI Fix Round 3 + i18n IT — 2026-05-24
+
+Avvio: 24 maggio 2026
+Stato globale: COMPLETATO
+
+Obiettivo: correggere la status bar ancora percepita a sinistra, aumentare ulteriormente il font HUD e localizzare le stringhe grafiche HUD in italiano tramite il sistema i18n esistente.
+
+### Completati
+
+- [x] FIX-1: Status bar spostata a destra anche nel percorso runtime fallback (`screen_subtitle_set()`), con formula `x = width - ren_width - 16`, `y = height - ren_height - 4`.
+- [x] FIX-2: Font body 20px bold (da 17), header 24px bold, small 18px regular; `line_height=26`, `min_height=360`, `time_height=88`.
+- [x] FIX-2: EVENTS fit ridotto a 23 caratteri per compensare il tradeoff font: nessuna misura 19-24 rispettava `long36 <= 254`.
+- [x] FIX-3: Localizzazione HUD IT tramite `style.get("hud", ...)`: 18 chiavi aggiunte in `res/ui/style.txt` e `res/ui-it/style.txt`.
+- [x] Test aggiornati: T_FONT_SIZE, T_I18N_KEYS e T_SUBTITLE_POSITION aggiunti; 34 passed, 0 failed.
+
+### Da verificare a runtime
+
+- [ ] Confermare posizione status bar su monitor reale in partita fullscreen.
+- [ ] Confermare leggibilità font 20px fullscreen.
+- [ ] Confermare stringhe HUD in italiano con lingua IT attiva nel gioco.
+
+### Vincoli rispettati
+
+- Modalità audio-only invariata (Legge IA #8): nessun import verso voice/sound/world*.
+- `display_is_active` gate non modificato.
+- Nessuna stringa italiana hardcoded in codice Python: il codice usa il sistema `style`.
