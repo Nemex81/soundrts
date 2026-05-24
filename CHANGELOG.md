@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+<!-- UI Fix Round 4 — 2026-05-24 -->
+
+### Fixed
+
+- [FIX-1] `screen_render_subtitle()`: added `if not _subtitle: return` guard to skip rendering when the subtitle is empty, preventing a spurious black background rectangle from appearing on screen (`soundrts/lib/screen.py`).
+- [FIX-1] Forensic analysis confirmed: `clientgamegridview.py` contains zero text rendering; the subtitle path has been correctly anchored to bottom-right since Round 2+3 via `_subtitle_position()`.
+
+### Changed
+
+- [FIX-2] `_parts_to_text()`: removed the `isdigit` filter — numeric string tokens are now preserved as-is, allowing HUD values such as "Pop: 0" or resource counts to display correctly (`soundrts/clientgamehud.py`).
+- [FIX-2] `_resource_name()`: digit filter applied explicitly here only, before calling `_parts_to_text()` — pure-digit tokens in the `parameters` style section (type/sound IDs) are still discarded as before, preserving existing resource label behaviour.
+
+### Tests
+
+- `test_hud_layout.py`: 38 passed, 0 failed (+4 Round 4 tests).
+- Added `test_parts_to_text_preserves_numbers` (T_PARTS_TO_TEXT_PRESERVES_NUMBERS).
+- Added `test_parts_to_text_preserves_zero_in_list` (T_PARTS_TO_TEXT_ZERO).
+- Added `test_resource_name_strips_digit_style_tokens` (T_RESOURCE_NAME_STRIPS_DIGITS).
+- Added `test_infobar_subtitle_rendering_path_confirmed` (T_INFOBAR_POSITION, multi-resolution forensic).
+
 <!-- UI Fix Round 3 + i18n IT — 2026-05-24 -->
 
 ### Fixed

@@ -100,6 +100,8 @@ def _subtitle_position(screen, rendered_text):
 
 
 def screen_render_subtitle():
+    if not _subtitle:
+        return
     ren = _font.render(_subtitle, True, (200, 200, 200), (0, 0, 0))
     _screen.blit(ren, _subtitle_position(_screen, ren))
 

@@ -227,6 +227,9 @@ class HudPanel:
             parts = style.get("parameters", key)
         except Exception:
             parts = None
+        # Numeric-only tokens in parameter style parts are sound/type IDs; discard them.
+        if isinstance(parts, (list, tuple)):
+            parts = [p for p in parts if not (isinstance(p, str) and p.isdigit())]
         label = self._parts_to_text(parts)
         return label or self._hud_format("resource_n", "Resource {}", index + 1)
 
@@ -332,10 +335,11 @@ class HudPanel:
             return None
 
     def _parts_to_text(self, parts: Any) -> str:
+        """Convert style parts to a display string. Numeric values are preserved."""
         if isinstance(parts, str):
             return parts
         if isinstance(parts, (list, tuple)):
-            words = [str(part) for part in parts if isinstance(part, str) and not str(part).isdigit()]
+            words = [str(part) for part in parts if isinstance(part, str)]
             return " ".join(words)
         return ""
 

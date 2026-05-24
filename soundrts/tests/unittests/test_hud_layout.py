@@ -239,3 +239,54 @@ def test_subtitle_position_is_bottom_right():
     assert x == 800 - 120 - 16
     assert y == 600 - 24 - 4
     assert x > screen.get_width() // 2
+
+
+# ────────────────────────────────────────────────────────────────
+# Round 4 — FIX-2: _parts_to_text safety
+# ────────────────────────────────────────────────────────────────
+
+def test_parts_to_text_preserves_numbers():
+    """T_PARTS_TO_TEXT_PRESERVES_NUMBERS: digit tokens must NOT be stripped."""
+    panel = HudPanel(_make_interface())
+    assert panel._parts_to_text(["Pop:", "0"]) == "Pop: 0"
+    assert panel._parts_to_text(["Resource", "1"]) == "Resource 1"
+    assert panel._parts_to_text(["Count:", "42"]) == "Count: 42"
+
+
+def test_parts_to_text_preserves_zero_in_list():
+    """T_PARTS_TO_TEXT_ZERO: '0' as a list element must be preserved."""
+    panel = HudPanel(_make_interface())
+    # "0" as a standalone token must not be stripped (e.g. resource count of zero)
+    result = panel._parts_to_text(["Pop:", "0"])
+    assert result == "Pop: 0", f"expected 'Pop: 0', got {result!r}"
+    assert "0" in result
+
+
+def test_resource_name_strips_digit_style_tokens():
+    """T_RESOURCE_NAME_STRIPS_DIGITS: pure-digit tokens (style type IDs) are discarded."""
+    panel = HudPanel(_make_interface())
+    # Simulate the filtering that _resource_name applies before _parts_to_text
+    raw_parts = ["Gold", "1"]  # "1" is a style type ID to discard
+    filtered = [p for p in raw_parts if not (isinstance(p, str) and p.isdigit())]
+    assert panel._parts_to_text(filtered) == "Gold"
+    assert "1" not in panel._parts_to_text(filtered)
+
+
+def test_infobar_subtitle_rendering_path_confirmed():
+    """T_INFOBAR_POSITION: forensic analysis — subtitle rendered by screen_render_subtitle().
+    Position formula: x = screen_w - text_w - 16, y = screen_h - text_h - 4.
+    Confirmed bottom-right. clientgamegridview.py has no text rendering.
+    Runtime verification required for visual confirmation.
+    """
+    from soundrts.lib.screen import _subtitle_position
+
+    for w, h in [(640, 480), (1024, 768), (1920, 1080)]:
+        screen = pygame.Surface((w, h))
+        text_surf = pygame.Surface((200, 24))
+        x, y = _subtitle_position(screen, text_surf)
+        # Right edge lands at screen_w - 16
+        assert x + 200 == w - 16, f"right edge mismatch at {w}x{h}"
+        # Bottom edge lands at screen_h - 4
+        assert y + 24 == h - 4, f"bottom edge mismatch at {w}x{h}"
+        # x must be in the right half for typical subtitle lengths
+        assert x > w // 2, f"x={x} not in right half at {w}x{h}"

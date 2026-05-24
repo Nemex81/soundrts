@@ -198,4 +198,43 @@ Obiettivo: correggere la status bar ancora percepita a sinistra, aumentare ulter
 
 - Modalità audio-only invariata (Legge IA #8): nessun import verso voice/sound/world*.
 - `display_is_active` gate non modificato.
+
+## HUD UI Fix Round 4 — 2026-05-24
+
+Avvio: 24 maggio 2026
+Stato globale: COMPLETATO
+
+Obiettivo: analisi forense completa del percorso runtime info-bar (FIX-1) e safety refactor di `_parts_to_text()` (FIX-2).
+
+### Completati
+
+- [x] FIX-1 FORENSE: Analisi completa del percorso runtime.
+      Ipotesi `clientgamegridview.py` ERRATA: il file non ha alcun rendering testuale.
+      Percorso reale: `lib/message.py:53` → `screen_subtitle_set()` → `_subtitle = txt`
+      → `clientgame.py:2114 display()` → `screen_render_subtitle()` → `_subtitle_position()` → bottom-right.
+      La posizione bottom-right era già corretta da Round 2+3; nessun path basso-sinistra residuo.
+- [x] FIX-1 MIGLIORAMENTO: Aggiunto guard `if not _subtitle: return` in `screen_render_subtitle()`
+      per evitare blit di superficie vuota con sfondo nero spurio.
+      (`soundrts/lib/screen.py`)
+- [x] FIX-2 SAFETY: Filtro `isdigit` spostato da `_parts_to_text()` a `_resource_name()` (OPZIONE B).
+      `_parts_to_text()` ora preserva tutti i token stringa compresi i numerici (es. "Pop: 0").
+      `_resource_name()` applica il filtro esplicitamente solo per i token ID di tipo/suono dello stile.
+      (`soundrts/clientgamehud.py`)
+- [x] Test aggiornati: 4 nuovi test aggiunti; 38 passed, 0 failed.
+      - T_PARTS_TO_TEXT_PRESERVES_NUMBERS
+      - T_PARTS_TO_TEXT_ZERO
+      - T_RESOURCE_NAME_STRIPS_DIGITS
+      - T_INFOBAR_POSITION (test forense su 3 risoluzioni)
+
+### Da verificare a runtime
+
+- [ ] Confermare assenza visiva di rettangolo nero spurio quando subtitle è vuoto.
+- [ ] Confermare che i valori numerici HUD (es. contatori risorse) siano visualizzati correttamente.
+- [ ] Confermare assenza info-bar basso-sinistra in partita reale.
+
+### Vincoli rispettati
+
+- Modalità audio-only invariata (Legge IA #8): nessun import verso voice/sound/world*.
+- `display_is_active` gate non modificato.
+- Nessuna stringa italiana hardcoded nel codice Python di produzione.
 - Nessuna stringa italiana hardcoded in codice Python: il codice usa il sistema `style`.

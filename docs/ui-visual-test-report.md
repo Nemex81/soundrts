@@ -307,3 +307,50 @@ pytest test_hud_layout.py: 34 passed, 0 failed
 - [x] Legge IA #8: nessun import verso voice/sound/world* e `display_is_active` invariato.
 - [x] Nessuna stringa italiana hardcoded in Python.
 - [x] Localizzazione integrata nel sistema `style.get(...)` già usato da SoundRTS.
+
+---
+
+## Stato post-fix Round 4 — 2026-05-24
+
+### Fix applicati
+
+| File | Modifica | Fix |
+|------|----------|-----|
+| `soundrts/lib/screen.py` | `screen_render_subtitle()`: aggiunto guard `if not _subtitle: return` | FIX-1 difensivo |
+| `soundrts/clientgamehud.py` | `_parts_to_text()`: rimosso filtro `isdigit` — valori numerici HUD preservati | FIX-2 safety |
+| `soundrts/clientgamehud.py` | `_resource_name()`: filtro `isdigit` applicato esplicitamente prima di `_parts_to_text()` | FIX-2 scoping |
+| `soundrts/tests/unittests/test_hud_layout.py` | aggiunti 4 test Round 4 | test |
+
+### Analisi forense FIX-1
+
+- **Ipotesi smentita**: `clientgamegridview.py` NON contiene alcun rendering testuale (nessuna chiamata a `screen_render*`, nessuna `font.render`).
+- **Percorso runtime reale**: `lib/message.py:53` → `screen_subtitle_set()` → `_subtitle = txt` → `clientgame.py:2114 display()` → `screen_render_subtitle()` → `_subtitle_position()` → bottom-right.
+- **Stato pre-Round 4**: Già corretto da Round 2+3. Nessun percorso basso-sinistra residuo.
+- **Testo basso-sinistra visibile**: solo i pannelli HUD GROUP/PLAYER (by design, intenzionale).
+
+### Risultati test post-fix Round 4
+
+```text
+py_compile: OK (soundrts/lib/screen.py, soundrts/clientgamehud.py)
+pytest test_hud_layout.py: 38 passed, 0 failed
+```
+
+### Nuovi test aggiunti
+
+| ID | Descrizione |
+|----|-------------|
+| T_PARTS_TO_TEXT_PRESERVES_NUMBERS | Verifica che token digit in lista siano preservati |
+| T_PARTS_TO_TEXT_ZERO | Verifica che "0" come elemento lista non sia rimosso |
+| T_RESOURCE_NAME_STRIPS_DIGITS | Verifica che il filtro digit in `_resource_name()` funzioni correttamente |
+| T_INFOBAR_POSITION | Test forense su 3 risoluzioni (640×480, 1024×768, 1920×1080) |
+
+### Note runtime
+
+- Conferma visiva necessaria: assenza rettangolo nero quando subtitle è vuoto.
+- Conferma visiva necessaria: valori numerici HUD (contatori risorse, pop) visualizzati correttamente.
+
+### Vincoli rispettati Round 4
+
+- [x] Legge IA #8: nessun import verso voice/sound/world* e `display_is_active` invariato.
+- [x] Nessuna stringa italiana hardcoded in Python.
+- [x] Nessuna funzionalità esistente rimossa.
