@@ -129,11 +129,22 @@ def set_screen(fullscreen):
         x, y = get_desktop_screen_mode()
         window_style = FULLSCREEN
     else:
-        if version.IS_DEV_VERSION:
+        # Round 8: visual_mode attiva fullscreen anche fuori dal gameplay
+        # (menu, opzioni, dialoghi). Import locale per evitare cicli.
+        try:
+            from .. import config as _config
+            _visual = bool(getattr(_config, "visual_mode", 0))
+        except Exception:
+            _visual = False
+        if _visual:
+            x, y = get_desktop_screen_mode()
+            window_style = FULLSCREEN
+        elif version.IS_DEV_VERSION:
             x, y = 200, 200
+            window_style = 0
         else:
             x, y = 400, 75
-        window_style = 0
+            window_style = 0
     try:
         _screen = pygame.display.set_mode((x, y), window_style)
     except:

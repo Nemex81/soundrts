@@ -30,13 +30,24 @@ from pygame.locals import (
     KEYDOWN,
     KMOD_CTRL,
     KMOD_SHIFT,
+    MOUSEBUTTONDOWN,
+    MOUSEMOTION,
     QUIT,
     USEREVENT,
 )
 
+from . import config
 from . import msgparts as mp
 from .clienthelp import help_msg
-from .clientmedia import modify_volume, sounds, toggle_fullscreen, voice
+from .clientmedia import (
+    modify_volume,
+    sounds,
+    toggle_fullscreen,
+    toggle_visual_mode,
+    voice,
+)
+from .clientmenuscreen import MenuScreen
+from .clientvisualui import get_screen_manager
 from .lib.log import warning
 from .lib.msgs import nb2msg
 from .lib.sound import psounds
@@ -137,6 +148,12 @@ class Menu:
         if len(choice) > 2:
             msg += mp.COMMA + choice[2]
         voice.item(msg)
+        # Round 8 H2: rispecchia selezione sullo stack visivo (no-op se OFF).
+        if config.visual_mode:
+            sm = get_screen_manager()
+            if sm.current is not None and hasattr(sm.current, "update"):
+                sm.current.update(self.choice_index)
+                sm._render_current()
 
     def _choice_exists(self):
         return self.choice_index is not None and 0 <= self.choice_index < len(
@@ -190,7 +207,9 @@ class Menu:
         elif e.key in (K_RETURN, K_KP_ENTER, K_RIGHT):
             return self._confirm_choice()
         elif e.key == K_F2 and e.mod & KMOD_CTRL:
-            toggle_fullscreen()
+            # Round 8 H5: in menu Ctrl+F2 commuta la modalita visiva.
+            # In gameplay (clientgame.cmd_fullscreen) resta toggle_fullscreen.
+            toggle_visual_mode()
         elif e.key == K_F1 and e.mod & KMOD_SHIFT or e.key == K_F2:
             voice.item(help_msg("menu", -1))
         elif e.key == K_F1:
@@ -282,6 +301,21 @@ class Menu:
             voice.update()
         elif e.type == KEYDOWN:
             self._process_keydown(e)
+        elif config.visual_mode and e.type in (MOUSEMOTION, MOUSEBUTTONDOWN):
+            # Round 8 H3: mouse additivo (LEGGE-6). Non disabilita tastiera.
+            sm = get_screen_manager()
+            cur = sm.current
+            if cur is not None:
+                if e.type == MOUSEMOTION:
+                    new_idx = cur.handle_mouse_motion(e.pos)
+                    if new_idx is not None and 0 <= new_idx < len(self.choices):
+                        self.choice_index = new_idx
+                        self._say_choice()
+                elif e.type == MOUSEBUTTONDOWN:
+                    clicked = cur.handle_mouse_click(e.pos)
+                    if clicked is not None and 0 <= clicked < len(self.choices):
+                        self.choice_index = clicked
+                        self._confirm_choice()
         voice.update()  # useful for SAPI
 
     def _get_choice_from_static_menu(self):
@@ -297,12 +331,30 @@ class Menu:
             self._execute_choice()
 
     def run(self):
-        if self.title:
-            voice.menu(self.title)
-        else:
-            voice.menu(mp.MAKE_A_SELECTION2)
-        self._get_choice_from_static_menu()
-        self._execute_choice()
+        # Round 8 H1: push schermata visiva (LEGGE-3 stack mirror).
+        _pushed = False
+        if config.visual_mode:
+            try:
+                get_screen_manager().push(
+                    MenuScreen(self.title, self.choices, self.choice_index)
+                )
+                _pushed = True
+            except Exception:
+                _pushed = False
+        try:
+            if self.title:
+                voice.menu(self.title)
+            else:
+                voice.menu(mp.MAKE_A_SELECTION2)
+            self._get_choice_from_static_menu()
+            self._execute_choice()
+        finally:
+            # Round 8 H4: pop anche su SystemExit (LEGGE-8 cleanup).
+            if _pushed:
+                try:
+                    get_screen_manager().pop()
+                except Exception:
+                    pass
 
     def loop(self):
         self.end_loop = False

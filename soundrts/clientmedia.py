@@ -68,6 +68,26 @@ def get_fullscreen():
     return fullscreen
 
 
+def toggle_visual_mode():
+    """Round 8: toggle modalita visiva fullscreen per menu/dialoghi.
+
+    Persiste su disco e applica subito ricreando la finestra. Quando OFF
+    il comportamento e identico al legacy audio-only (finestra 400x75).
+    """
+    config.visual_mode = 0 if config.visual_mode else 1
+    set_screen(fullscreen)
+    config.save()
+    if config.visual_mode:
+        voice.item(mp.DISPLAY_ON)
+    else:
+        voice.item(mp.DISPLAY_OFF)
+
+
+def get_visual_mode():
+    """Round 8: accessor stato modalita visiva."""
+    return bool(config.visual_mode)
+
+
 def close_media():
     """try to clean up before closing the client"""
     sound.stop()

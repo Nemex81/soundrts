@@ -34,6 +34,9 @@ DEFEAT = [150]
 DETECTOR = [4290]
 DISPLAY_ON = [4206]
 DISPLAY_OFF = [4207]
+# Round 8: alias semantici per la modalita visiva menu/dialoghi.
+VISUAL_MODE_ON = DISPLAY_ON
+VISUAL_MODE_OFF = DISPLAY_OFF
 DOCUMENTATION = [4337]
 DOT = [5026]
 EAST = [69]

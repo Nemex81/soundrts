@@ -38,7 +38,7 @@ import cloudpickle
 from . import discovery
 from . import msgparts as mp
 from . import stats
-from .clientmedia import close_media, init_media, voice, app_title
+from .clientmedia import close_media, init_media, toggle_visual_mode, voice, app_title
 from .clientmenu import CLOSE_MENU, Menu, input_string
 from .clientserver import (
     connect_and_play,
@@ -315,12 +315,15 @@ def soundpacks_menu():
 
 
 def options_menu():
+    # Round 8: etichetta dinamica modalita visiva.
+    visual_label = mp.VISUAL_MODE_ON if config.visual_mode else mp.VISUAL_MODE_OFF
     Menu(
         mp.OPTIONS_MENU,
         [
             (mp.MODIFY_LOGIN, modify_login),
             (mp.MODS, mods_menu),
             (mp.SOUNDPACKS, soundpacks_menu),
+            (visual_label, toggle_visual_mode),
             (mp.OPEN_USER_FOLDER, open_user_folder),
             (mp.BACK, CLOSE_MENU),
         ],

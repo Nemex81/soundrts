@@ -282,3 +282,54 @@ Obiettivo: analisi forense completa del percorso runtime info-bar (FIX-1) e safe
 - `display_is_active` gate non modificato.
 - Nessuna stringa italiana hardcoded nel codice Python di produzione.
 - Nessuna stringa italiana hardcoded in codice Python: il codice usa il sistema `style`.
+
+## Visual UI Mode Round 8 — 2026-05-25
+
+Avvio: 25 maggio 2026
+Stato globale: COMPLETATO
+
+Obiettivo: introdurre una modalità visiva opzionale fullscreen per menu e dialoghi, gated da `config.visual_mode` (default 0 = audio-only invariato). Zero regressioni tollerate sul path audio.
+
+### Completati
+
+- [x] FASE 0: Analisi codice reale + piano (`doc_admin/round8_visual_ui_plan.md`). Discrepanze D1-D6, hook H1-H6, rischi R1-R4 mappati.
+- [x] FASE 1 — Fondamenta:
+  - `soundrts/config.py`: aggiunta opzione `("general", "visual_mode", 0)` con converter int auto.
+  - `soundrts/lib/screen.py`: `set_screen(fullscreen=False)` usa FULLSCREEN desktop quando `config.visual_mode=1`. Path gameplay invariato.
+  - `soundrts/clientmedia.py`: `toggle_visual_mode()` + `get_visual_mode()` con TTS `DISPLAY_ON`/`DISPLAY_OFF` e `config.save()`.
+- [x] FASE 2 — Moduli visivi:
+  - `soundrts/clientvisualui.py` (nuovo): `ScreenManager` singleton (stack mirror), constanti layout, palette, `_safe_font`.
+  - `soundrts/clientmenuscreen.py` (nuovo): `MenuScreen`, `DialogScreen`, `_label_to_str` mai-solleva.
+- [x] FASE 3 — Agganci:
+  - `soundrts/clientmenu.py`: push/pop in `Menu.run()` con try/finally (LEGGE-8), `_say_choice` rispecchia indice (H2), mouse additivo in `_try_to_get_choice` (H3, LEGGE-6), Ctrl+F2 nei menu commuta visual mode (H5).
+  - `soundrts/clientmain.py`: voce dinamica "Visivo ON/OFF" nel menu Opzioni.
+  - `soundrts/msgparts.py`: alias `VISUAL_MODE_ON`/`VISUAL_MODE_OFF` = `DISPLAY_ON`/`DISPLAY_OFF`.
+- [x] FASE 4 — Test: `test_visual_ui.py` 9/9 passed (LEGGE 1-8 coperte).
+- [x] FASE 5 — Suite globale: nessuna regressione (baseline 178 → 187 passed; +9 nuovi; failed e errors invariati a 45+9).
+- [x] FASE 6 — Documentazione: CHANGELOG.md aggiornato sotto `[Unreleased]`, questa sezione todo.
+
+### LEGGI rispettate
+
+- LEGGE-1 (gating): tutti i metodi visivi controllano `if not config.visual_mode: return`.
+- LEGGE-2 (audio invariante): render in `try/except` silenzioso; mai influenza voice/sounds.
+- LEGGE-3 (stack mirror): `ScreenManager` rispecchia, non guida.
+- LEGGE-4 (`_label_to_str` mai solleva): `except Exception` su iter + ogni token.
+- LEGGE-5 (backward compat): default OFF, suite zero regressioni.
+- LEGGE-6 (mouse additivo): tastiera è primaria, mouse aggiunto.
+- LEGGE-7 (update in-place): `update_current` modifica top dello stack senza push.
+- LEGGE-8 (SystemExit safe): push/pop in `try/finally`, `cleanup()` svuota.
+
+### Note runtime
+
+- Cambio infrastrutturale `pytest.ini`: aggiunto ignore per `DeprecationWarning: Use setlocale(...)` (preesistente in `lib/resource.py:83`). Senza questo fix, la collection era bloccata.
+- Suite globale presenta 45 failure preesistenti (warning trattati come error: `ResourceWarning` da `config.save`, `PytestUnraisableException`, ecc.). Non in scope Round 8 — da affrontare in un round dedicato pulizia warning.
+
+### Da verificare a runtime
+
+- [ ] Attivare `Ctrl+F2` da menu principale: verifica annuncio TTS "Display ON" e apertura modalità visiva fullscreen.
+- [ ] Navigazione menu con frecce + Enter mentre visual_mode=1: confermare highlight selezione e annunci TTS sincronizzati.
+- [ ] Mouse hover su voce: cambio selezione + TTS; click: conferma. Tastiera ancora primaria.
+- [ ] `Ctrl+F2` di nuovo: ritorno a modalità audio-only (window legacy).
+- [ ] Riavvio gioco: `visual_mode` persistito in `SoundRTS.ini`.
+- [ ] In gameplay (partita attiva), `Ctrl+F2` continua a commutare fullscreen del gioco (NON visual mode).
+

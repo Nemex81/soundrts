@@ -40,6 +40,9 @@ _options = [
         "menu_changed,unit_added,unit_complete,scout_info,food,resources,resource_exhausted",
     ),
     ("general", "debug_mode", 0),
+    # visual_mode: 0=OFF (audio-only legacy), 1=ON (fullscreen visual UI for menus).
+    # int 0/1 per compatibilita ConfigParser (Round 8).
+    ("general", "visual_mode", 0),
     ("server", "timeout", 60.0),
     # fpct must be as small as possible while respecting test_fpct()
     ("server", "fpct_coef", 2.3),

@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+<!-- Visual Mode Round 8 — 2026-05-25 -->
+
+### Added
+
+- [VIS-MODE-1] Nuova opzione `config.visual_mode` (int 0/1, default 0): commuta la UI dei menu da audio-only a fullscreen visuale. Persiste in `SoundRTS.ini` sezione `[general]`. Quando 0, comportamento legacy invariato (audio-first, NVDA-compatibile).
+- [VIS-MODE-1] `soundrts/clientvisualui.py`: `ScreenManager` singleton con stack `push/pop/update_current/cleanup` e hit-test mouse (`handle_mouse_motion`, `handle_mouse_click`). Tutti i metodi gated da `config.visual_mode` (no-op se OFF).
+- [VIS-MODE-1] `soundrts/clientmenuscreen.py`: `MenuScreen` (header/body/footer, finestra scroll auto-centrata, item rect per click), `DialogScreen` (pannello centrato con scrim per input). Helper `_label_to_str` mai solleva eccezioni (token sound/str/None tutti gestiti).
+- [VIS-MODE-1] `clientmedia.toggle_visual_mode()` e `get_visual_mode()`: commutazione runtime con salvataggio config + annuncio TTS (`DISPLAY_ON`/`DISPLAY_OFF`).
+- [VIS-MODE-1] Voce dinamica "Visivo ON/OFF" nel menu Opzioni (`clientmain.options_menu`). Scorciatoia `Ctrl+F2` nei menu commuta visual mode (in gameplay continua a commutare fullscreen del gioco, invariato).
+- [VIS-MODE-1] Supporto mouse additivo nei menu (LEGGE-6): movimento sposta selezione + TTS, click conferma. Tastiera resta primaria e invariata.
+- [VIS-MODE-1] `msgparts.VISUAL_MODE_ON`/`VISUAL_MODE_OFF` come alias di `DISPLAY_ON`/`DISPLAY_OFF`.
+- [VIS-MODE-1] `lib/screen.set_screen`: quando `fullscreen=False` e `config.visual_mode=1`, usa `FULLSCREEN` desktop per i menu. Path gameplay (`fullscreen=True`) invariato.
+
+### Tests
+
+- `test_visual_ui.py`: 9 nuovi test (LEGGE 1-8). Gating off-state, label safe, stack push/pop, update in-place, mouse hit-test, cleanup, toggle.
+- Suite globale: nessuna regressione rispetto alla baseline (45 failed / 178 passed / 9 errors pre-Round8 → 45 failed / 187 passed / 9 errors post-Round8: +9 nuovi visual UI).
+
+### Fixed
+
+- `pytest.ini`: aggiunto `ignore` per `DeprecationWarning` di `locale.getdefaultlocale()` (preesistente in `lib/resource.py:83`, sbloccava la collection dei test).
+
 ## [1.4.0] — 2026-05-24
 
 > Ciclo UI visuale Round 1→7 completato. Confermato funzionante su partita reale (runtime test).
