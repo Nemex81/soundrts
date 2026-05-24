@@ -198,7 +198,7 @@ Stato: COMPLETATO
 
 - [x] MAP-VIEWPORT-1: `_hud_right_width()=303` in `GridView` e `map_w = max(sw//2, sw-303)` in `_update_coefs()`.
       La mappa non si estende piu sotto la colonna HUD destra.
-- [x] MAP-SCALE-1: `UNIT_SCALE=1.5` in `clientgamegridview.py`.
+- [x] MAP-SCALE-1: `UNIT_SCALE=1.5` implementato in Round 7, poi aggiornato a `2.0` in Round 7b.
       `R_vis = max(R_MIN, int(R * UNIT_SCALE))`; i draw usano `R_vis`, mentre `R2` usa `R` per mantenere invariata la hit-detection.
 - [x] `display_attack`: aggiornato a `R_vis` per il cerchio visuale del bersaglio.
 - [x] Test: 105 passed, 0 failed (+16 nuovi/aggiornati Round 7).
@@ -207,14 +207,15 @@ Stato: COMPLETATO
 
 - `map_w = max(320, 337) = 337px`
 - `sq = min(33, 60) = 33px` (da 60px con mappa full-screen 10x8)
-- `R_vis` con `R=4`: `max(4, int(4*1.5)) = max(4, 6) = 6px`
+- `R_vis` con `R=4`: `max(4, int(4*2.0)) = max(4, 8) = 8px` (Round 7b)
 - Mappa non sovrapposta a HUD destra: OK
 
 ### Da verificare a runtime
 
-- [ ] Confermare posizione mappa su monitor reale.
-- [ ] Confermare dimensione unita con `UNIT_SCALE=1.5`.
-- [ ] Valutare `UNIT_SCALE=2.0` se le unita risultano ancora piccole.
+- [x] Confermare posizione mappa su monitor reale.
+- [x] Confermare dimensione unita con `UNIT_SCALE=2.0` (confermato in Round 7b).
+- [x] `UNIT_SCALE=2.0` confermato post runtime test (Round 7b, 2026-05-24).
+- [x] Round 7b: `UNIT_SCALE` 1.5→2.0 in `clientgamegridview.py` (2026-05-24).
 
 ## HUD UI Fix Round 3 + i18n IT — 2026-05-24
 

@@ -2,12 +2,16 @@
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-05-24
+
+> Ciclo UI visuale Round 1→7 completato. Confermato funzionante su partita reale (runtime test).
+
 <!-- MAP Layout Round 7 — 2026-05-24 -->
 
 ### Changed
 
 - [MAP-VIEWPORT-1] `GridView._update_coefs()`: la mappa usa `map_w = max(sw//2, sw-303)` invece della larghezza schermo intera. La colonna HUD destra da 295px piu margine non viene piu coperta dalla mappa.
-- [MAP-SCALE-1] `UNIT_SCALE=1.5`: le unita sono disegnate con `R_vis = max(R_MIN, int(R * 1.5))`. La hit-detection usa ancora `R` (`R2 = R*R` invariato).
+- [MAP-SCALE-1] `UNIT_SCALE=2.0` (R7b): le unita sono disegnate con `R_vis = max(R_MIN, int(R * 2.0))`. La hit-detection usa ancora `R` (`R2 = R*R` invariato).
 - [MAP-SCALE-1] `display_attack()` aggiornato con `R_vis` per il raggio visuale del bersaglio.
 
 ### Added
@@ -16,7 +20,7 @@
 
 ### Tests
 
-- `test_hud_layout.py`: 105 passed, 0 failed (+16 Round 7 tests/updates).
+- `test_hud_layout.py`: 105 passed, 0 failed (+16 Round 7 tests/updates; R7b: UNIT_SCALE 1.5→2.0).
 
 <!-- UI Fix Round 6 — 2026-05-24 -->
 

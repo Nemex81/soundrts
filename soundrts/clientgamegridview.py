@@ -13,7 +13,7 @@ from .worldentity import COLLISION_RADIUS
 # in style.txt. Improves visual differentiation for sighted players without
 # touching the audio-only mode (Legge IA #8).
 R_MIN = 4  # minimum unit circle radius in pixels (MAP-1)
-UNIT_SCALE = 1.5  # visual multiplier for unit radius (MAP-SCALE-1, R7)
+UNIT_SCALE = 2.0  # visual multiplier for unit radius (MAP-SCALE-1, R7b)
 
 _AUTO_TERRAIN_FALLBACK = {
     "_meadows": (35, 80, 35),

@@ -401,15 +401,15 @@ Nota: a 640x480, 800x600 e 1024x768 la cella si riduce per liberare la colonna H
 
 ### MAP-SCALE-1: scala visiva unita
 
-`UNIT_SCALE = 1.5`.
-`R_vis = max(4, int(R * 1.5))`.
+`UNIT_SCALE = 2.0` (aggiornato in Round 7b dopo conferma runtime test).
+`R_vis = max(4, int(R * 2.0))`.
 
 | R fisica | R_vis display | Marker | HP_W |
 |----------|---------------|--------|------|
-| 4        | 6             | 3      | 4    |
-| 6        | 9             | 4      | 7    |
-| 8        | 12            | 6      | 10   |
-| 10       | 15            | 7      | 13   |
+| 4        | 8             | 4      | 6    |
+| 6        | 12            | 6      | 10   |
+| 8        | 16            | 8      | 14   |
+| 10       | 20            | 10     | 18   |
 
 ### Hit-test e zoom
 

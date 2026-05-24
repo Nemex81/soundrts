@@ -458,7 +458,7 @@ def test_unit_scale_applied(R):
     R_vis = max(R_MIN, int(R * UNIT_SCALE))
     assert R_vis >= R_MIN
     assert R_vis >= R
-    assert R_vis == max(4, int(R * 1.5))
+    assert R_vis == max(4, int(R * 2.0))
 
 
 def test_r2_not_scaled_by_unit_scale(monkeypatch):
