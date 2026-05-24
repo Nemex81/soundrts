@@ -67,7 +67,8 @@ class CutSceneChapter(Chapter):
         self._load()
 
     def _load(self):
-        s = self.campaign.resources.open_text(self.path).read()
+        with self.campaign.resources.open_text(self.path) as _f:
+            s = _f.read()
         # header
         m = re.search("(?m)^title[ \t]+([0-9 ]+)$", s)
         if m:
@@ -105,7 +106,8 @@ class Campaign:
 
     def _set_title_and_mods(self):
         if self.resources.isfile("campaign.txt"):
-            s = self.resources.open_text("campaign.txt").read()
+            with self.resources.open_text("campaign.txt") as _f:
+                s = _f.read()
         else:
             s = ""
         m = re.search("(?m)^title[ \t]+([A-Za-z0-9 ]+)$", s)
@@ -123,7 +125,8 @@ class Campaign:
 
     def _set_mods_from_mods_txt(self):
         if self.resources.isfile("mods.txt"):
-            self.mods = self.resources.open_text("mods.txt").read()
+            with self.resources.open_text("mods.txt") as _f:
+                self.mods = _f.read()
 
     def _set_chapters(self):
         self.chapters = []
@@ -137,8 +140,8 @@ class Campaign:
             if self._is_a_cutscene(filename):
                 c = CutSceneChapter(self, number, filename)
             else:
-                file = self.resources.open_binary(filename)
-                map_ = Map.load(file, filename)
+                with self.resources.open_binary(filename) as _file:
+                    map_ = Map.load(_file, filename)
                 map_.name = self.name + "/" + str(number)
                 c = MissionChapter(self, number, map_)
             self.chapters.append(c)

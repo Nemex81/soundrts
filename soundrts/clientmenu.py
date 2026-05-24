@@ -137,7 +137,8 @@ class Menu:
         self.remember = remember
         if self.remember is not None:
             try:
-                self._remembered_choice = open(_remember_path(remember)).read()
+                with open(_remember_path(remember)) as _f:
+                    self._remembered_choice = _f.read()
             except:
                 self._remembered_choice = ""
 
@@ -295,7 +296,8 @@ class Menu:
         if cmd(*args) == CLOSE_MENU:
             self.end_loop = True
         if self.remember is not None and action is not None:
-            open(_remember_path(self.remember), "w").write(repr(label))
+            with open(_remember_path(self.remember), "w") as _f:
+                _f.write(repr(label))
             # default_choice_index might be useful soon
             # for example: ServerMenu._get_creation_submenu()
             self.default_choice_index = self.choice_index
@@ -320,7 +322,8 @@ class Menu:
                     if new_idx is not None and 0 <= new_idx < len(self.choices):
                         self.choice_index = new_idx
                         self._say_choice()
-                elif e.type == MOUSEBUTTONDOWN:
+                elif e.type == MOUSEBUTTONDOWN and e.button == 1:
+                    # B1.4: solo button=1 (click sinistro) conferma la scelta.
                     clicked = cur.handle_mouse_click(e.pos)
                     if clicked is not None and 0 <= clicked < len(self.choices):
                         self.choice_index = clicked

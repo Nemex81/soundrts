@@ -376,3 +376,75 @@ Decisione release/tag (LEGGE-7):
       Motivazione: fix principalmente tecnico/qualita interna, con residuo suite non nullo.
       Rilascio rinviato a quando il blocco residuo sara stabilizzato.
 
+## Round 10 — Residuo suite + Audit Visual UI (2026-05-25)
+
+Stato globale: **COMPLETATO**
+
+Obiettivi:
+
+- A) Eliminare residuo suite 3 failed / 2 errors: COMPLETATO
+- B) Audit sistema Visual UI (Round 8+9): COMPLETATO
+
+Risultato suite finale Round 10: **244 passed / 0 failed / 0 errors**
+
+### Obiettivo A: Residuo suite
+
+Classificazione problemi riscontrati:
+
+- CATEGORIA-2 (ResourceWarning tracciati come errori via `filterwarnings = error`):
+  5 handle non chiusi in `servermain.py`, `metaserver.py`, `campaign.py` (x4),
+  `mapfile.py`, `lib/package.py` + 4 nel codice test in `test_config.py`.
+- CATEGORIA-3 (fixture di test mancanti):
+  `res2/mods/mod2/` e `res2/mods/sound1/` non esistevano come cartelle reali
+  (solo in `res2.zip`), causando fallimento di `test_subpackage_dirnames` e `test_update`.
+
+File modificati (A):
+
+- `soundrts/servermain.py`
+- `soundrts/metaserver.py`
+- `soundrts/campaign.py`
+- `soundrts/mapfile.py`
+- `soundrts/lib/package.py`
+- `soundrts/tests/test_config.py`
+
+File creati (A):
+
+- `soundrts/tests/res2/mods/mod2/.gitkeep`
+- `soundrts/tests/res2/mods/sound1/.gitkeep`
+
+### Obiettivo B: Audit Visual UI
+
+Punti checklist B1 verificati: 9
+
+Problemi rilevati:
+
+- B1.4 GRAVITÀ MEDIA: `MOUSEBUTTONDOWN` in `Menu._try_to_get_choice()` non filtrava
+  per `e.button == 1`. Click destro/scroll potevano confermare una scelta.
+  **CORRETTO**: aggiunto `and e.button == 1`.
+- B1.x GRAVITÀ BASSA: 2 `open()` bare nel meccanismo `remember` di `clientmenu.py`.
+  **CORRETTO**: context manager applicati (linee ~140 e ~298).
+- B1.6 GRAVITÀ BASSA: Nessun handler `VIDEORESIZE` (fullscreen desktop). **Rimandato Round 11.**
+
+File modificati (B):
+
+- `soundrts/clientmenu.py`: fix button filter + 2 open() context manager
+
+Test aggiunti (B):
+
+- `test_mouse_button_right_click_ignored` in `test_visual_ui.py`
+  (12 test totali, tutti passati)
+
+Decisione release/tag (LEGGE-7):
+
+- Suite finale: 244 passed / 0 failed / 0 errors — condizioni LEGGE-7 soddisfatte.
+- NO bump di versione autonomo in questo round.
+  Motivazione: `version.py` ha `"1.3.8.1"` non sincronizzato con CHANGELOG interno (1.4.0).
+  Il bump versione va deciso dall'operatore umano con allineamento esplicito.
+  Raccomandato: aggiornare `version.py` a `"1.3.9"` o `"1.4.1"` prima del prossimo tag.
+
+### Punti aperti per Round 11
+
+- [ ] VIDEORESIZE handling (GRAVITÀ BASSA): aggiungere handler se il gioco esce da fullscreen
+  desktop in modalita visual_mode=1. Probabilmente no-op (SDL gestisce internamente).
+- [ ] Allineamento versione: sincronizzare `soundrts/version.py` con CHANGELOG.
+

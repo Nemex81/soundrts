@@ -17,8 +17,30 @@
 
 ### Tests
 
-- `test_visual_ui.py`: 11 test (9 Round 8 + 2 Round 9 audit). Coperti: gating off-state, label safe, stack push/pop, update in-place, mouse hit-test, cleanup, toggle, sync `Menu.update_menu()` e `DialogScreen.update_input()`.
-- Suite globale Round 9: 238 passed / 3 failed / 2 errors.
+- `test_visual_ui.py`: 12 test (9 Round 8 + 2 Round 9 audit + 1 Round 10).
+  Aggiunto `test_mouse_button_right_click_ignored` (B1.4): verifica che solo button=1 confermi la scelta.
+- Suite globale Round 10: **244 passed / 0 failed / 0 errors**.
+
+### Fixed (Round 10 — Obiettivo A: residuo suite)
+
+- [R10-A] Rimossi `ResourceWarning` da file handle non chiusi (Round 9 residuo):
+  - `soundrts/servermain.py`: `WHATISMYIP_URL` usa context manager.
+  - `soundrts/metaserver.py`: `MAIN_METASERVER_URL` e `_default_servers()` usano context manager.
+  - `soundrts/campaign.py`: 4 handle non chiusi in `CutSceneChapter._load()`,
+    `Campaign._set_title_and_mods()`, `Campaign._set_mods_from_mods_txt()`, `Campaign._set_chapters()`.
+  - `soundrts/mapfile.py`: `_load_from_package()` usa context manager.
+  - `soundrts/lib/package.py`: `PackageStack.mod()` usa context manager.
+  - `soundrts/tests/test_config.py`: 4 `open()` bare nel test sostituiti con `with`.
+- [R10-A] Creati fixture dir mancanti per test package/resource:
+  - `soundrts/tests/res2/mods/mod2/.gitkeep`
+  - `soundrts/tests/res2/mods/sound1/.gitkeep`
+  - Questo risolveva `test_subpackage_dirnames` e `test_update` (FAILED in Round 9).
+
+### Changed (Round 10 — Obiettivo B: audit Visual UI)
+
+- [R10-B1] `soundrts/clientmenu.py`: `_try_to_get_choice()` filtra `MOUSEBUTTONDOWN` a `button == 1`.
+  Click destro (button 2/3) e scroll (button 4/5) non confermano piu la selezione del menu (GRAVITÀ MEDIA).
+- [R10-B2] `soundrts/clientmenu.py`: `Menu.__init__` e `_execute_choice()` ora usano context manager per `open()` nel meccanismo `remember` (ResourceWarning prevenuto, GRAVITÀ BASSA).
 
 ### Fixed
 

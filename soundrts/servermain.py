@@ -26,7 +26,8 @@ from .version import SERVER_COMPATIBILITY
 REGISTER_INTERVAL = 10 * 60  # register server every 10 minutes
 REGISTER_URL = MAIN_METASERVER_URL + "servers_register.php"
 UNREGISTER_URL = MAIN_METASERVER_URL + "servers_unregister.php"
-WHATISMYIP_URL = open("cfg/whatismyip.txt").read().strip()
+with open("cfg/whatismyip.txt") as _f:
+    WHATISMYIP_URL = _f.read().strip()
 
 
 @lru_cache()

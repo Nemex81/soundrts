@@ -223,3 +223,46 @@ def test_dialog_screen_update_input(default, visual_on):
     assert d.current_input == "xyz"
     d.update_input("")
     assert d.current_input == ""
+
+
+def test_mouse_button_right_click_ignored(default, visual_on, monkeypatch):
+    """B1.4: MOUSEBUTTONDOWN con button != 1 non conferma la scelta.
+
+    Solo il click sinistro (button=1) deve attivare _confirm_choice.
+    Click destro (button=2,3) e scroll (4,5) devono essere ignorati.
+    """
+    import soundrts.clientmenu as cmenu
+    from soundrts.clientmenu import Menu
+
+    choices = [([1], lambda: None), ([2], lambda: None)]
+    m = Menu(["title"], choices)
+    m.choice_index = 0
+
+    confirm_calls = []
+    monkeypatch.setattr(m, "_confirm_choice", lambda: confirm_calls.append(1))
+    # blocca voice.update usato in _try_to_get_choice
+    monkeypatch.setattr(cmenu.voice, "update", lambda: None)
+
+    class FakeCurrent:
+        def handle_mouse_click(self, pos):
+            return 0  # indice 0 sempre in area
+
+    class FakeSM:
+        current = FakeCurrent()
+
+    monkeypatch.setattr(cmenu, "get_screen_manager", lambda: FakeSM())
+
+    # button=2 (click destro): nessuna conferma
+    ev_right = pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(10, 10), button=2)
+    m._try_to_get_choice(ev_right)
+    assert len(confirm_calls) == 0, "click destro non deve confermare"
+
+    # button=4 (scroll): nessuna conferma
+    ev_scroll = pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(10, 10), button=4)
+    m._try_to_get_choice(ev_scroll)
+    assert len(confirm_calls) == 0, "scroll non deve confermare"
+
+    # button=1 (click sinistro): conferma
+    ev_left = pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(10, 10), button=1)
+    m._try_to_get_choice(ev_left)
+    assert len(confirm_calls) == 1, "click sinistro deve confermare"

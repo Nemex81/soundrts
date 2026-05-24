@@ -47,7 +47,8 @@ class Map:
 
     def _load_from_package(self, package):
         self.resources = resource_layer(package, self.name)
-        self._load_from_text_file(self.resources.open_text("map.txt"))
+        with self.resources.open_text("map.txt") as f:
+            self._load_from_text_file(f)
 
     def _init_from_path(self, path):
         self.name = _name_from_path(path)

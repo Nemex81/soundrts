@@ -177,7 +177,8 @@ class PackageStack(list):
             mod = resource_layer(package.subpackage(subdir), name)
             if mod:
                 if mod.isfile("mod.txt"):
-                    s = mod.open_text("mod.txt").read()
+                    with mod.open_text("mod.txt") as _f:
+                        s = _f.read()
                     if s.startswith("mods "):
                         mod.mods = s.split(" ", 1)[1].split(",")
                 return mod
