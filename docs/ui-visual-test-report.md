@@ -1,0 +1,138 @@
+# UI Visual Test Report — HudPanel Layout
+
+## Data: 2026-05-24
+
+## Risoluzioni testate: 400x300, 420x260, 640x480, 800x600, 1024x768, 1280x720, 1366x768, 1920x1080
+
+## Layout analizzato
+
+```text
+┌─────────────────────────────────────────────┐
+│ PANNELLO: RES                              │
+│ X: margin                                  │
+│ Y: margin                                  │
+│ W: 180                                     │
+│ H: 30 + len(resources) * 15                │
+│ Max righe: len(resources) + 1 food line    │
+│ Line height: 15 px                         │
+│ Anchor: top-left                           │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PANNELLO: TIME                             │
+│ X: (width - margin) - 175                  │
+│ Y: margin                                  │
+│ W: 175                                     │
+│ H: 60                                      │
+│ Max righe: 2                               │
+│ Line height: 15 px                         │
+│ Anchor: top-right                          │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PANNELLO: EVENTS                           │
+│ X: (width - margin) - 260                  │
+│ Y: margin + 70                             │
+│ W: 260                                     │
+│ H: 30 + max(1, len(events)) * 15           │
+│ Max righe: min(len(events), 8)             │
+│ Line height: 15 px                         │
+│ Anchor: top-right                          │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PANNELLO: PLAYER                           │
+│ X: margin                                  │
+│ Y: group_top - 30 - 4                      │
+│ W: 295                                     │
+│ H: 30                                      │
+│ Max righe: 1                               │
+│ Line height: 15 px                         │
+│ Anchor: bottom-left                        │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PANNELLO: GROUP                            │
+│ X: margin                                  │
+│ Y: (height - margin) - group_height        │
+│ W: 295                                     │
+│ H: 30 + max(1, len(units)) * 15            │
+│ Max righe: min(len(units), 8)              │
+│ Line height: 15 px                         │
+│ Anchor: bottom-left                        │
+└─────────────────────────────────────────────┘
+```
+
+Relazioni di dipendenza tra pannelli:
+
+- PLAYER dipende da GROUP: si posiziona a 4 px sopra il bordo superiore di GROUP.
+- GROUP dipende da height e dal numero di unità: più unità, più sale verso l'alto.
+- EVENTS dipende da width e dal numero di eventi: resta ancorato a destra ma cresce in altezza verso il basso.
+- TIME dipende da width: resta ancorato in alto a destra.
+- RES non dipende dalla risoluzione per dimensione, solo dal margine e dal numero di risorse.
+
+⚠️ [ASSUNZIONE] Per T5 l'altezza header stimata è 20 px, coerente con la misura reale del font header (19 px).
+⚠️ [ASSUNZIONE] Lo snapshot usato nel test rappresenta il caso realistico richiesto: 3 risorse, 2 unità, 5 eventi, player con nome e razza.
+
+## Risultati per risoluzione
+
+| Risoluzione | T1 | T2 | T3 | T4 | T5 | Esito |
+| ----------- | -- | -- | -- | -- | -- | ----- |
+| 400x300 | ✅ | n/a | n/a | n/a | n/a | SKIP ✅ |
+| 420x260 | n/a | ❌ | ✅ | ✅ | ❌ | FAIL |
+| 640x480 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+| 800x600 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+| 1024x768 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+| 1280x720 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+| 1366x768 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+| 1920x1080 | n/a | ✅ | ✅ | ✅ | ❌ | FAIL |
+
+Note per risoluzione:
+
+- 400x300: display() ritorna prima di _draw_snapshot() per width < 420. Comportamento corretto sotto soglia.
+- 420x260: overlap tra RES ed EVENTS. Rect misurati: RES = (8, 8, 180, 75), EVENTS = (152, 78, 260, 105).
+- 640x480 e superiori: nessuna collisione tra pannelli e nessun overflow del contenitore HUD; resta pero insufficiente l'altezza del pannello RES.
+
+## Misure font reali
+
+Output misurato con pygame.font.SysFont:
+
+```text
+body: height=14px  sample_width=200px  sample_height=14px
+header: height=19px  sample_width=271px  sample_height=19px
+small: height=13px  sample_width=185px  sample_height=13px
+```
+
+Confronto con le assunzioni del codice:
+
+- line_height = 15 px: sufficiente per il font body da 14 px.
+- header stimato ~20 px: confermato dal valore reale 19 px.
+- 180 px RES e 175 px TIME non contengono una riga body lunga circa 40 caratteri senza troncamento.
+- 260 px EVENTS e 295 px GROUP/PLAYER sono compatibili con la stringa campione misurata.
+
+## Problemi rilevati
+
+- [CRITICO] [420x260] [RES/EVENTS]: sovrapposizione tra pannelli in alto. Il layout fisso non rispetta la soglia minima dichiarata di 420 px.
+  → Correzione proposta: rendere EVENTS responsive in larghezza a risoluzioni strette, oppure alzare min_width ad almeno 456 px se le larghezze fisse restano invariate.
+- [MEDIO] [420x260, 640x480, 800x600, 1024x768, 1280x720, 1366x768, 1920x1080] [RES]: altezza pannello insufficiente per header + 3 righe risorsa + riga food. Stima misurata: 80 px necessari contro 75 px disponibili.
+  → Correzione proposta: includere la riga food nel calcolo di res_rect.height, ad esempio 30 + (len(resources) + 1) * line_height.
+- [BASSO] [Tutte le risoluzioni funzionali] [RES/TIME]: la larghezza body misurata per una riga lunga (~200 px) supera i pannelli da 180 px e 175 px.
+  → Correzione proposta: usare limiti testo basati su misura font reale, o ridurre il budget testuale per i pannelli stretti.
+
+## Raccomandazioni
+
+1. Correggere per primo il conflitto 420x260, scegliendo tra layout responsive o aumento esplicito della soglia minima supportata.
+2. Correggere poi la formula di altezza del pannello RES, che oggi omette la riga food e produce clipping stimato a tutte le risoluzioni operative.
+3. Introdurre in HudPanel un calcolo basato su metriche font reali per le larghezze testo, invece di affidarsi solo a budget per numero di caratteri.
+4. Mantenere il nuovo test_hud_layout.py come guardia regressiva dopo il fix del layout.
+
+## Vincoli rispettati
+
+- [x] Legge IA #8: modalità audio non impattata
+- [x] Nessun file sorgente esistente modificato
+- [x] Tutti i problemi emersi dai test e dalle misure font sono documentati
+
+## Esito validazione artefatti
+
+- test_hud_layout.py: VALIDATO sintatticamente con py_compile; pytest mirato eseguito con 21 test PASS e 8 FAIL diagnostici reali.
+- ui-visual-test-report.md: contenuto allineato ai risultati T1-T5 e alle misure font raccolte.
