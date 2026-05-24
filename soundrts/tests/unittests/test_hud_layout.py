@@ -290,3 +290,76 @@ def test_infobar_subtitle_rendering_path_confirmed():
         assert y + 24 == h - 4, f"bottom edge mismatch at {w}x{h}"
         # x must be in the right half for typical subtitle lengths
         assert x > w // 2, f"x={x} not in right half at {w}x{h}"
+
+
+# ────────────────────────────────────────────────────────────────
+# Round 5 — PLAYER/GROUP relocated to bottom-right under EVENTS
+# ────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_player_panel_is_right_anchored(monkeypatch, resolution):
+    """T_PLAYER_RIGHT_ANCHORED: PLAYER docked to the right column."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    width, _ = resolution
+    player_rect = rects.get("player")
+    assert player_rect is not None
+    assert player_rect.right == width - panel.margin
+    assert player_rect.left > width // 2
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_group_panel_is_right_anchored(monkeypatch, resolution):
+    """T_GROUP_RIGHT_ANCHORED: GROUP docked to the right column."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    width, _ = resolution
+    group_rect = rects.get("group")
+    assert group_rect is not None
+    assert group_rect.right == width - panel.margin
+    assert group_rect.left > width // 2
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_group_panel_does_not_overflow(monkeypatch, resolution):
+    """T_GROUP_NO_OVERFLOW: GROUP bottom stays inside the screen."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    _, height = resolution
+    assert rects["group"].bottom <= height - panel.margin
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_player_below_events(monkeypatch, resolution):
+    """T_PLAYER_BELOW_EVENTS: PLAYER stacked directly under EVENTS."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    assert rects["player"].top >= rects["events"].bottom
+    assert rects["player"].top - rects["events"].bottom <= panel.margin + 1
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_adaptive_units_cap(monkeypatch, resolution):
+    """T_ADAPTIVE_UNITS: with worst-case unit count, GROUP never overflows."""
+    surface = pygame.Surface(resolution)
+    monkeypatch.setattr(pygame.display, "get_surface", lambda: surface)
+    monkeypatch.setattr(sys, "argv", [sys.argv[0]])
+    monkeypatch.setattr(locale, "getdefaultlocale", lambda: ("en_US", "UTF-8"))
+
+    from soundrts.lib import screen as screen_module
+
+    monkeypatch.setattr(screen_module, "screen_render", lambda *args, **kwargs: None)
+    monkeypatch.setattr(screen_module, "screen_render_header", lambda *args, **kwargs: None)
+
+    panel = HudPanel(_make_interface())
+    base = _make_snapshot()
+    crowded = HudSnapshot(
+        resources=base.resources,
+        food=base.food,
+        time=base.time,
+        speed=base.speed,
+        units=[HudUnitSnapshot("unit #%d" % i, 10, 10, "idle") for i in range(panel.max_units)],
+        events=base.events,
+        player=base.player,
+    )
+    panel._draw_snapshot(surface, crowded)
+    _, height = resolution
+    assert panel._panel_rects["group"].bottom <= height - panel.margin
+    assert panel._panel_rects["player"].bottom <= panel._panel_rects["group"].top

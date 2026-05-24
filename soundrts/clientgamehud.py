@@ -157,31 +157,37 @@ class HudPanel:
                 )
                 y += self.line_height
 
-        # --- PLAYER panel (bottom-left, above GROUP) ---
+        # --- PLAYER panel (bottom-right, below EVENTS) — Round 5 ---
         group_width = 295
-        unit_count = max(1, len(snapshot.units))
-        group_height = self.panel_header_height + unit_count * self.line_height
-        group_top = bottom - group_height
-        player_top = group_top - self.player_height - 4
-        player_rect = (left, player_top, group_width, self.player_height)
+        event_bottom = event_top + event_height
+        player_top = event_bottom + self.margin
+        player_left = right - group_width
+        player_rect = (player_left, player_top, group_width, self.player_height)
         self._draw_panel(screen, player_rect)
         self._panel_rects["player"] = pygame.Rect(*player_rect)
-        screen_render_header(self._hud_text("panel_player", "PLAYER"), (left + 6, player_top + 4), color=(200, 230, 255))
-        screen_render(snapshot.player, (left + 125, player_top + 8), color=(220, 235, 245))
+        screen_render_header(self._hud_text("panel_player", "PLAYER"), (player_left + 6, player_top + 4), color=(200, 230, 255))
+        screen_render(snapshot.player, (player_left + 125, player_top + 8), color=(220, 235, 245))
 
-        # --- GROUP panel (bottom-left) ---
-        group_rect = (left, group_top, group_width, group_height)
+        # --- GROUP panel (bottom-right, below PLAYER) — Round 5 ---
+        group_top = player_top + self.player_height + 4
+        # Adaptive strategy A: cap visible units to available vertical space
+        available_h = max(0, bottom - group_top - self.panel_header_height)
+        max_units_fit = max(1, available_h // self.line_height)
+        units_to_show = max(1, min(self.max_units, int(max_units_fit)))
+        unit_count = max(1, min(max(1, len(snapshot.units)), units_to_show))
+        group_height = self.panel_header_height + unit_count * self.line_height
+        group_rect = (player_left, group_top, group_width, group_height)
         self._draw_panel(screen, group_rect)
         self._panel_rects["group"] = pygame.Rect(*group_rect)
-        screen_render_header(self._hud_text("panel_group", "GROUP"), (left + 6, group_top + 4), color=(180, 220, 255))
+        screen_render_header(self._hud_text("panel_group", "GROUP"), (player_left + 6, group_top + 4), color=(180, 220, 255))
         y = group_top + self.panel_header_height
         units = snapshot.units or [HudUnitSnapshot(self._hud_text("no_unit", "No unit selected"), None, None, "")]
-        for unit in units[: self.max_units]:
+        for unit in units[:units_to_show]:
             hp = ""
             if unit.hit_points is not None and unit.max_hit_points is not None:
                 hp = " {}/{} hp".format(unit.hit_points, unit.max_hit_points)
             line = self._fit("{}{} {}".format(unit.label, hp, unit.status).strip(), 40)
-            screen_render(line, (left + 6, y), color=(220, 235, 245))
+            screen_render(line, (player_left + 6, y), color=(220, 235, 245))
             y += self.line_height
 
     def _event_style(self, severity: str):

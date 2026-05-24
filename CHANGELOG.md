@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+<!-- UI Fix Round 5 — 2026-05-24 -->
+
+### Changed
+
+- [R5] Pannelli PLAYER e GROUP spostati da basso-sinistra a basso-destra, right-anchored sotto EVENTS (`soundrts/clientgamehud.py`). La colonna sinistra è ora libera (solo RES rimane in top-left), restituendo spazio mappa.
+- [R5] Strategia adattiva overflow GROUP: il numero di unità mostrate si adatta dinamicamente allo spazio verticale disponibile (`max_units_fit = available_h // line_height`), evitando che GROUP esca dallo schermo a basse risoluzioni.
+- [R5] `min_height` mantenuto a 360px (minimo teorico ricalcolato 284px, margine confermato).
+
+### Tests
+
+- `test_hud_layout.py`: 68 passed, 0 failed (+5 Round 5 tests parametrizzati su 6 risoluzioni funzionali).
+- Aggiunto `test_player_panel_is_right_anchored` (T_PLAYER_RIGHT_ANCHORED).
+- Aggiunto `test_group_panel_is_right_anchored` (T_GROUP_RIGHT_ANCHORED).
+- Aggiunto `test_group_panel_does_not_overflow` (T_GROUP_NO_OVERFLOW).
+- Aggiunto `test_player_below_events` (T_PLAYER_BELOW_EVENTS).
+- Aggiunto `test_adaptive_units_cap` (T_ADAPTIVE_UNITS, worst-case 8 unità).
+
 <!-- UI Fix Round 4 — 2026-05-24 -->
 
 ### Fixed
