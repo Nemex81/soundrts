@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.4.1] — 2026-05-25
+
+> Ciclo Visual UI menu Round 8→11 stabilizzato, localizzato e con suite verde.
+
 <!-- Visual Mode Round 8 — 2026-05-25 -->
 
 ### Added
@@ -15,11 +19,29 @@
 - [VIS-MODE-1] `msgparts.VISUAL_MODE_ON`/`VISUAL_MODE_OFF` come alias di `DISPLAY_ON`/`DISPLAY_OFF`.
 - [VIS-MODE-1] `lib/screen.set_screen`: quando `fullscreen=False` e `config.visual_mode=1`, usa `FULLSCREEN` desktop per i menu. Path gameplay (`fullscreen=True`) invariato.
 
+### Added (Round 11)
+
+- [R11-A] Aggiunte 2 stringhe Visual UI al sistema di localizzazione `tts.txt`:
+  - `4365` / `msgparts.VISUAL_MENU_HINT`: EN `Arrow keys: navigate. Enter: confirm. Esc: back. Ctrl+F2: visual off`; IT `Frecce: naviga. Invio: conferma. Esc: indietro. Ctrl+F2: visivo off`.
+  - `4366` / `msgparts.VISUAL_DIALOG_HINT`: EN `Enter: confirm. Esc: cancel. Ctrl+F2: visual off`; IT `Invio: conferma. Esc: annulla. Ctrl+F2: visivo off`.
+
+### Fixed (Round 11)
+
+- [R11-A] Rimosse stringhe visibili hardcoded dal Visual UI:
+  - `clientvisualui.py`: i footer menu/dialogo usano ora token `msgparts` localizzati.
+  - `clientmenuscreen.py`: il fallback titolo `Menu` usa `mp.MENU` invece di testo hardcoded.
+- [R11-A] Aggiunto `test_visual_footer_hints_use_localized_msgparts` per garantire che i footer Visual UI passino dalla stessa pipeline di localizzazione audio (`SoundCache.translate_sound_number`).
+
+### Changed (Round 11 — B1.6)
+
+- [R11-B] `VIDEORESIZE`/`WINDOWRESIZED` documentato come non pratico nell'assetto attuale: `visual_mode=1` usa `pygame.FULLSCREEN` e non `RESIZABLE`, quindi il resize utente non e' raggiungibile nel flusso normale. Nessun handler aggiunto.
+
 ### Tests
 
-- `test_visual_ui.py`: 12 test (9 Round 8 + 2 Round 9 audit + 1 Round 10).
+- `test_visual_ui.py`: 13 test (9 Round 8 + 2 Round 9 audit + 1 Round 10 + 1 Round 11).
   Aggiunto `test_mouse_button_right_click_ignored` (B1.4): verifica che solo button=1 confermi la scelta.
-- Suite globale Round 10: **244 passed / 0 failed / 0 errors**.
+  Aggiunto `test_visual_footer_hints_use_localized_msgparts` (Round 11): verifica footer Visual UI localizzati via `msgparts`.
+- Suite globale Round 11: **245 passed / 0 failed / 0 errors**.
 
 ### Fixed (Round 10 — Obiettivo A: residuo suite)
 

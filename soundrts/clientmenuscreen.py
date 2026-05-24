@@ -12,6 +12,7 @@ from typing import Any, List, Optional, Tuple
 import pygame
 
 from . import config
+from . import msgparts as mp
 from . import clientvisualui as vui
 from .lib.screen import get_screen
 from .lib.sound_cache import sounds
@@ -93,7 +94,7 @@ class MenuScreen:
         font_s = vui._safe_font(16, False)
 
         if font_h is not None:
-            title_text = _label_to_str(self.title) or "Menu"
+            title_text = _label_to_str(self.title) or _label_to_str(mp.MENU)
             surf = font_h.render(title_text, True, vui.COLOR_HEADER_FG)
             rect = surf.get_rect(center=(w // 2, vui.HEADER_H // 2))
             screen.blit(surf, rect)
@@ -130,7 +131,7 @@ class MenuScreen:
             y += vui.LINE_H
 
         if font_s is not None:
-            surf = font_s.render(vui.FOOTER_HINT_MENU, True, vui.COLOR_FOOTER_FG)
+            surf = font_s.render(_label_to_str(vui.FOOTER_HINT_MENU), True, vui.COLOR_FOOTER_FG)
             r = surf.get_rect(center=(w // 2, h - vui.FOOTER_H // 2))
             screen.blit(surf, r)
 
@@ -214,7 +215,7 @@ class DialogScreen:
             screen.blit(surf, (input_rect.x + 8, input_rect.y + (input_rect.h - surf.get_height()) // 2))
 
         if font_s is not None:
-            surf = font_s.render(vui.FOOTER_HINT_DIALOG, True, vui.COLOR_FOOTER_FG)
+            surf = font_s.render(_label_to_str(vui.FOOTER_HINT_DIALOG), True, vui.COLOR_FOOTER_FG)
             r = surf.get_rect(center=(w // 2, h - vui.FOOTER_H // 2))
             screen.blit(surf, r)
 

@@ -37,6 +37,8 @@ DISPLAY_OFF = [4207]
 # Round 8: alias semantici per la modalita visiva menu/dialoghi.
 VISUAL_MODE_ON = DISPLAY_ON
 VISUAL_MODE_OFF = DISPLAY_OFF
+VISUAL_MENU_HINT = [4365]
+VISUAL_DIALOG_HINT = [4366]
 DOCUMENTATION = [4337]
 DOT = [5026]
 EAST = [69]

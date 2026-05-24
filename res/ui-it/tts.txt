@@ -518,3 +518,5 @@ controlla la prossima unita' nella locazione
 4362 prati
 4363 foresta
 4364 foresta densa
+4365 Frecce: naviga. Invio: conferma. Esc: indietro. Ctrl+F2: visivo off
+4366 Invio: conferma. Esc: annulla. Ctrl+F2: visivo off

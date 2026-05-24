@@ -92,6 +92,19 @@ def test_label_to_str_empty_label(default):
     assert _label_to_str("") == ""
 
 
+def test_visual_footer_hints_use_localized_msgparts(default):
+    """Round 11: i footer Visual UI usano token msgparts, non testo hardcoded."""
+    from soundrts import clientvisualui as vui
+    from soundrts import msgparts as mp
+    from soundrts.clientmenuscreen import _label_to_str
+    from soundrts.lib.sound_cache import sounds
+
+    assert vui.FOOTER_HINT_MENU == mp.VISUAL_MENU_HINT
+    assert vui.FOOTER_HINT_DIALOG == mp.VISUAL_DIALOG_HINT
+    assert _label_to_str(vui.FOOTER_HINT_MENU) == sounds.translate_sound_number(4365)
+    assert _label_to_str(vui.FOOTER_HINT_DIALOG) == sounds.translate_sound_number(4366)
+
+
 def test_screen_manager_push_pop(default, visual_on, monkeypatch):
     """LEGGE-3: stack mirror push/pop con visual_mode=1, render disabilitato."""
     from soundrts.clientvisualui import get_screen_manager

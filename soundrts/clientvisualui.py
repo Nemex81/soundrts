@@ -15,6 +15,7 @@ from typing import Any, List, Optional
 import pygame
 
 from . import config
+from . import msgparts as mp
 from .lib.screen import get_screen
 
 # Palette layout fissa (header + body + footer)
@@ -42,8 +43,8 @@ COLOR_PANEL_BORDER = (100, 160, 255)
 COLOR_INPUT_BG = (15, 15, 25)
 COLOR_INPUT_FG = (255, 255, 255)
 
-FOOTER_HINT_MENU = "Up/Down Naviga   Enter Conferma   Esc Indietro   Ctrl+F2 Visivo OFF"
-FOOTER_HINT_DIALOG = "Enter Conferma   Esc Annulla   Ctrl+F2 Visivo OFF"
+FOOTER_HINT_MENU = mp.VISUAL_MENU_HINT
+FOOTER_HINT_DIALOG = mp.VISUAL_DIALOG_HINT
 
 
 def _safe_font(size: int, bold: bool = False) -> Optional["pygame.font.Font"]:

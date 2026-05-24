@@ -448,3 +448,74 @@ Decisione release/tag (LEGGE-7):
   desktop in modalita visual_mode=1. Probabilmente no-op (SDL gestisce internamente).
 - [ ] Allineamento versione: sincronizzare `soundrts/version.py` con CHANGELOG.
 
+## Round 11 — Localizzazione Visual UI + B1.6 (2026-05-25)
+
+Stato globale: **COMPLETATO**
+
+Obiettivi:
+
+- A) Localizzazione Visual UI: COMPLETATO
+- B) Residuo B1.6 VIDEORESIZE: DOCUMENTATO IRRIDUCIBILE/NON PRATICO
+
+Risultato suite finale Round 11: **245 passed / 0 failed / 0 errors**
+
+### Localizzazione Visual UI
+
+Meccanismo usato:
+
+- `soundrts/msgparts.py` per costanti token numeriche.
+- `res/ui/tts.txt` come fallback inglese.
+- `res/ui-it/tts.txt` per italiano.
+- `soundrts/lib/sound_cache.py::SoundCache.translate_sound_number()` per risoluzione runtime.
+
+Stringhe hardcoded trovate: 3
+
+- `clientmenuscreen.py`: fallback `"Menu"` → `mp.MENU` (ESISTENTE, 4010)
+- `clientvisualui.py`: footer menu → `mp.VISUAL_MENU_HINT` (NUOVA, 4365)
+- `clientvisualui.py`: footer dialogo → `mp.VISUAL_DIALOG_HINT` (NUOVA, 4366)
+
+Stringhe ESISTENTI riutilizzate: 1
+
+- `mp.MENU` / 4010: `Menu`
+
+Stringhe NUOVE aggiunte: 2
+
+- 4365 / `VISUAL_MENU_HINT`: EN `Arrow keys: navigate. Enter: confirm. Esc: back. Ctrl+F2: visual off`; IT `Frecce: naviga. Invio: conferma. Esc: indietro. Ctrl+F2: visivo off`.
+- 4366 / `VISUAL_DIALOG_HINT`: EN `Enter: confirm. Esc: cancel. Ctrl+F2: visual off`; IT `Invio: conferma. Esc: annulla. Ctrl+F2: visivo off`.
+
+File modificati:
+
+- `soundrts/msgparts.py`
+- `res/ui/tts.txt`
+- `res/ui-it/tts.txt`
+- `soundrts/clientvisualui.py`
+- `soundrts/clientmenuscreen.py`
+- `soundrts/tests/unittests/test_visual_ui.py`
+
+Test aggiunti:
+
+- `test_visual_footer_hints_use_localized_msgparts`
+      (test_visual_ui totale: 13 passed)
+
+### B1.6 VIDEORESIZE
+
+Decisione: **OPZIONE-1 — documentato come non pratico nell'assetto attuale**
+
+Motivazione:
+
+- pygame 2.6.1 espone `VIDEORESIZE` legacy e `WINDOWRESIZED`/`WINDOWSIZECHANGED` moderni.
+- `visual_mode=1` usa `pygame.FULLSCREEN` in `lib/screen.set_screen()`.
+- La Visual UI non usa `pygame.RESIZABLE`, quindi il resize utente non e' raggiungibile nel flusso normale.
+- Nessun handler aggiunto per evitare codice morto/manutenzione non necessaria.
+
+### Release
+
+- CHANGELOG interno aggiornato a `[1.4.1] — 2026-05-25`.
+- `soundrts/version.py` non modificato per istruzione Round 11.
+
+### TODO rimandati a Round 12
+
+- [ ] Se viene introdotta una modalita Visual UI windowed/resizable, aggiungere handler `WINDOWRESIZED`/`WINDOWSIZECHANGED` e test dedicato.
+- [ ] Tradurre `4365` e `4366` anche nei cataloghi non italiani (`res/ui-fr`, `res/ui-es`, `res/ui-de`, ecc.) se si vuole evitare fallback inglese nelle altre lingue.
+- [ ] Allineare `soundrts/version.py` con il CHANGELOG interno 1.4.x quando l'operatore decide il prossimo tag.
+

@@ -515,3 +515,5 @@
 4362 meadows
 4363 forest
 4364 dense forest
+4365 Arrow keys: navigate. Enter: confirm. Esc: back. Ctrl+F2: visual off
+4366 Enter: confirm. Esc: cancel. Ctrl+F2: visual off
