@@ -2,16 +2,27 @@
 
 ## [Unreleased]
 
+<!-- UI Fix Round 2 — 2026-05-24 -->
+
 ### Fixed
 
+- [FIX-C] TIME panel height raised from 60 to 68 px, eliminating the critical 1 px bottom margin that caused text descender clipping on some systems.
+- [FIX-B] Status bar (`screen_render_subtitle`) repositioned from horizontal center to bottom-right anchor (`x = width - text_width - 16`, `y = height - text_height - 4`), eliminating overlap with the game map.
 - Fixed a critical overlap between the RES and EVENTS HUD panels at 420×260 resolution by raising `HudPanel.min_width` from 420 to 460 and `HudPanel.min_height` from 260 to 280; the 420×260 resolution is now correctly excluded from the HUD rendering path.
 - Fixed the RES panel height calculation that omitted the food row: `res_rect` height now uses `30 + (len(resources) + 1) * line_height` instead of `len(resources)`.
 
 ### Changed
 
-- Upgraded HUD body font from Arial 12 bold to Arial 14 bold for improved readability at all resolutions; `HudPanel.line_height` updated from 15 to 19 px (font height 17 px + 2 px inter-line gap).
-- Scaled HUD font hierarchy proportionally: header font 16 → 18 bold, small font 11 → 12 regular.
+- [FIX-A] Further upgraded HUD body font to Arial 17 bold (from 14) for improved readability on real fullscreen monitors; `HudPanel.line_height` updated from 19 to 23 px (font height 20 px + 3 px inter-line gap); `HudPanel.min_height` raised to 308 to maintain panel geometry with the larger font.
+- [FIX-A] Scaled HUD font hierarchy: header font 18 → 21 bold, small font 12 → 15 regular (body+4 / body-2 rule).
+- Upgraded HUD body font from Arial 12 bold to Arial 14 bold for improved readability at all resolutions; `HudPanel.line_height` updated from 15 to 19 px.
+- Scaled HUD font hierarchy proportionally (session Round 1): header font 16 → 18 bold, small font 11 → 12 regular.
 - Updated `test_hud_layout.py`: `FUNCTIONAL_RESOLUTIONS` now starts at 640×480 (420×260 moved to below-threshold bucket); T1 boundary test updated to 420×260.
+
+### Tests
+
+- Added `test_time_panel_has_minimum_height` (T_TIME_PADDING): asserts TIME panel height ≥ 68 px across all functional resolutions.
+- `T_SUBTITLE_RIGHT` documented as a manual runtime test in `test_hud_layout.py` (requires a live pygame display).
 
 ### Added
 

@@ -120,6 +120,9 @@ Pulsanti veri: **PARZIALE** — solo hook no-op C1, popup completi rimandati.
 - 2026-05-23: non eseguito bump release; la modifica resta documentata in `[Unreleased]`.
 - 2026-05-24: scelto Arial 14 bold per body font (stessa larghezza di 13 bold su Windows, altezza 17px → leggibilità migliore).
 - 2026-05-24: adottata OPZIONE A per overlap CRITICO 420x260 (min_width 420→460) + aumento min_height 260→280 per overlap verticale EVENTS/GROUP.
+- 2026-05-24 Round 2: scelto Arial 17 bold come body definitivo (h=20px, w_short=110px; massima leggibilità entro 20px height constraint).
+- 2026-05-24 Round 2: min_height alzato a 308 (soglia geometrica per EVENTS/GROUP no-collision con line_height=23).
+- 2026-05-24 Round 2: status bar ancorata bottom-right (x = width - ren_width - 16) per evitare overlap con mappa.
 
 ## HUD Fix + Font Upgrade — 2026-05-24
 
@@ -145,3 +148,27 @@ Obiettivo: correggere i bug layout rilevati in Fase QA (2026-05-24) e aggiornare
 
 - Modalità audio-only invariata (Legge IA #8): screen_render* non è mai chiamata da path audio.
 - Nessuna modifica a `clientgamegridview.py`, `world*.py`, bindings audio.
+
+## HUD UI Fix Round 2 — 2026-05-24
+
+Avvio: 24 maggio 2026
+Stato globale: COMPLETATO
+
+Obiettivo: fix segnalati da test visivo reale su monitor (font ancora piccolo, status bar su mappa, TIME clipping).
+
+### Completati
+
+- [x] FIX-A: Font body aumentato da 14 → 17px bold (header 21px, small 15px).
+      Criteri rispettati: height ≤ 20px, w_short=110px ≤ 180px.
+- [x] FIX-B: Status bar spostata a destra (x = width - ren_width - 16, y = height - ren_height - 4).
+      Fuori area mappa, nessun overlap con HUD panels.
+- [x] FIX-C: TIME panel height 60 → 68px. Margine critico 1px eliminato (6px padding inferiore garantito).
+- [x] FIX-A2: line_height 19 → 23, min_height 280 → 308 (soglia geometrica EVENTS/GROUP no-collision).
+- [x] Test aggiornati: aggiunto T_TIME_PADDING (31 passed, 0 failed).
+- [x] Documentazione aggiornata: CHANGELOG.md, todo.md, ui-visual-test-report.md.
+
+### Da verificare a runtime
+
+- [ ] Confermare leggibilità font su monitor reale dopo aggiornamento a 17px bold.
+- [ ] Verificare posizione status bar in partita reale su diverse risoluzioni.
+- [ ] T_SUBTITLE_RIGHT: test manuale (documentato in test_hud_layout.py).

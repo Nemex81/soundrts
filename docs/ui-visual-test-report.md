@@ -185,3 +185,65 @@ Confronto con le assunzioni del codice:
 - [x] Legge IA #8: `screen_render`, `screen_render_header`, `screen_render_small` non sono mai chiamate da path audio.
 - [x] `clientgamegridview.py` invariato.
 - [x] Tutte le modifiche sono additive o di costanti: nessuna logica audio/world alterata.
+
+---
+
+## Stato post-fix Round 2 — 2026-05-24
+
+### Fix applicati
+
+| File | Modifica | Fix |
+|------|----------|-----|
+| `soundrts/lib/screen.py` | body 14→**17** bold, header 18→**21** bold, small 12→**15** reg | FIX-A font upgrade |
+| `soundrts/lib/screen.py` | `screen_render_subtitle()` ancorata bottom-right | FIX-B status bar |
+| `soundrts/clientgamehud.py` | `time_rect` height 60→**68** px | FIX-C TIME clipping |
+| `soundrts/clientgamehud.py` | `line_height` 19→**23**, `min_height` 280→**308** | FIX-A2 geometria |
+| `soundrts/tests/unittests/test_hud_layout.py` | aggiunto `test_time_panel_has_minimum_height` | T_TIME_PADDING |
+
+### Misure font Round 2
+
+```
+=== Arial 17 bold ===
+  short  ("Resource 1: 999"):  110x20px
+  medium ("Speed: x1.5"):       80x20px
+  long40 ("X"*40):             361x20px
+
+=== Arial 21 bold (header) ===  [stimato: body+4]
+=== Arial 15 reg  (small)  ===  [stimato: body-2]
+```
+
+### Status bar — posizione aggiornata
+
+| Versione | Formula x | Formula y | Zona |
+|----------|-----------|-----------|------|
+| Prima | `(width - ren_width) // 2` | `height - ren_height` | Centro schermo, su mappa |
+| Dopo  | `width - ren_width - 16`   | `height - ren_height - 4` | Bottom-right, fuori mappa |
+
+### Tabella risoluzioni post-fix Round 2
+
+| Risoluzione | T1 | T2 | T3 | T4 | T5 | T_TIME | Esito |
+| ----------- | -- | -- | -- | -- | -- | ------ | ----- |
+| 400×300 | ✅ | n/a | n/a | n/a | n/a | n/a | SKIP ✅ |
+| 420×260 | ✅ | n/a | n/a | n/a | n/a | n/a | SKIP ✅ |
+| 640×480 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 800×600 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1024×768 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1280×720 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1366×768 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1920×1080 | n/a | ✅ | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+
+### Esito pytest Round 2
+
+```
+31 passed, 0 failed  (pytest 9.0.3, Python 3.12.0, pygame 2.6.1)
+```
+
+### Nota runtime Round 2
+
+- La leggibilità del font 17px e la posizione della status bar richiedono conferma visiva su partita reale (T_SUBTITLE_RIGHT documentato come test manuale in `test_hud_layout.py`).
+
+### Vincoli rispettati Round 2
+
+- [x] Legge IA #8: `screen_render_subtitle()` e `_font` non sono mai chiamate da path audio.
+- [x] `clientgamegridview.py` invariato.
+- [x] `display_is_active` gate non modificato.

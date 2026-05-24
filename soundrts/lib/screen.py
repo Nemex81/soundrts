@@ -7,7 +7,7 @@ from .. import version
 from .log import warning
 
 pygame.font.init()
-_font = pygame.font.SysFont("arial", 14, bold=True)
+_font = pygame.font.SysFont("arial", 17, bold=True)
 
 
 def _make_font(size, bold):
@@ -18,8 +18,8 @@ def _make_font(size, bold):
         return _font
 
 
-_font_header = _make_font(18, True)
-_font_small = _make_font(12, False)
+_font_header = _make_font(21, True)
+_font_small = _make_font(15, False)
 
 
 def _render_with(font, text, dest, right=False, center=False, color=(200, 200, 200)):
@@ -95,8 +95,8 @@ def screen_render(text, dest, right=False, center=False, color=(200, 200, 200)):
 
 def screen_render_subtitle():
     ren = _font.render(_subtitle, True, (200, 200, 200), (0, 0, 0))
-    x = (_screen.get_width() - ren.get_width()) // 2
-    y = _screen.get_height() - ren.get_height()
+    x = _screen.get_width() - ren.get_width() - 16
+    y = _screen.get_height() - ren.get_height() - 4
     _screen.blit(ren, (x, y))
 
 

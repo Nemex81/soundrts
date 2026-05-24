@@ -173,3 +173,22 @@ def test_dynamic_panel_content_fits_estimated_height(monkeypatch, resolution):
                 _resolution_id(resolution),
             )
         )
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_time_panel_has_minimum_height(monkeypatch, resolution):
+    """T_TIME_PADDING: TIME panel must be at least 68px to avoid descender clipping."""
+    _, _, rects = _capture_layout(monkeypatch, resolution)
+    assert rects["time"].height >= 68, (
+        "TIME panel height {} < 68px at {}; text at y+42 would be clipped".format(
+            rects["time"].height,
+            _resolution_id(resolution),
+        )
+    )
+
+
+# T_SUBTITLE_RIGHT: screen_render_subtitle() positions the status bar at
+# x = screen_width - text_width - 16 (bottom-right anchor, outside map area).
+# Requires a running pygame display to verify at runtime; not mockable here.
+# Manual verification: launch a game session and confirm the subtitle appears
+# in the bottom-right quadrant (x > screen_width // 2) at all resolutions.

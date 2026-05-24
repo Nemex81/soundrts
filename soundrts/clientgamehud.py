@@ -53,11 +53,11 @@ class HudSnapshot:
 
 class HudPanel:
     min_width = 460
-    min_height = 280
+    min_height = 308
     max_units = 8
     max_events = 8
     margin = 8
-    line_height = 19
+    line_height = 23
 
     def __init__(self, interface: Any) -> None:
         self.interface = interface
@@ -124,7 +124,7 @@ class HudPanel:
 
         # --- TIME panel (top-right) ---
         time_width = 175
-        time_rect = (right - time_width, top, time_width, 60)
+        time_rect = (right - time_width, top, time_width, 68)
         self._draw_panel(screen, time_rect)
         self._panel_rects["time"] = pygame.Rect(*time_rect)
         screen_render_header("TIME", (right - time_width + 6, top + 4), color=(160, 210, 255))
