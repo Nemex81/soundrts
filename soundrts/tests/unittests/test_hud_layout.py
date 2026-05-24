@@ -389,13 +389,19 @@ def test_events_aligned_with_group(monkeypatch, resolution):
 @pytest.mark.parametrize("R", [1, 2, 3, 4, 6, 8, 12])
 def test_faction_marker_min(R):
     """T_FACTION_MARKER_MIN: faction circle radius is always >= 2."""
-    assert max(2, R // 2) >= 2
+    from soundrts.clientgamegridview import R_MIN, UNIT_SCALE
+
+    R_vis = max(R_MIN, int(R * UNIT_SCALE))
+    assert max(2, R_vis // 2) >= 2
 
 
 @pytest.mark.parametrize("R", [1, 2, 3, 4, 6, 8, 12])
 def test_hp_bar_w_min(R):
     """T_HP_BAR_W_MIN: HP bar half-width is always >= 3."""
-    assert max(3, R - 2) >= 3
+    from soundrts.clientgamegridview import R_MIN, UNIT_SCALE
+
+    R_vis = max(R_MIN, int(R * UNIT_SCALE))
+    assert max(3, R_vis - 2) >= 3
 
 
 def test_r_min_constant():
@@ -403,3 +409,87 @@ def test_r_min_constant():
     from soundrts.clientgamegridview import R_MIN
 
     assert R_MIN == 4
+
+
+# ────────────────────────────────────────────────────────────────
+# Round 7 — MAP viewport clipping + visual unit scale
+# ────────────────────────────────────────────────────────────────
+
+
+def _make_grid_view(monkeypatch, resolution):
+    from soundrts import clientgamegridview as gridview_module
+
+    surface = pygame.Surface(resolution)
+    monkeypatch.setattr(gridview_module, "get_screen", lambda: surface)
+    grid = {(xc, yc): (xc, yc) for xc in range(10) for yc in range(8)}
+    player = SimpleNamespace(world=SimpleNamespace(grid=grid))
+    interface = SimpleNamespace(
+        xcmax=9,
+        ycmax=7,
+        square_width=1.0,
+        server=SimpleNamespace(player=player),
+    )
+    return gridview_module.GridView(interface), gridview_module, grid
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_map_viewport_is_clipped_to_hud_free_width(monkeypatch, resolution):
+    """T_MAP_VIEWPORT_CLIP: GridView uses the HUD-free map width."""
+    grid_view, _, _ = _make_grid_view(monkeypatch, resolution)
+    width, height = resolution
+    hud_right = grid_view._hud_right_width()
+    map_w = max(width // 2, width - hud_right)
+    expected_sq = min(map_w // 10, height // 8)
+
+    grid_view._update_coefs()
+
+    assert grid_view.square_view_width == expected_sq
+    assert grid_view.square_view_height == expected_sq
+    assert grid_view.square_view_width >= 1
+    assert grid_view.square_view_width * 10 <= map_w
+    assert grid_view.ymax <= height
+
+
+@pytest.mark.parametrize("R", [4, 5, 6, 8, 10, 12, 16])
+def test_unit_scale_applied(R):
+    """T_UNIT_SCALE_APPLIED: R_vis never shrinks physical R."""
+    from soundrts.clientgamegridview import R_MIN, UNIT_SCALE
+
+    R_vis = max(R_MIN, int(R * UNIT_SCALE))
+    assert R_vis >= R_MIN
+    assert R_vis >= R
+    assert R_vis == max(4, int(R * 1.5))
+
+
+def test_r2_not_scaled_by_unit_scale(monkeypatch):
+    """T_R2_NOT_SCALED: hit-test radius remains physical R, not visual R_vis."""
+    grid_view, gridview_module, _ = _make_grid_view(monkeypatch, (800, 600))
+
+    grid_view._update_coefs()
+
+    R_vis = max(gridview_module.R_MIN, int(gridview_module.R * gridview_module.UNIT_SCALE))
+    assert gridview_module.R2 == gridview_module.R * gridview_module.R
+    assert gridview_module.R2 != R_vis * R_vis
+
+
+def test_hud_right_width_matches_hud_panel_geometry(monkeypatch):
+    """T_HUD_RIGHT_WIDTH: 303px matches HudPanel right-column geometry."""
+    resolution = (800, 600)
+    grid_view, _, _ = _make_grid_view(monkeypatch, resolution)
+    _, _, rects = _capture_layout(monkeypatch, resolution)
+
+    assert grid_view._hud_right_width() == 303
+    assert grid_view._hud_right_width() == resolution[0] - rects["events"].left
+
+
+def test_hit_test_uses_unshifted_map_coordinates(monkeypatch):
+    """T_HIT_TEST_INVARIANT: map_x=0/map_y=0 keeps mouse coordinates unshifted."""
+    grid_view, _, grid = _make_grid_view(monkeypatch, (800, 600))
+
+    grid_view._update_coefs()
+    square = grid_view.square_view_width
+    xc, yc = 3, 4
+    pos = (xc * square + square // 2, grid_view.ymax - (yc * square + square // 2))
+
+    assert grid_view.square_from_mousepos(pos) == grid[(xc, yc)]
+    assert grid_view.square_from_mousepos((square * 10 + 1, pos[1])) is None

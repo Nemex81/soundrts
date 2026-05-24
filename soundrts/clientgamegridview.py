@@ -13,6 +13,7 @@ from .worldentity import COLLISION_RADIUS
 # in style.txt. Improves visual differentiation for sighted players without
 # touching the audio-only mode (Legge IA #8).
 R_MIN = 4  # minimum unit circle radius in pixels (MAP-1)
+UNIT_SCALE = 1.5  # visual multiplier for unit radius (MAP-SCALE-1, R7)
 
 _AUTO_TERRAIN_FALLBACK = {
     "_meadows": (35, 80, 35),
@@ -113,14 +114,15 @@ class GridView:
         else:
             width = 1
         x, y = self._object_coords(o)
+        R_vis = max(R_MIN, int(R * UNIT_SCALE))
         if o.shape() == "square":
-            rect = x - R, y - R, R * 2, R * 2
+            rect = x - R_vis, y - R_vis, R_vis * 2, R_vis * 2
             draw_rect(o.corrected_color(), rect, width)
         else:
             if o.collision:
-                pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R, width)
+                pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R_vis, width)
             elif self.interface.target is not None and self.interface.target is o:
-                pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R, 0)
+                pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R_vis, 0)
             else:
                 get_screen().set_at((x, y), o.corrected_color())
         if getattr(o.model, "player", None) is not None:
@@ -134,26 +136,26 @@ class GridView:
                 color = (155, 0, 0)
             else:
                 color = (180, 180, 180)
-            pygame.draw.circle(get_screen(), color, (x, y), max(2, R // 2), 0)
+            pygame.draw.circle(get_screen(), color, (x, y), max(2, R_vis // 2), 0)
             if getattr(o, "hp", None) is not None and o.hp != o.hp_max:
                 hp_prop = 100 * o.hp // o.hp_max
                 if hp_prop > 80:
                     color = (0, 255, 0)
                 else:
                     color = (255, 0, 0)
-                W = max(3, R - 2)
+                W = max(3, R_vis - 2)
                 if color != (0, 255, 0):
                     pygame.draw.line(
                         get_screen(),
                         (0, 55, 0),
-                        (x - W, y - R - 2),
-                        (x - W + 2 * W, y - R - 2),
+                        (x - W, y - R_vis - 2),
+                        (x - W + 2 * W, y - R_vis - 2),
                     )
                 pygame.draw.line(
                     get_screen(),
                     color,
-                    (x - W, y - R - 2),
-                    (x - W + hp_prop * (2 * W) // 100, y - R - 2),
+                    (x - W, y - R_vis - 2),
+                    (x - W + hp_prop * (2 * W) // 100, y - R_vis - 2),
                 )
 
     def display_objects(self):
@@ -170,11 +172,19 @@ class GridView:
                 if o.is_memory:
                     warning("(memory)")
 
+    def _hud_right_width(self) -> int:
+        """Width reserved for the HUD right column plus margin."""
+        return 303  # col_right_width=295 + margin=8 in HudPanel
+
     def _update_coefs(self):
         global R, R2
+        screen = get_screen()
+        sw, sh = screen.get_size()
+        hud_right = self._hud_right_width()
+        map_w = max(sw // 2, sw - hud_right)
         self.square_view_width = self.square_view_height = min(
-            get_screen().get_width() // (self.interface.xcmax + 1),
-            get_screen().get_height() // (self.interface.ycmax + 1),
+            map_w // (self.interface.xcmax + 1),
+            sh // (self.interface.ycmax + 1),
         )
         self.ymax = self.square_view_height * (self.interface.ycmax + 1)
         R = max(
@@ -257,6 +267,7 @@ class GridView:
     def display_attack(self, attacker_id, target):
         a = self.interface.dobjets[attacker_id]
         self._update_coefs()
+        R_vis = max(R_MIN, int(R * UNIT_SCALE))
         if self.interface.player.is_an_enemy(a):
             color = (255, 0, 0)
         else:
@@ -271,7 +282,7 @@ class GridView:
             get_screen(),
             (100, 100, 100),
             self._object_coords(target),
-            R * 3 // 2,
+            R_vis * 3 // 2,
             0,
         )
         pygame.display.update(r1.union(r2))

@@ -378,3 +378,47 @@ pytest test_hud_layout.py: 38 passed, 0 failed
 - [x] Legge IA #8: nessun import verso voice/sound/world* e `display_is_active` invariato.
 - [x] Nessuna stringa italiana hardcoded in Python.
 - [x] Nessuna funzionalità esistente rimossa.
+
+---
+
+## MAP Layout Round 7 — 2026-05-24
+
+### MAP-VIEWPORT-1: viewport ridotto
+
+Costante: `hud_right_width = 303px`.
+Formula: `map_w = max(screen_w // 2, screen_w - 303)`.
+Mappa tipica verificata: `xcmax=9`, `ycmax=7` (10x8 celle).
+
+| Risoluzione | screen_w | map_w | sq_old | sq_new | Nota |
+|-------------|----------|-------|--------|--------|------|
+| 640x480     | 640      | 337   | 60px   | 33px   | width-limited |
+| 800x600     | 800      | 497   | 75px   | 49px   | width-limited |
+| 1024x768    | 1024     | 721   | 96px   | 72px   | width-limited |
+| 1280x720    | 1280     | 977   | 90px   | 90px   | height-limited |
+| 1920x1080   | 1920     | 1617  | 135px  | 135px  | height-limited |
+
+Nota: a 640x480, 800x600 e 1024x768 la cella si riduce per liberare la colonna HUD destra. A 1280x720 e 1920x1080 la mappa 10x8 resta limitata dall'altezza, quindi la cella non cambia ma il limite orizzontale resta esplicito.
+
+### MAP-SCALE-1: scala visiva unita
+
+`UNIT_SCALE = 1.5`.
+`R_vis = max(4, int(R * 1.5))`.
+
+| R fisica | R_vis display | Marker | HP_W |
+|----------|---------------|--------|------|
+| 4        | 6             | 3      | 4    |
+| 6        | 9             | 4      | 7    |
+| 8        | 12            | 6      | 10   |
+| 10       | 15            | 7      | 13   |
+
+### Hit-test e zoom
+
+- `square_from_mousepos()`, `object_from_mousepos()` e `units_from_mouserect()` restano in coordinate schermo non traslate (`map_x=0`, `map_y=0`).
+- `R2 = R * R` resta invariato e non usa `R_vis`.
+- `zoom_mode` resta compatibile: `_display_active_zone_border()` usa le stesse coordinate mappa scalate da `square_view_width`/`square_view_height`.
+
+### Risultati test
+
+- `py_compile`: OK (`clientgamegridview.py`, `test_hud_layout.py`).
+- `pytest soundrts/tests/unittests/test_hud_layout.py -v --tb=short`: 105 passed, 0 failed.
+- Nuovi/aggiornati Round 7: T_MAP_VIEWPORT_CLIP, T_UNIT_SCALE_APPLIED, T_R2_NOT_SCALED, T_HUD_RIGHT_WIDTH, T_HIT_TEST_INVARIANT, marker/HP bar su `R_vis`.
