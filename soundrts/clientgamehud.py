@@ -135,30 +135,30 @@ class HudPanel:
         screen_render(snapshot.time, (right - time_width + 6, top + self.panel_header_height), color=(220, 235, 245))
         screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, top + self.panel_header_height + self.line_height), color=(220, 235, 245))
 
-        # --- EVENTS panel (right side, below TIME) ---
-        event_width = 260
+        # --- EVENTS panel (right side, below TIME) — aligned to col_right_width R6 ---
+        col_right_width = 295  # unified right-column width (EVENTS = PLAYER = GROUP)
         event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
         event_top = top + self.time_height + self.margin
-        event_rect = (right - event_width, event_top, event_width, event_height)
+        event_rect = (right - col_right_width, event_top, col_right_width, event_height)
         self._draw_panel(screen, event_rect)
         self._panel_rects["events"] = pygame.Rect(*event_rect)
-        screen_render_header(self._hud_text("panel_events", "EVENTS"), (right - event_width + 6, event_top + 4), color=(255, 190, 120))
+        screen_render_header(self._hud_text("panel_events", "EVENTS"), (right - col_right_width + 6, event_top + 4), color=(255, 190, 120))
         y = event_top + self.panel_header_height
         events = snapshot.events
         if not events:
-            screen_render(self._hud_text("no_events", "No recent events"), (right - event_width + 6, y), color=(230, 220, 205))
+            screen_render(self._hud_text("no_events", "No recent events"), (right - col_right_width + 6, y), color=(230, 220, 205))
         else:
             for ev in events[: self.max_events]:
                 prefix, ev_color = self._event_style(ev.severity)
                 screen_render(
                     self._fit("{} {}".format(prefix, ev.text), self.event_text_max_length),
-                    (right - event_width + 6, y),
+                    (right - col_right_width + 6, y),
                     color=ev_color,
                 )
                 y += self.line_height
 
         # --- PLAYER panel (bottom-right, below EVENTS) — Round 5 ---
-        group_width = 295
+        group_width = col_right_width
         event_bottom = event_top + event_height
         player_top = event_bottom + self.margin
         player_left = right - group_width

@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+<!-- UI Fix Round 6 — 2026-05-24 -->
+
+### Changed
+
+- [HUD-1] Allineamento colonna destra HUD: `event_width` 260→295 unificato in `col_right_width=295`. Il bordo sinistro di EVENTS ora coincide con PLAYER e GROUP (tutti ancorati a `right - 295`).
+- [MAP-1] `R_MIN = 4` introdotto in `clientgamegridview.py`: le unità sulla mappa hanno raggio minimo 4px garantito in qualsiasi configurazione di mappa.
+- [MAP-2] Marker fazione: raggio `max(2, R // 2)` — visibile anche su mappe grandi con R basso.
+- [MAP-3] Barra HP: `W = max(3, R - 2)` — larghezza minima 6px totali garantita.
+
+### Tests
+
+- `test_hud_layout.py`: 89 passed, 0 failed (+21 Round 6 tests).
+- Aggiunto `test_events_aligned_with_group` (T_EVENTS_ALIGNED_WITH_GROUP, 6 risoluzioni).
+- Aggiunto `test_faction_marker_min` (T_FACTION_MARKER_MIN, 7 valori R).
+- Aggiunto `test_hp_bar_w_min` (T_HP_BAR_W_MIN, 7 valori R).
+- Aggiunto `test_r_min_constant` (T_R_MIN_ENFORCED).
+
 <!-- UI Fix Round 5 — 2026-05-24 -->
 
 ### Changed

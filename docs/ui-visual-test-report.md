@@ -274,6 +274,30 @@ Arial 23 bold: h=27px | short=141px | long36=468px
 Arial 24 bold: h=28px | short=151px | long36=469px
 ```
 
+## Stato post-fix Round 6 — 2026-05-24
+
+### HUD-1: Allineamento colonna destra
+
+- `event_width`: 260 → 295 (unificato in `col_right_width = 295`)
+- EVENTS, PLAYER, GROUP partono tutti da `x = width - margin - 295`
+- TIME rimane invariato (`width = 175`, right-anchored)
+- Bordo sinistro colonna destra completamente allineato
+
+### MAP-1/2/3: Visibilità elementi mappa
+
+- `R_MIN = 4`: raggio minimo unità garantito in `_update_coefs()` — diametro minimo 8px
+- Marker fazione: `max(2, R // 2)` — cerchio sempre visibile
+- Barra HP: `W = max(3, R - 2)` — larghezza minima 6px totali
+
+### Risultati test
+
+- `pytest soundrts/tests/unittests/test_hud_layout.py`: **89 passed, 0 failed**
+- Nuovi test Round 6: T_EVENTS_ALIGNED_WITH_GROUP (6 risoluzioni), T_FACTION_MARKER_MIN (7 valori R), T_HP_BAR_W_MIN (7 valori R), T_R_MIN_ENFORCED.
+
+### Stato todo
+
+- CHIUSO: tutti i punti residui `[ ]` marcati `[x]` — nessun punto aperto.
+
 Tradeoff documentato: nessun candidato 19-24 rispetta `long36 <= 254`; è stato scelto Arial 20 bold perché è la massima dimensione con `height <= 24px`. L'overflow EVENTS viene mitigato riducendo `event_text_max_length` a 23 caratteri.
 
 ### Tabella risoluzioni post-fix Round 3

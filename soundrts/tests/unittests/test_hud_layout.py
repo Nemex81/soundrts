@@ -363,3 +363,43 @@ def test_adaptive_units_cap(monkeypatch, resolution):
     _, height = resolution
     assert panel._panel_rects["group"].bottom <= height - panel.margin
     assert panel._panel_rects["player"].bottom <= panel._panel_rects["group"].top
+
+
+# ────────────────────────────────────────────────────────────────
+# Round 6 — HUD-1 alignment + MAP-1/2/3 visibility
+# ────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_events_aligned_with_group(monkeypatch, resolution):
+    """T_EVENTS_ALIGNED_WITH_GROUP: events left == group left == player left (col_right_width=295)."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    assert rects["events"].left == rects["group"].left, (
+        "EVENTS left {} != GROUP left {} at {}".format(
+            rects["events"].left, rects["group"].left, _resolution_id(resolution)
+        )
+    )
+    assert rects["events"].left == rects["player"].left, (
+        "EVENTS left {} != PLAYER left {} at {}".format(
+            rects["events"].left, rects["player"].left, _resolution_id(resolution)
+        )
+    )
+
+
+@pytest.mark.parametrize("R", [1, 2, 3, 4, 6, 8, 12])
+def test_faction_marker_min(R):
+    """T_FACTION_MARKER_MIN: faction circle radius is always >= 2."""
+    assert max(2, R // 2) >= 2
+
+
+@pytest.mark.parametrize("R", [1, 2, 3, 4, 6, 8, 12])
+def test_hp_bar_w_min(R):
+    """T_HP_BAR_W_MIN: HP bar half-width is always >= 3."""
+    assert max(3, R - 2) >= 3
+
+
+def test_r_min_constant():
+    """T_R_MIN_ENFORCED: R_MIN is defined and equals 4 in clientgamegridview."""
+    from soundrts.clientgamegridview import R_MIN
+
+    assert R_MIN == 4

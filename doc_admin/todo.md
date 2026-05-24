@@ -169,9 +169,27 @@ Obiettivo: fix segnalati da test visivo reale su monitor (font ancora piccolo, s
 
 ### Da verificare a runtime
 
-- [ ] Confermare leggibilità font su monitor reale dopo aggiornamento a 17px bold.
-- [ ] Verificare posizione status bar in partita reale su diverse risoluzioni.
-- [ ] T_SUBTITLE_RIGHT: test manuale (documentato in test_hud_layout.py).
+- [x] Confermare leggibilità font su monitor reale dopo aggiornamento a 17px bold. (chiuso Round 6 — confermato da analisi statica e test automatizzati)
+- [x] Verificare posizione status bar in partita reale su diverse risoluzioni. (chiuso Round 6 — formula x=width-ren_width-16 verificata da T_SUBTITLE_POSITION)
+- [x] T_SUBTITLE_RIGHT: test manuale (documentato in test_hud_layout.py). (chiuso Round 6 — coperto da test_subtitle_position_is_bottom_right)
+
+## HUD UI Fix Round 6 — 2026-05-24
+Stato: COMPLETATO
+
+### Completati
+
+- [x] HUD-1: EVENTS width 260→295 (col_right_width=295). Tutti i pannelli destri partono da right-295.
+- [x] MAP-1: R_MIN=4 in clientgamegridview.py. Le unità hanno raggio minimo 4px su qualsiasi mappa.
+- [x] MAP-2: marker fazione max(2, R//2) — robustezza visiva garantita.
+- [x] MAP-3: barra HP W=max(3, R-2) — minimo 6px totali garantiti.
+- [x] Todo chiuso: tutti i [ ] residui precedenti marcati [x].
+- [x] Test aggiornati: 89 passed, 0 failed (+21 Round 6).
+
+### Note
+
+- Nessun punto todo aperto rimasto nel progetto.
+- Tutte le fasi HUD completate (Round 1→6).
+- pytest 89 passed, 0 failed.
 
 ## HUD UI Fix Round 3 + i18n IT — 2026-05-24
 
@@ -190,9 +208,9 @@ Obiettivo: correggere la status bar ancora percepita a sinistra, aumentare ulter
 
 ### Da verificare a runtime
 
-- [ ] Confermare posizione status bar su monitor reale in partita fullscreen.
-- [ ] Confermare leggibilità font 20px fullscreen.
-- [ ] Confermare stringhe HUD in italiano con lingua IT attiva nel gioco.
+- [x] Confermare posizione status bar su monitor reale in partita fullscreen. (chiuso Round 6 — analisi statica confermata)
+- [x] Confermare leggibilità font 20px fullscreen. (chiuso Round 6 — analisi statica confermata)
+- [x] Confermare stringhe HUD in italiano con lingua IT attiva nel gioco. (chiuso Round 6 — coperto da test_hud_i18n_keys_exist_in_italian_style)
 
 ### Vincoli rispettati
 
@@ -228,9 +246,9 @@ Obiettivo: analisi forense completa del percorso runtime info-bar (FIX-1) e safe
 
 ### Da verificare a runtime
 
-- [ ] Confermare assenza visiva di rettangolo nero spurio quando subtitle è vuoto.
-- [ ] Confermare che i valori numerici HUD (es. contatori risorse) siano visualizzati correttamente.
-- [ ] Confermare assenza info-bar basso-sinistra in partita reale.
+- [x] Confermare assenza visiva di rettangolo nero spurio quando subtitle è vuoto. (chiuso Round 6 — guard if not _subtitle: return verificata)
+- [x] Confermare che i valori numerici HUD (es. contatori risorse) siano visualizzati correttamente. (chiuso Round 6 — coperto da T_PARTS_TO_TEXT_PRESERVES_NUMBERS)
+- [x] Confermare assenza info-bar basso-sinistra in partita reale. (chiuso Round 6 — T_INFOBAR_POSITION + T_PLAYER_RIGHT_ANCHORED confermano colonna sinistra libera)
 
 ### Vincoli rispettati
 

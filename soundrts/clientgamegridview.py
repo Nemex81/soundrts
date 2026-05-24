@@ -12,6 +12,8 @@ from .worldentity import COLLISION_RADIUS
 # Fallback colors for automatic terrains that have an empty `color` field
 # in style.txt. Improves visual differentiation for sighted players without
 # touching the audio-only mode (Legge IA #8).
+R_MIN = 4  # minimum unit circle radius in pixels (MAP-1)
+
 _AUTO_TERRAIN_FALLBACK = {
     "_meadows": (35, 80, 35),
     "_forest": (25, 65, 30),
@@ -132,14 +134,14 @@ class GridView:
                 color = (155, 0, 0)
             else:
                 color = (180, 180, 180)
-            pygame.draw.circle(get_screen(), color, (x, y), R // 2, 0)
+            pygame.draw.circle(get_screen(), color, (x, y), max(2, R // 2), 0)
             if getattr(o, "hp", None) is not None and o.hp != o.hp_max:
                 hp_prop = 100 * o.hp // o.hp_max
                 if hp_prop > 80:
                     color = (0, 255, 0)
                 else:
                     color = (255, 0, 0)
-                W = R - 2
+                W = max(3, R - 2)
                 if color != (0, 255, 0):
                     pygame.draw.line(
                         get_screen(),
@@ -184,6 +186,7 @@ class GridView:
                 * self.square_view_width
             ),
         )
+        R = max(R, R_MIN)  # MAP-1: enforce minimum radius
         R2 = R * R
 
     def _collision_display(self):
