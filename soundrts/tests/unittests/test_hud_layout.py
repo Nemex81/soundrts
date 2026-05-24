@@ -20,7 +20,7 @@ RESOLUTIONS = [
     (1920, 1080),
 ]
 
-FUNCTIONAL_RESOLUTIONS = RESOLUTIONS[1:]
+FUNCTIONAL_RESOLUTIONS = RESOLUTIONS[2:]
 PANEL_NAMES = ("res", "time", "events", "player", "group")
 
 
@@ -98,7 +98,7 @@ def _estimated_content_height(panel, snapshot, panel_name):
 def test_display_skips_hud_below_minimum_resolution(monkeypatch):
     interface = _make_interface(display_is_active=True)
     panel = HudPanel(interface)
-    surface = pygame.Surface((400, 300))
+    surface = pygame.Surface((420, 260))
     draw_calls = []
 
     monkeypatch.setattr(pygame.display, "get_surface", lambda: surface)

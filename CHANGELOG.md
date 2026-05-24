@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed a critical overlap between the RES and EVENTS HUD panels at 420×260 resolution by raising `HudPanel.min_width` from 420 to 460 and `HudPanel.min_height` from 260 to 280; the 420×260 resolution is now correctly excluded from the HUD rendering path.
+- Fixed the RES panel height calculation that omitted the food row: `res_rect` height now uses `30 + (len(resources) + 1) * line_height` instead of `len(resources)`.
+
+### Changed
+
+- Upgraded HUD body font from Arial 12 bold to Arial 14 bold for improved readability at all resolutions; `HudPanel.line_height` updated from 15 to 19 px (font height 17 px + 2 px inter-line gap).
+- Scaled HUD font hierarchy proportionally: header font 16 → 18 bold, small font 11 → 12 regular.
+- Updated `test_hud_layout.py`: `FUNCTIONAL_RESOLUTIONS` now starts at 640×480 (420×260 moved to below-threshold bucket); T1 boundary test updated to 420×260.
+
 ### Added
 
 - Added a Pygame HUD overlay for active visual displays, showing resources, population, selected group status, game time, speed, and recent gameplay events.

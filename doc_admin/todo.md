@@ -118,3 +118,30 @@ Pulsanti veri: **PARZIALE** — solo hook no-op C1, popup completi rimandati.
 - 2026-05-23: deciso di non modificare `.github/**` per documentazione Spark, perche `framework_edit_mode: false` blocca scritture framework.
 - 2026-05-23: installati `pytest` e `pygame` nella `.venv` per eseguire i test dichiarati dal progetto.
 - 2026-05-23: non eseguito bump release; la modifica resta documentata in `[Unreleased]`.
+- 2026-05-24: scelto Arial 14 bold per body font (stessa larghezza di 13 bold su Windows, altezza 17px → leggibilità migliore).
+- 2026-05-24: adottata OPZIONE A per overlap CRITICO 420x260 (min_width 420→460) + aumento min_height 260→280 per overlap verticale EVENTS/GROUP.
+
+## HUD Fix + Font Upgrade — 2026-05-24
+
+Avvio: 24 maggio 2026
+Stato globale: COMPLETATO
+
+Obiettivo: correggere i bug layout rilevati in Fase QA (2026-05-24) e aggiornare i font HUD per migliore leggibilità.
+
+### Task completati
+
+- [x] QA preliminare: eseguiti 25 test su 8 risoluzioni (21 PASS / 8 FAIL diagnostici).
+- [x] Misurazione font reali pygame: body 14px, header 19px, small 13px (Arial 12/16/11 bold/reg).
+- [x] Misurazione font upgrade (13-16 bold): selezionato Arial 14 bold (h=17px, w_short=84px).
+- [x] FIX [CRITICO] `clientgamehud.py`: min_width 420→460, min_height 260→280 (esclude 420x260 dalla rendering path).
+- [x] FIX [MEDIO] `clientgamehud.py`: formula res_rect.height ora include food row: `30 + (len(resources) + 1) * line_height`.
+- [x] FIX [FONT] `lib/screen.py`: body 12→14 bold, header 16→18 bold, small 11→12 regular.
+- [x] UPDATE `clientgamehud.py`: line_height 15→19 (font 14 height + 2px inter-line gap).
+- [x] UPDATE `test_hud_layout.py`: FUNCTIONAL_RESOLUTIONS inizia da 640x480; T1 testa confine 420x260.
+- [x] VALIDAZIONE: py_compile OK; pytest 25/25 PASS (0 FAIL).
+- [x] Documentazione: CHANGELOG.md e ui-visual-test-report.md aggiornati.
+
+### Vincoli rispettati
+
+- Modalità audio-only invariata (Legge IA #8): screen_render* non è mai chiamata da path audio.
+- Nessuna modifica a `clientgamegridview.py`, `world*.py`, bindings audio.

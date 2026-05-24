@@ -52,12 +52,12 @@ class HudSnapshot:
 
 
 class HudPanel:
-    min_width = 420
-    min_height = 260
+    min_width = 460
+    min_height = 280
     max_units = 8
     max_events = 8
     margin = 8
-    line_height = 15
+    line_height = 19
 
     def __init__(self, interface: Any) -> None:
         self.interface = interface
@@ -109,7 +109,7 @@ class HudPanel:
         self._panel_rects = {}
 
         # --- RES panel (top-left) ---
-        res_rect = (left, top, 180, 30 + len(snapshot.resources) * self.line_height)
+        res_rect = (left, top, 180, 30 + (len(snapshot.resources) + 1) * self.line_height)
         self._draw_panel(screen, res_rect)
         self._panel_rects["res"] = pygame.Rect(*res_rect)
         screen_render_header("RES", (left + 6, top + 4), color=(120, 220, 190))

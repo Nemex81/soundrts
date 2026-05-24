@@ -136,3 +136,52 @@ Confronto con le assunzioni del codice:
 
 - test_hud_layout.py: VALIDATO sintatticamente con py_compile; pytest mirato eseguito con 21 test PASS e 8 FAIL diagnostici reali.
 - ui-visual-test-report.md: contenuto allineato ai risultati T1-T5 e alle misure font raccolte.
+
+---
+
+## Stato post-fix — 2026-05-24
+
+### Modifiche applicate
+
+| File | Modifica | Bug risolto |
+|------|----------|-------------|
+| `soundrts/lib/screen.py` | body 12→14 bold, header 16→18, small 11→12 | [BASSO] leggibilità, [NUOVO] upgrade richiesto |
+| `soundrts/clientgamehud.py` | `min_width` 420→460, `min_height` 260→280 | [CRITICO] overlap RES/EVENTS a 420×260 |
+| `soundrts/clientgamehud.py` | `line_height` 15→19 | consistenza con font aggiornato |
+| `soundrts/clientgamehud.py` | formula `res_rect.height` aggiunge `+1` food row | [MEDIO] altezza RES insufficiente |
+| `soundrts/tests/unittests/test_hud_layout.py` | `FUNCTIONAL_RESOLUTIONS` da indice 1 a indice 2; T1 usa 420×260 | allineamento soglie al codice aggiornato |
+
+### Misure font post-upgrade
+
+```text
+14 bold (body):   height=17px  w_short=84px  w_long=165px
+18 bold (header): height=21px  (stimato proporzionalmente da 19px a 16 bold)
+12 reg  (small):  height=14px  (stimato)
+```
+
+*Nota: `w_short` = "Resource 1: 999" (15 char); `w_long` = "Resource 1: 999  food test long" (31 char).*
+
+### Tabella risoluzioni post-fix
+
+| Risoluzione | T1 | T2 | T3 | T4 | T5 | Esito |
+| ----------- | -- | -- | -- | -- | -- | ----- |
+| 400×300 | ✅ | n/a | n/a | n/a | n/a | SKIP ✅ |
+| 420×260 | ✅ | n/a | n/a | n/a | n/a | SKIP ✅ |
+| 640×480 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 800×600 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1024×768 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1280×720 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1366×768 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+| 1920×1080 | n/a | ✅ | ✅ | ✅ | ✅ | PASS ✅ |
+
+### Esito pytest
+
+```
+25 passed, 0 failed  (pytest 9.0.3, Python 3.12.0, pygame 2.6.1)
+```
+
+### Vincoli rispettati post-fix
+
+- [x] Legge IA #8: `screen_render`, `screen_render_header`, `screen_render_small` non sono mai chiamate da path audio.
+- [x] `clientgamegridview.py` invariato.
+- [x] Tutte le modifiche sono additive o di costanti: nessuna logica audio/world alterata.
