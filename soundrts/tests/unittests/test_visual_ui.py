@@ -188,3 +188,38 @@ def test_visual_mode_toggle_updates_screen(default, visual_off, monkeypatch):
     assert int(config.visual_mode) == 0
     assert calls["save"] == 2
     assert len(calls["set_screen"]) == 2
+
+
+def test_menu_update_menu_syncs_visual_stack(default, visual_on, monkeypatch):
+    """Audit Round 9: Menu.update_menu aggiorna ScreenManager in-place."""
+    from soundrts.clientmenu import Menu
+    import soundrts.clientmenu as cmenu
+
+    class DummySM:
+        def __init__(self):
+            self.calls = []
+
+        def update_current(self, title, choices, index):
+            self.calls.append((title, choices, index))
+
+    sm = DummySM()
+    monkeypatch.setattr(cmenu, "get_screen_manager", lambda: sm)
+
+    m = Menu(["old"], [(["a"], lambda: None)])
+    m.choice_index = 0
+    m.update_menu(Menu(["new"], [(["a"], lambda: None), (["b"], lambda: None)]))
+    assert len(sm.calls) == 1
+    assert sm.calls[0][0] == ["new"]
+    assert len(sm.calls[0][1]) == 2
+
+
+def test_dialog_screen_update_input(default, visual_on):
+    """Audit Round 9: DialogScreen.update_input sostituisce il testo corrente."""
+    from soundrts.clientmenuscreen import DialogScreen
+
+    d = DialogScreen(["prompt"], "abc")
+    assert d.current_input == "abc"
+    d.update_input("xyz")
+    assert d.current_input == "xyz"
+    d.update_input("")
+    assert d.current_input == ""

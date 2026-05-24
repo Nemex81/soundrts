@@ -17,12 +17,22 @@
 
 ### Tests
 
-- `test_visual_ui.py`: 9 nuovi test (LEGGE 1-8). Gating off-state, label safe, stack push/pop, update in-place, mouse hit-test, cleanup, toggle.
-- Suite globale: nessuna regressione rispetto alla baseline (45 failed / 178 passed / 9 errors pre-Round8 → 45 failed / 187 passed / 9 errors post-Round8: +9 nuovi visual UI).
+- `test_visual_ui.py`: 11 test (9 Round 8 + 2 Round 9 audit). Coperti: gating off-state, label safe, stack push/pop, update in-place, mouse hit-test, cleanup, toggle, sync `Menu.update_menu()` e `DialogScreen.update_input()`.
+- Suite globale Round 9: 238 passed / 3 failed / 2 errors.
 
 ### Fixed
 
-- `pytest.ini`: aggiunto `ignore` per `DeprecationWarning` di `locale.getdefaultlocale()` (preesistente in `lib/resource.py:83`, sbloccava la collection dei test).
+- [R9-A] Rimossa chiamata deprecata `locale.getdefaultlocale()` in `soundrts/lib/resource.py`, sostituita con `locale.getlocale()` + fallback esplicito a `"en"`.
+- [R9-A] Rimossi `ResourceWarning` da file handle non chiusi nel codice progetto:
+	- `soundrts/config.py`: `save()` e `load()` ora usano context manager.
+	- `soundrts/lib/resource.py`: stream map chiusi in `official_multiplayer_maps()` e `_add_custom_multi()`.
+	- `soundrts/mapfile.py`: apertura mappe `.txt` via context manager.
+- [R9-A] Rimosso filtro temporaneo `ignore:Use setlocale.*:DeprecationWarning` da `pytest.ini` (workaround Round 8 non piu necessario).
+
+### Changed (Round 9 — audit Round 8)
+
+- [R9-B] `soundrts/clientmenu.py`: `Menu.update_menu()` aggiorna ora lo stack visivo in-place tramite `ScreenManager.update_current(...)` quando `visual_mode=1`.
+- [R9-B] `soundrts/clientmain.py`: `set_and_launch_mod()` e `set_and_launch_soundpack()` invocano `get_screen_manager().cleanup()` prima di `SystemExit`.
 
 ## [1.4.0] — 2026-05-24
 

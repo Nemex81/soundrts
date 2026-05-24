@@ -333,3 +333,46 @@ Obiettivo: introdurre una modalità visiva opzionale fullscreen per menu e dialo
 - [ ] Riavvio gioco: `visual_mode` persistito in `SoundRTS.ini`.
 - [ ] In gameplay (partita attiva), `Ctrl+F2` continua a commutare fullscreen del gioco (NON visual mode).
 
+## Round 9 — Debito tecnico + Audit Round 8 (2026-05-25)
+
+Stato globale: COMPLETATO
+
+Obiettivi:
+
+- A) Debito tecnico warning/deprecazioni: COMPLETATO
+- B) Audit Round 8 (visual mode): REVISIONATO E CONVALIDATO
+
+Risultato suite finale Round 9:
+
+- 238 passed / 3 failed / 2 errors
+
+Risultati principali:
+
+- Rimossa deprecazione `locale.getdefaultlocale()` in `soundrts/lib/resource.py`.
+- Rimossi `ResourceWarning` da file non chiusi in `soundrts/config.py`,
+      `soundrts/lib/resource.py`, `soundrts/mapfile.py`.
+- Rimosso workaround temporaneo da `pytest.ini`
+      (`ignore:Use setlocale.*:DeprecationWarning`).
+- Audit Round 8: corretti 2 gap di completezza:
+      - `Menu.update_menu()` ora sincronizza lo stack visivo in-place.
+      - cleanup stack visivo prima di `SystemExit` in set mod/soundpack.
+- Copertura test visual UI estesa da 9 a 11 test.
+
+Punti rimandati a round futuro:
+
+- Residuo suite: 3 failed / 2 errors non legati a locale deprecato
+      (area package/resource map loading). Da affrontare in round dedicato quality stabilization.
+
+File/report prodotti:
+
+- `doc_admin/round9_debito_tecnico_plan.md`
+- `doc_admin/round9_audit_round8.md`
+- `doc_admin/round8_visual_ui_plan.md` (sezione "Revisioni Round 9")
+- `suite_pre_A.log`, `suite_post_A.log`, `suite_final_R9.log`
+
+Decisione release/tag (LEGGE-7):
+
+- NO aggiornamento release/tag in questo round.
+      Motivazione: fix principalmente tecnico/qualita interna, con residuo suite non nullo.
+      Rilascio rinviato a quando il blocco residuo sara stabilizzato.
+

@@ -263,6 +263,15 @@ class Menu:
             self.choice_index = None
             if old_choice in self.choices:
                 self.choice_index = self.choices.index(old_choice)
+        if config.visual_mode:
+            # Round 9 audit: TrainingMenu.update_menu deve aggiornare in-place
+            # la schermata visiva corrente (LEGGE-7), senza push/pop.
+            try:
+                get_screen_manager().update_current(
+                    self.title, self.choices, self.choice_index
+                )
+            except Exception:
+                pass
 
     def _execute_choice(self):
         label, action = self.choices[self.choice_index][:2]

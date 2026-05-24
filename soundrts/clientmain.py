@@ -52,6 +52,7 @@ from .lib.msgs import nb2msg
 from .lib.resource import best_language_match, preferred_language, res
 from .metaserver import servers_list
 from .paths import CONFIG_DIR_PATH, REPLAYS_PATH, SAVE_PATH
+from .clientvisualui import get_screen_manager
 from .version import server_is_compatible
 
 
@@ -281,6 +282,8 @@ def set_and_launch_mod(mods):
     config.save()
     res.set_mods(config.mods)
     main_menu()  # update the menu title
+    # Round 9 audit: evita leak di stack visivo su rilancio client.
+    get_screen_manager().cleanup()
     raise SystemExit
 
 
@@ -300,6 +303,8 @@ def set_and_launch_soundpack(soundpacks):
     config.save()
     res.set_soundpacks(config.soundpacks)
     main_menu()  # update the menu title
+    # Round 9 audit: evita leak di stack visivo su rilancio client.
+    get_screen_manager().cleanup()
     raise SystemExit
 
 

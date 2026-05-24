@@ -86,3 +86,14 @@ import top-level, non importa nulla del menu nei moduli visivi).
 - F3: diff `clientmenu.py` mostra solo agganci, zero modifica a voice/sounds.
 - F4: pytest visual_ui 9/9, suite globale invariata (105+).
 - F5: `visual_mode=0` → comportamento attuale identico (zero render).
+
+## Revisioni Round 9
+
+- Audit B1.4: aggiunto `get_screen_manager().cleanup()` in
+  `set_and_launch_mod()` e `set_and_launch_soundpack()` prima di `SystemExit`.
+- Audit B1.3: `Menu.update_menu()` ora propaga l'update in-place allo stack
+  visivo tramite `ScreenManager.update_current(...)` quando `visual_mode=1`.
+- Audit B2: copertura test estesa da 9 a 11 test in
+  `soundrts/tests/unittests/test_visual_ui.py` con casi su:
+  - sync `Menu.update_menu()` -> `ScreenManager`
+  - `DialogScreen.update_input()`

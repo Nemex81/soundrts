@@ -80,8 +80,12 @@ def _preferred_language():
         return cfg
     else:
         try:
-            return locale.getdefaultlocale()[0]
-        except ValueError:
+            # Python 3.12: getdefaultlocale() e deprecato.
+            lang, _ = locale.getlocale()
+            if not lang:
+                return "en"
+            return lang
+        except (ValueError, locale.Error):
             warning(
                 "Couldn't get the system language. "
                 "To use another language, edit 'cfg/language.txt' "
@@ -294,7 +298,8 @@ def official_multiplayer_maps():
     maps = []
     official = res.packages[0].subpackage("multi")
     for n in official.filenames():
-        m = Map.load(official.open_binary(n), n)
+        with official.open_binary(n) as f:
+            m = Map.load(f, n)
         m.official = True
         maps.append(m)
     return maps
@@ -306,7 +311,8 @@ def _add_custom_multi(maps):
         if multi:
             for n in list(multi.filenames()) + list(multi.dirnames()):
                 try:
-                    m = Map.load(multi.open_binary(n), n)
+                    with multi.open_binary(n) as f:
+                        m = Map.load(f, n)
                 except Exception as e:
                     exception("couldn't load map %s: %s", n, e)
                 else:

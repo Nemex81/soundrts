@@ -52,8 +52,8 @@ class Map:
     def _init_from_path(self, path):
         self.name = _name_from_path(path)
         if path.endswith(".txt"):
-            f = open(path, encoding="utf-8", errors="replace")
-            self._load_from_text_file(f)
+            with open(path, encoding="utf-8", errors="replace") as f:
+                self._load_from_text_file(f)
         else:
             package = Package.from_path(path)
             self._load_from_package(package)
