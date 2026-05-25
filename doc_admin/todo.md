@@ -663,21 +663,31 @@ Evidenze raccolte:
 
 ### TODO Round 16
 
-- [ ] ALTA: Creare `soundrts/clientsprites.py` con `SpriteCache`
-      (get/clear/category_of) come da bozza in §3.1 del piano R15.
-      Usare `_IMG_ROOT = Path(BASE_DIR) / "res" / "img"`.
-- [ ] ALTA: Integrare blit sprite nei punti PR-1, PR-2, PR-3 di
-      `clientgamegridview.py` con fallback geometrico (LEGGE-1
-      audio invariante, LEGGE-2 visual_mode guard preservato).
-- [ ] ALTA: Aggiungere ~7 test in `test_clientsprites.py`
-      (cache miss → None, hit → Surface scalata, clear, fallback
-      su display_object/display_terrain con mock).
-- [ ] MEDIA: Verificare suite ≥ 310 passed / 0 failed.
-- [ ] MEDIA: Aggiornare `CHANGELOG.md` con sezione `[1.4.4]`
-      (Added: SpriteCache + sprite rendering opzionale).
-- [ ] OPERATORE: rivedere visivamente i 40 sprite MATCH_MEDIO
-      generati in `res/img/` e sostituire quelli non adeguati con
-      asset ad hoc (vedi `tools/sprite_mapping.csv`).
+- [x] ALTA: Creare `soundrts/clientsprites.py` con `SpriteCache`
+      (get/clear/category_of). Path root derivato da
+      `Path(__file__).resolve().parent.parent / "res" / "img"`
+      (correzione vs piano R15: `paths.BASE_DIR` non esiste nel
+      modulo `soundrts.paths`).
+- [x] ALTA: Integrare blit sprite nei punti PR-1, PR-2, PR-3 di
+      `clientgamegridview.py` con fallback geometrico preservato
+      (LEGGE-1 audio invariante, LEGGE-5 visual_mode=0 mai tocca
+      la cache).
+- [x] ALTA: Aggiungere 21 test in
+      `soundrts/tests/unittests/test_clientsprites.py` (cache
+      miss/hit/clear/reuse, placeholder trasparente → None,
+      fallback display_object circle/square, integrazione PR-1
+      terrain, sentinel _IMG_ROOT esistente,
+      `category_of` parametrizzato su 10 type_name).
+- [x] ALTA: `.gitignore` aggiornato (`/res/img/`,
+      `/tools/sprite_validation_report.txt`).
+- [x] MEDIA: Suite finale 322 passed / 1 skipped / 0 failed
+      (baseline R15-B 301 + 21 nuovi test).
+- [x] MEDIA: `CHANGELOG.md` aggiornato sotto `[Unreleased]`
+      (Added: SpriteCache + sprite rendering integrato).
+- [x] OPERATORE (tracciato): revisione visiva dei 40 sprite
+      MATCH_MEDIO resta a carico operatore — il codice R16 non
+      fa assunzioni sulla qualità semantica dell'arte, blitta
+      qualunque PNG valido in `res/img/<categoria>/`.
 
 ### TODO Round 17+
 
@@ -689,6 +699,49 @@ Evidenze raccolte:
       (zombie, skeleton, catapult, dragon, flyingmachine x2,
       naval x4, goldmine, dragonslair, shipyard, buildingsite)
       con sprite custom o pack alternativi.
+- [ ] BASSA: Hook automatico di `clientsprites.clear()` su
+      cambio risoluzione (attualmente esposto come metodo
+      `GridView.invalidate_sprite_cache()` ma non invocato; oggi
+      la cache cresce con i livelli di zoom). Bassa priorità:
+      le surface scalate sono piccole (≤256×256 RGBA).
+- [ ] BASSA: Estendere `category_of` a parsing dinamico di
+      `style.txt` se i mod introducono nuovi type_name
+      renderizzabili (oggi lookup statico hardcoded di 54
+      entità, fallback geometrico per i nuovi).
+
+## Round 16 — Sprite Cache + Integrazione Visual UI
+
+Data: 25 maggio 2026
+Stato: COMPLETATO
+
+### Output
+
+- `soundrts/clientsprites.py`: nuovo modulo SpriteCache (lazy
+  load, key `"{cat}/{name}@{size}"`, fallback `None` su
+  errore o placeholder trasparente, `category_of` statico).
+- `soundrts/clientgamegridview.py`: integrazione additiva PR-1
+  (terrain blit in `_display()`), PR-2 (buildings blit in
+  `display_object()` shape="square"), PR-3 (units/resources
+  blit in `display_object()` ramo circle); aggiunto metodo
+  `invalidate_sprite_cache()` per cambio risoluzione futura.
+- `soundrts/tests/unittests/test_clientsprites.py`: 21 test
+  (di cui 11 parametrizzati su `category_of`).
+- `.gitignore`: esclusi `/res/img/` e
+  `/tools/sprite_validation_report.txt`.
+- `doc_admin/round16_report.md`: report finale operatore.
+
+### Esito tecnico
+
+- Suite: 322 passed / 1 skipped / 0 failed (era 301
+  baseline + 21 nuovi test).
+- LEGGE-1 (audio): rispettata. Nessun import voice/sound/world*
+  nel nuovo modulo. `clientgamegridview` resta l'unico
+  consumatore di `clientsprites`.
+- LEGGE-5 (visual_mode=0): rispettata. Audio-only non
+  istanzia `GridView` quindi non importa né tocca la cache.
+- Placeholder trasparenti (OP-2): rilevati via sampling
+  alpha angoli+centro, ritornano None → fallback geometrico
+  attivo (uguale al pre-R16).
 
 ## Round 15-B — Sprite Pipeline (res/img/ + tooling)
 

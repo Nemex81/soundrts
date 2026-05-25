@@ -4,6 +4,23 @@
 
 ### Added
 
+- [R16] `soundrts/clientsprites.py`: nuovo modulo `SpriteCache` per la Visual UI. API pubblica: `get(category, name, size)` lazy con cache `dict[str, Surface | None]` chiavata su `"{cat}/{name}@{size}"`, `clear()` per invalidazione su resize, `category_of(o)` resolver statico (lookup hardcoded delle 54 entità rinderizzabili documentate in `tools/sprite_mapping.csv`). Errori file/pygame → `None` (fallback geometrico). I PNG completamente trasparenti generati da R15-B (`tools/normalize_sprites.py`) vengono rilevati via sampling alpha sui quattro angoli + centro e trattati come "sprite assente" per preservare il fallback.
+- [R16] `soundrts/clientgamegridview.py`: integrazione additiva sprite in 3 punti — PR-1 in `_display()` (blit del terrain sprite sopra `draw_rect` di fondo, con `sq.type_name.lstrip("_")` per i terreni auto-applicati), PR-2 in `display_object()` ramo `shape == "square"` (buildings), PR-3 in `display_object()` ramo circle (units/resources). Tutti i fallback geometrici preesistenti restano invariati. Aggiunto metodo `GridView.invalidate_sprite_cache()` come hook per futuri cambi di risoluzione.
+- [R16] `soundrts/tests/unittests/test_clientsprites.py`: 21 test (cache miss/hit/clear/reuse, placeholder trasparente → None, integrazione PR-1 con `_display`, fallback PR-2/PR-3 in `display_object`, `category_of` parametrizzato su 10 type_name più caso senza `type_name`, sentinel `_IMG_ROOT` coincide con `<repo>/res/img/`).
+
+### Changed
+
+- [R16] `.gitignore`: esclusi `/res/img/` (54 PNG asset binari generati localmente da `tools/normalize_sprites.py`) e `/tools/sprite_validation_report.txt` (output volatile QA). Coerente con la decisione D2 di R15-B (no `git add` su binari).
+
+### Notes
+
+- [R16] Decisione architetturale: `_IMG_ROOT = Path(__file__).resolve().parent.parent / "res" / "img"`. Il piano R15 ipotizzava `Path(BASE_DIR) / "res" / "img"`, ma `BASE_DIR` non è esposto da `soundrts/paths.py`. Il path relativo al modulo è più robusto (segue il modulo se reinstallato come package).
+- [R16] LEGGE-1 (audio-only invariant) e LEGGE-5 (visual_mode=0 mai chiama `clientsprites`) verificate: `clientgamegridview` è l'unico modulo che importa `clientsprites`, e viene istanziato solo in `visual_mode=1`.
+- [R16] Suite finale: 322 passed / 1 skipped / 0 failed (era 301 baseline R15-B + 21 nuovi test). Nessuna regressione.
+- [R16] Nessun bump di versione: funzionalità additiva, comportamento visivo identico al pre-R16 quando `res/img/` è assente (fallback geometrico totale). Eventuale bump `1.4.4` rimandato a un round che chiude più feature insieme.
+
+### Added
+
 - [R15-B] `res/img/{units,buildings,resources,terrain,ui}/`: nuova radice asset grafici 2D. 54 PNG RGBA obbligatori generati dal pack Kenney Medieval RTS (`PNG/Retina/`) o come placeholder trasparente quando non esiste una controparte semantica nel pack (zombie, skeleton, catapult, dragon, flyingmachine, naval units, goldmine, dragonslair, shipyard, buildingsite). Dimensioni: 32x32 per units/resources, 64x64 per buildings/terrain/ui. Pronto per la `SpriteCache` di Round 16.
 - [R15-B] `tools/normalize_sprites.py`: dev-tool basato su Pillow che converte gli sprite sorgente in RGBA, ridimensiona con LANCZOS e li salva in `res/img/<categoria>/<type_name>.png`. Scrive `tools/sprite_mapping.csv` come audit trail (sorgente, dimensioni originali/finali, livello match, status).
 - [R15-B] `tools/validate_sprites.py`: dev-tool QA che verifica presenza, modo RGBA, dimensioni esatte e classifica ogni sprite (OK / PLACEHOLDER / MANCANTE / ERRORE_FORMATO). Output testuale NVDA-friendly su stdout e su `tools/sprite_validation_report.txt`.

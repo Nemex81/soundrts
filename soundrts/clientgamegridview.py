@@ -2,6 +2,7 @@ from math import cos, radians, sin
 
 import pygame
 
+from . import clientsprites
 from .definitions import style
 from .lib.log import warning
 from .lib.nofloat import PRECISION, square_of_distance
@@ -80,7 +81,17 @@ class GridView:
                     color = square_color(sq)
                     if sq not in player.observed_squares:
                         color = fade(color)
-                    draw_rect(color, self._get_rect_from_map_coords(xc, yc))
+                    rect = self._get_rect_from_map_coords(xc, yc)
+                    draw_rect(color, rect)
+                    # PR-1: overlay terrain sprite if available; the
+                    # draw_rect above remains as fallback when the
+                    # sprite is missing (placeholder) or fails to load.
+                    terrain_name = sq.type_name.lstrip("_")
+                    terrain_sprite = clientsprites.get(
+                        "terrain", terrain_name, self.square_view_width
+                    )
+                    if terrain_sprite is not None:
+                        get_screen().blit(terrain_sprite, (rect[0], rect[1]))
                     squares_to_view.append(sq)
         # walls
         for sq in squares_to_view:
@@ -115,11 +126,27 @@ class GridView:
             width = 1
         x, y = self._object_coords(o)
         R_vis = max(R_MIN, int(R * UNIT_SCALE))
+        # PR-2 / PR-3: try sprite blit first, fall back to the legacy
+        # geometric rendering when no sprite is available. This keeps
+        # behaviour identical for placeholders and for entities
+        # without artwork (Legge IA #8: audio invariant; the fallback
+        # is the previous code path verbatim).
+        category = clientsprites.category_of(o)
+        sprite = (
+            clientsprites.get(category, o.type_name, R_vis * 2)
+            if category is not None
+            else None
+        )
         if o.shape() == "square":
             rect = x - R_vis, y - R_vis, R_vis * 2, R_vis * 2
-            draw_rect(o.corrected_color(), rect, width)
+            if sprite is not None:
+                get_screen().blit(sprite, (x - R_vis, y - R_vis))
+            else:
+                draw_rect(o.corrected_color(), rect, width)
         else:
-            if o.collision:
+            if sprite is not None:
+                get_screen().blit(sprite, (x - R_vis, y - R_vis))
+            elif o.collision:
                 pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R_vis, width)
             elif self.interface.target is not None and self.interface.target is o:
                 pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R_vis, 0)
@@ -232,6 +259,16 @@ class GridView:
         self._display_active_zone_border()
         if self.interface.collision_debug:
             self._collision_display()
+
+    def invalidate_sprite_cache(self):
+        """Drop cached sprites (call on resolution change).
+
+        Round 16 hook: scaled surfaces are sized for the current
+        ``square_view_width`` / ``R_vis``. After a resize the cache
+        must be invalidated so that the next display() rescales from
+        the source PNGs.
+        """
+        clientsprites.clear()
 
     def square_from_mousepos(self, pos):
         self._update_coefs()

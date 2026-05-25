@@ -4,3 +4,8 @@
 /doc
 /.mypy_cache
 /.venv
+
+# R16: sprite assets are generated locally (tools/normalize_sprites.py).
+# Binary PNGs are not tracked; operator may opt in via Git LFS.
+/res/img/
+/tools/sprite_validation_report.txt
