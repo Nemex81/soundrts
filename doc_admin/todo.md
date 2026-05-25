@@ -613,4 +613,76 @@ Suite finale: 292 passed / 0 failed / 0 errors / 1 skipped
 - [ ] OPERATORE: decidere se creare il tag `v1.4.3` in git
       (LEGGE-8 R14 ha vietato git autonomo).
 
+## Round 15 — Analisi Sprite + Piano Tecnico Integrazione Grafica
+
+Stato globale: COMPLETATO
+Data: 25 maggio 2026
+Tipo round: ANALISI + PIANIFICAZIONE (zero implementazione)
+Suite finale: invariata (292 passed / 0 failed / 0 errors / 1 skipped)
+
+Deliverable prodotti:
+
+- `doc_admin/round15_sprite_plan.md` — piano tecnico SpriteCache
+  (architettura, integrazione punti PR-1..PR-5 in
+  `clientgamegridview.py`, strategia mock test headless,
+  bug noto su `R`/`R2` globali).
+- `doc_admin/round15_sprite_report.md` — catalogo operatore di
+  54 sprite obbligatori (18 unità + 22 strutture + 2 risorse +
+  12 terreni) + 5 UI opzionali, organizzati in 4 gruppi di
+  priorità, con descrizione visiva, dimensioni master,
+  convenzioni di naming.
+- Sezione corrente in `doc_admin/todo.md`.
+
+Decisioni autonome registrate:
+
+- PR-4 (indicatore fazione + HP bar): NON sostituire con sprite
+  in R16, restano primitive geometriche già adeguate.
+- PR-5 (attack flash): sprite opzionale priorità BASSA per R16+.
+- `R`/`R2` globali in `clientgamegridview.py`: refactor a
+  attributi di istanza rinviato a Round 17+ per non mescolare
+  refactor con introduzione sprite.
+- Terreni `_meadows`/`_forest`/`_dense_forest`: filename senza
+  underscore iniziale (`meadows.png`, ecc.) in `img/terrain/`.
+- Categorizzazione runtime (`category_of(o)`): decisione finale
+  in R16, due strategie sul piatto (mapping statico hardcoded vs
+  costruzione dinamica da `style.txt`).
+- Spell/effect (`holy_vision`, `meteors`, `exorcism`): esclusi
+  dal catalogo sprite (effetti non statici).
+- `meadow`/`corpse`/`path`/`bridge`: sprite opzionali (BASSA),
+  decorativi non bloccanti.
+
+Evidenze raccolte:
+
+- Analisi `clientgamegridview.py` (lines 1–300, 4 touchpoint
+  rendering identificati).
+- Lettura completa `res/ui/style.txt` (609 righe, 125 def block,
+  catena `is_a` analizzata, totale 54 type_name renderizzabili).
+- Probe `pygame 2.6.1` (SDL 2.28.4): supporto `image.load`,
+  `convert_alpha`, `transform.scale`, `SRCALPHA` confermato.
+- Cartella `img/` ancora inesistente nel workspace
+  (Test-Path → False): da creare dall'operatore.
+
+### TODO Round 16
+
+- [ ] ALTA: Creare `soundrts/clientsprites.py` con `SpriteCache`
+      (get/clear/category_of) come da bozza in §3.1 del piano R15.
+- [ ] ALTA: Integrare blit sprite nei punti PR-1, PR-2, PR-3 di
+      `clientgamegridview.py` con fallback geometrico (LEGGE-1
+      audio invariante, LEGGE-2 visual_mode guard preservato).
+- [ ] ALTA: Aggiungere ~7 test in `test_clientsprites.py`
+      (cache miss → None, hit → Surface scalata, clear, fallback
+      su display_object/display_terrain con mock).
+- [ ] MEDIA: Verificare suite ≥ 299 passed / 0 failed.
+- [ ] MEDIA: Aggiornare `CHANGELOG.md` con sezione `[1.4.4]`
+      (Added: SpriteCache + sprite rendering opzionale).
+- [ ] OPERATORE: creare cartella `img/` e popolarla seguendo
+      `round15_sprite_report.md` (priorità Gruppo 1 = MVP 12 sprite).
+
+### TODO Round 17+
+
+- [ ] BASSA: Refactor `R`/`R2` globali in
+      `clientgamegridview.py` a `self.R`/`self.R2`.
+- [ ] BASSA: Sprite UI opzionali (selection_ring, hp_bar_*,
+      attack_flash) integrati in PR-4/PR-5.
+
 
