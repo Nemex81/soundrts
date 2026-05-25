@@ -4,20 +4,23 @@
 
 ## [1.4.3] — 2026-05-25
 
-> Round 13: chiusura sospesi R11 (cataloghi i18n hint visuali + allineamento `version.py`).
+> Round 13 + Round 14: chiusura sospesi R11 (cataloghi i18n hint visuali, allineamento `version.py`) e revisione/release prep (qualità i18n, fallback update-check, bump finale 1.4.3).
 
 ### Added
 
 - [R13-T2] `res/ui-{be,cs,de,es,fr,pl,pt-BR,ru,sk,vi,zh}/tts.txt`: aggiunti i token `4365` (`VISUAL_MENU_HINT`) e `4366` (`VISUAL_DIALOG_HINT`) per coprire tutte le lingue rilasciate. Le traduzioni sono prodotte come adattamento meccanico della versione EN/IT e devono essere riviste da madrelingua.
 - [R13-T2] `soundrts/tests/unittests/test_i18n_hints.py`: 27 test parametrizzati che verificano la presenza dei token `4365`/`4366` in ogni catalogo `res/ui*/tts.txt`.
+- [R14-T2] `soundrts/tests/unittests/test_version_check.py`: 3 test che verificano il fallback silenzioso di `RevisionChecker.run()` per HTTP 404, `TimeoutError` e `URLError`, garantendo l'invariante audio-only anche quando l'endpoint `http://jlpo.free.fr/soundrts/<major.minor>version.txt` non è disponibile.
 
 ### Changed
 
-- [R13-T3] `soundrts/version.py`: `VERSION` allineata da `"1.3.8.1"` a `"1.4.2"`, in coerenza con il CHANGELOG interno. Il bump è sicuro perché `server_is_compatible()` confronta `SERVER_COMPATIBILITY="0"` e non la stringa `VERSION`; l'unico effetto è l'URL del check "update available" che ora punta a `1.4version.txt`.
+- [R13-T3 / R14-T3] `soundrts/version.py`: `VERSION` allineata da `"1.3.8.1"` a `"1.4.3"` in coerenza con questa sezione del changelog. Il bump è sicuro perché `server_is_compatible()` confronta `SERVER_COMPATIBILITY="0"` e non la stringa `VERSION`; l'unico effetto pratico è l'URL del check "update available" che ora punta a `1.4version.txt`.
 
 ### Notes
 
 - [R13-T1] SOSPESO-A (handler `WINDOWRESIZED`/`WINDOWSIZECHANGED`): SCARTATO-PREMATURO. `lib/screen.set_screen()` usa `pygame.FULLSCREEN` sia per gameplay sia per `visual_mode=1`; `RESIZABLE` non è mai impostato, quindi un handler resize sarebbe codice morto.
+- [R14-T1] Revisione qualità delle traduzioni i18n 4365/4366: tutte le 11 lingue (`be, cs, de, es, fr, pl, pt-BR, ru, sk, vi, zh`) sono state classificate ACCETTABILI secondo il criterio struttura "tasto: azione" e tasti fisici universali in EN. Per `vi` e `zh` la revisione madrelingua resta consigliata e tracciata come TODO Round 15.
+- [R14-T2] Endpoint `http://jlpo.free.fr/soundrts/1.4version.txt` non disponibile (HTTP 404). Il fallback è già silenzioso grazie al `try/except` esistente in `RevisionChecker.run()`; rischio residuo: nessuna notifica di nuove versioni per utenti 1.4.x, tracciato come TODO Round 15 a bassa priorità.
 
 ## [1.4.2] — 2026-05-26
 

@@ -559,7 +559,58 @@ Suite finale: 289 passed / 0 failed / 0 errors
 
 ### TODO Round 14
 
-- [ ] Revisione madrelingua delle traduzioni `4365`/`4366` aggiunte in R13.
-- [ ] Decidere tag release `v1.4.3` (LEGGE-8: nessun comando git eseguito autonomamente).
-- [ ] Verificare disponibilità `1.4version.txt` su `jlpo.free.fr` per update-check.
+- [x] Revisione madrelingua delle traduzioni `4365`/`4366` aggiunte in R13.
+- [x] Decidere tag release `v1.4.3` (LEGGE-8: nessun comando git eseguito autonomamente).
+- [x] Verificare disponibilità `1.4version.txt` su `jlpo.free.fr` per update-check.
+
+## Round 14 — i18n Revisione + Update-check + Release prep
+
+Avvio: 25 maggio 2026
+Stato globale: COMPLETATO
+Suite finale: 292 passed / 0 failed / 0 errors / 1 skipped
+(baseline ingresso: 289)
+
+### Completati
+
+- [x] TASK-1: Revisione madrelingua 4365/4366.
+      Esito: 11/11 lingue ACCETTABILI senza modifica
+      (be, cs, de, es, fr, pl, pt-BR, ru, sk hanno traduzioni
+      target-language coerenti; vi/zh accettate come base
+      automatica, revisione nativa consigliata R15).
+      Test aggiornati: 0 (i 27 test esistenti già verificano
+      solo la presenza del token, non il contenuto esatto).
+- [x] TASK-2: Verifica endpoint update-check.
+      URL: `http://jlpo.free.fr/soundrts/1.4version.txt`
+      Esito HTTP: 404 Not Found.
+      Ramo scelto: **RAMO-FILE-MANCANTE-SAFE**.
+      Motivazione: `RevisionChecker.run()` in `clientversion.py`
+      ha già `try/except` bare che inghiotte ogni eccezione
+      (incluso `HTTPError`). Nessun crash, nessun TTS spurio.
+      SUB-TASK-2A: non necessario.
+      Test aggiunti: 3 in `test_version_check.py` che simulano
+      `HTTPError(404)`, `TimeoutError`, `URLError` e verificano
+      che `run()` non propaghi eccezioni.
+- [x] TASK-3: Preparazione release v1.4.3.
+      Discrepanza R13 risolta come OPZIONE-A:
+      `version.py` bumpato `"1.4.2"` → `"1.4.3"` per allineamento
+      con CHANGELOG `[1.4.3]`.
+      `server_is_compatible()` confronta `SERVER_COMPATIBILITY="0"`,
+      non `VERSION`: bump sicuro per protocollo.
+      `README.txt`: nessuna menzione versione, invariato.
+      `CHANGELOG.md`: sezione `[1.4.3]` estesa con voci R14
+      (test fallback update-check, revisione i18n, bump finale).
+
+### TODO Round 15
+
+- [ ] BASSA: Revisione madrelingua delle traduzioni `4365`/`4366`
+      per `vi` (vietnamita) e `zh` (cinese): le altre 9 lingue
+      sono state classificate ACCETTABILI in R14.
+- [ ] BASSA: Pubblicare il file `1.4version.txt` su `jlpo.free.fr`
+      (o configurare endpoint alternativo) per riattivare la
+      notifica "update available" agli utenti 1.4.x. Rischio
+      attuale: utenti non notificati di nuove versioni
+      (no crash, fallback già silenzioso).
+- [ ] OPERATORE: decidere se creare il tag `v1.4.3` in git
+      (LEGGE-8 R14 ha vietato git autonomo).
+
 
