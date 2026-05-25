@@ -659,24 +659,25 @@ Evidenze raccolte:
   catena `is_a` analizzata, totale 54 type_name renderizzabili).
 - Probe `pygame 2.6.1` (SDL 2.28.4): supporto `image.load`,
   `convert_alpha`, `transform.scale`, `SRCALPHA` confermato.
-- Cartella `img/` ancora inesistente nel workspace
-  (Test-Path → False): da creare dall'operatore.
+- Cartella `res/img/` creata e popolata in Round 15-B.
 
 ### TODO Round 16
 
 - [ ] ALTA: Creare `soundrts/clientsprites.py` con `SpriteCache`
       (get/clear/category_of) come da bozza in §3.1 del piano R15.
+      Usare `_IMG_ROOT = Path(BASE_DIR) / "res" / "img"`.
 - [ ] ALTA: Integrare blit sprite nei punti PR-1, PR-2, PR-3 di
       `clientgamegridview.py` con fallback geometrico (LEGGE-1
       audio invariante, LEGGE-2 visual_mode guard preservato).
 - [ ] ALTA: Aggiungere ~7 test in `test_clientsprites.py`
       (cache miss → None, hit → Surface scalata, clear, fallback
       su display_object/display_terrain con mock).
-- [ ] MEDIA: Verificare suite ≥ 299 passed / 0 failed.
+- [ ] MEDIA: Verificare suite ≥ 310 passed / 0 failed.
 - [ ] MEDIA: Aggiornare `CHANGELOG.md` con sezione `[1.4.4]`
       (Added: SpriteCache + sprite rendering opzionale).
-- [ ] OPERATORE: creare cartella `img/` e popolarla seguendo
-      `round15_sprite_report.md` (priorità Gruppo 1 = MVP 12 sprite).
+- [ ] OPERATORE: rivedere visivamente i 40 sprite MATCH_MEDIO
+      generati in `res/img/` e sostituire quelli non adeguati con
+      asset ad hoc (vedi `tools/sprite_mapping.csv`).
 
 ### TODO Round 17+
 
@@ -684,5 +685,41 @@ Evidenze raccolte:
       `clientgamegridview.py` a `self.R`/`self.R2`.
 - [ ] BASSA: Sprite UI opzionali (selection_ring, hp_bar_*,
       attack_flash) integrati in PR-4/PR-5.
+- [ ] BASSA: Sostituire i 14 placeholder trasparenti
+      (zombie, skeleton, catapult, dragon, flyingmachine x2,
+      naval x4, goldmine, dragonslair, shipyard, buildingsite)
+      con sprite custom o pack alternativi.
+
+## Round 15-B — Sprite Pipeline (res/img/ + tooling)
+
+Data: 25 maggio 2026
+Stato: COMPLETATO
+
+### Output
+
+- Corretto il path target da `img/` a `res/img/` nei due doc R15
+  (`round15_sprite_plan.md`, `round15_sprite_report.md`).
+- Creata struttura `res/img/{units,buildings,resources,terrain,ui}/`
+  e popolata con 54 PNG RGBA obbligatori (32x32 units/resources,
+  64x64 buildings/terrain).
+- `tools/normalize_sprites.py`: dev-tool Pillow per generazione
+  sprite da pack Kenney Medieval RTS + placeholder trasparenti.
+- `tools/validate_sprites.py`: dev-tool QA NVDA-friendly che
+  produce `tools/sprite_validation_report.txt`.
+- `tools/sprite_mapping.csv`: audit trail mapping 54 entry.
+- `soundrts/tests/unittests/test_sprite_tools.py`: 9 test.
+- `doc_admin/round15b_report.md`: report finale operatore.
+
+### Esito tecnico
+
+- 40 sprite OK (MATCH_MEDIO con pack Kenney, indice senza
+  ispezione visiva: richiede revisione operatore).
+- 14 sprite PLACEHOLDER trasparenti (NO_MATCH semantico nel
+  pack Kenney base).
+- 0 MANCANTI, 0 ERRORI_FORMATO, STATO_GENERALE: OK.
+- Suite: 301 passed / 1 skipped / 0 failed (era 292 baseline +
+  9 nuovi test sprite tools).
+
+
 
 

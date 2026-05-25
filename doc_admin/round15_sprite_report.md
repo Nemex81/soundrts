@@ -2,7 +2,7 @@
 
 **Data:** 25 maggio 2026
 **Destinatario:** operatore (creazione sprite manuale)
-**Output atteso:** cartella `img/` nella root del workspace
+**Output atteso:** cartella `res/img/` (sottocartella di `res/`)
 **Formato master:** PNG con canale alpha
 **Stile suggerito:** top-down medieval flat, palette coerente
 **Tool consigliati:** Aseprite, Krita, Piskel, Inkscape
@@ -34,7 +34,7 @@
 ## 2. Struttura cartelle attesa
 
 ```
-img/
+res/img/
 ├── units/        ← 18 file
 ├── buildings/    ← 22 file
 ├── resources/    ← 2  file
@@ -46,7 +46,7 @@ Totale obbligatorio: **54 PNG**. Totale completo con UI: **59 PNG**.
 
 ---
 
-## 3. UNITÀ (`img/units/`, 32×32 px)
+## 3. UNITÀ (`res/img/units/`, 32×32 px)
 
 Priorità ALTA: gameplay core, sempre visibili sul campo.
 
@@ -75,7 +75,7 @@ Priorità ALTA: gameplay core, sempre visibili sul campo.
 
 ---
 
-## 4. STRUTTURE (`img/buildings/`, 64×64 px)
+## 4. STRUTTURE (`res/img/buildings/`, 64×64 px)
 
 Priorità ALTA: definiscono visivamente le basi del giocatore.
 
@@ -108,7 +108,7 @@ Priorità ALTA: definiscono visivamente le basi del giocatore.
 
 ---
 
-## 5. RISORSE (`img/resources/`, 32×32 px)
+## 5. RISORSE (`res/img/resources/`, 32×32 px)
 
 Priorità ALTA: visibili in ogni mappa.
 
@@ -121,7 +121,7 @@ Priorità ALTA: visibili in ogni mappa.
 
 ---
 
-## 6. TERRENI (`img/terrain/`, 64×64 px, tileable)
+## 6. TERRENI (`res/img/terrain/`, 64×64 px, tileable)
 
 Priorità ALTA: coprono l'intera mappa, tile-friendly (i bordi devono
 combaciare se ripetuti).
@@ -150,7 +150,7 @@ possono avere un disegno centrato non tileable.
 
 ---
 
-## 7. UI OPZIONALI (`img/ui/`, 64×64 px) — PRIORITÀ BASSA
+## 7. UI OPZIONALI (`res/img/ui/`, 64×64 px) — PRIORITÀ BASSA
 
 Non richiesti per R16. Possono migliorare il feedback visivo nei round
 successivi.
@@ -223,11 +223,11 @@ del paragrafo 9. Il gioco resta giocabile in ogni momento.
 
 ## 11. Posizione di consegna
 
-Crea la cartella `img/` nella root del workspace:
+Crea la cartella `res/img/` (dentro `res/` del workspace):
 
 ```
-c:\Users\nemex\OneDrive\Documenti\GitHub\soundrts\img\
+c:\Users\nemex\OneDrive\Documenti\GitHub\soundrts\res\img\
 ```
 
 NON committare file binari grossi: prima di pushare, valutare git LFS o
-escludere `img/` da `.gitignore` (decisione operatore).
+escludere `res/img/` da `.gitignore` (decisione operatore).

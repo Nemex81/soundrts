@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- [R15-B] `res/img/{units,buildings,resources,terrain,ui}/`: nuova radice asset grafici 2D. 54 PNG RGBA obbligatori generati dal pack Kenney Medieval RTS (`PNG/Retina/`) o come placeholder trasparente quando non esiste una controparte semantica nel pack (zombie, skeleton, catapult, dragon, flyingmachine, naval units, goldmine, dragonslair, shipyard, buildingsite). Dimensioni: 32x32 per units/resources, 64x64 per buildings/terrain/ui. Pronto per la `SpriteCache` di Round 16.
+- [R15-B] `tools/normalize_sprites.py`: dev-tool basato su Pillow che converte gli sprite sorgente in RGBA, ridimensiona con LANCZOS e li salva in `res/img/<categoria>/<type_name>.png`. Scrive `tools/sprite_mapping.csv` come audit trail (sorgente, dimensioni originali/finali, livello match, status).
+- [R15-B] `tools/validate_sprites.py`: dev-tool QA che verifica presenza, modo RGBA, dimensioni esatte e classifica ogni sprite (OK / PLACEHOLDER / MANCANTE / ERRORE_FORMATO). Output testuale NVDA-friendly su stdout e su `tools/sprite_validation_report.txt`.
+- [R15-B] `soundrts/tests/unittests/test_sprite_tools.py`: 9 test che proteggono il contratto della pipeline sprite (54 entry obbligatorie, categorie note, contratto placeholder trasparente, classificazione errori formato).
+
+### Changed
+
+- [R15-B] `doc_admin/round15_sprite_plan.md` e `doc_admin/round15_sprite_report.md`: corretto il percorso target degli sprite da `img/` (root del workspace) a `res/img/` (sottocartella di `res/`). Aggiornati anche gli snippet di codice (`_IMG_ROOT = Path(BASE_DIR) / "res" / "img"`) coerentemente con la convenzione resource del progetto.
+
+### Notes
+
+- [R15-B] Decisione operativa: i 54 PNG generati NON vengono committati automaticamente (LFS / `.gitignore` su `res/img/` resta una decisione operatore). Pillow è installata come dev-dependency nel venv ma NON è stata aggiunta a `requirements.txt` (tooling, non runtime).
+- [R15-B] Tutte le 40 corrispondenze MATCH_MEDIO con il pack Kenney sono state assegnate per indice del file sorgente senza ispezione visiva sprite-per-sprite. Ogni riga di `tools/sprite_mapping.csv` riporta una nota esplicativa; si consiglia revisione visiva operatore prima del rendering definitivo in Round 16.
+
 ## [1.4.3] — 2026-05-25
 
 > Round 13 + Round 14: chiusura sospesi R11 (cataloghi i18n hint visuali, allineamento `version.py`) e revisione/release prep (qualità i18n, fallback update-check, bump finale 1.4.3).

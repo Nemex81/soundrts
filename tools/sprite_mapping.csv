@@ -1,0 +1,55 @@
+type_name,categoria,file_sorgente,size_originale,size_finale,modalita_rgba,livello_match,note,status
+peasant,units,medievalUnit_01.png,128x128,32x32,RGBA,MEDIO,indice 01 assunto come unita base team blu; richiede verifica visiva,OK
+footman,units,medievalUnit_02.png,128x128,32x32,RGBA,MEDIO,indice 02 assunto come fante melee team blu,OK
+archer,units,medievalUnit_03.png,128x128,32x32,RGBA,MEDIO,indice 03 assunto come arciere team blu,OK
+knight,units,medievalUnit_04.png,128x128,32x32,RGBA,MEDIO,indice 04 assunto come cavaliere team blu,OK
+mage,units,medievalUnit_05.png,128x128,32x32,RGBA,MEDIO,indice 05 assunto come caster team blu,OK
+priest,units,medievalUnit_06.png,128x128,32x32,RGBA,MEDIO,indice 06 assunto come caster supporto team blu,OK
+darkarcher,units,medievalUnit_15.png,128x128,32x32,RGBA,MEDIO,indice 15 assunto come arciere team rosso (variante scura),OK
+necromancer,units,medievalUnit_17.png,128x128,32x32,RGBA,MEDIO,indice 17 assunto come caster team rosso,OK
+zombie,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+skeleton,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+catapult,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+dragon,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+new_flyingmachine,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+flyingmachine,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+boat,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+destroyer,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+battleship,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+submarine,units,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+townhall,buildings,medievalStructure_02.png,128x128,64x64,RGBA,MEDIO,indice 02 60x38 assunto come edificio centrale team blu,OK
+keep,buildings,medievalStructure_03.png,128x128,64x64,RGBA,MEDIO,indice 03 52x34 assunto come mastio team blu,OK
+castle,buildings,medievalStructure_09.png,128x128,64x64,RGBA,MEDIO,indice 09 56x60 assunto come castello grande,OK
+barracks,buildings,medievalStructure_04.png,128x128,64x64,RGBA,MEDIO,indice 04 44x36 assunto come caserma team blu,OK
+farm,buildings,medievalStructure_01.png,128x128,64x64,RGBA,MEDIO,indice 01 36x42 assunto come fattoria,OK
+lumbermill,buildings,medievalStructure_05.png,128x128,64x64,RGBA,MEDIO,indice 05 44x42 assunto come segheria,OK
+blacksmith,buildings,medievalStructure_10.png,128x128,64x64,RGBA,MEDIO,indice 10 44x40 assunto come fucina,OK
+stables,buildings,medievalStructure_11.png,128x128,64x64,RGBA,MEDIO,indice 11 44x40 assunto come stalla,OK
+workshop,buildings,medievalStructure_18.png,128x128,64x64,RGBA,MEDIO,indice 18 44x48 assunto come officina,OK
+magestower,buildings,medievalStructure_12.png,128x128,64x64,RGBA,MEDIO,indice 12 20x36 torre alta assunta come torre dei maghi,OK
+temple,buildings,medievalStructure_13.png,128x128,64x64,RGBA,MEDIO,indice 13 53x52 assunto come tempio,OK
+necropolis,buildings,medievalStructure_14.png,128x128,64x64,RGBA,MEDIO,indice 14 63x63 assunto come necropoli (struttura grande scura),OK
+scouttower,buildings,medievalStructure_08.png,128x128,64x64,RGBA,MEDIO,indice 08 32x40 torre in legno,OK
+guardtower,buildings,medievalStructure_22.png,128x128,64x64,RGBA,MEDIO,indice 22 32x40 torre in pietra team rosso,OK
+cannontower,buildings,medievalStructure_16.png,128x128,64x64,RGBA,MEDIO,indice 16 44x60 torre alta con sommita armata,OK
+wall,buildings,medievalStructure_06.png,128x128,64x64,RGBA,MEDIO,indice 06 60x38 assunto come sezione muro team blu,OK
+massive_wall,buildings,medievalStructure_07.png,128x128,64x64,RGBA,MEDIO,indice 07 52x34 assunto come muro pesante team rosso,OK
+gate,buildings,medievalStructure_15.png,128x128,64x64,RGBA,MEDIO,indice 15 62x64 assunto come cancello,OK
+massive_gate,buildings,medievalStructure_21.png,128x128,64x64,RGBA,MEDIO,indice 21 60x60 assunto come cancello rinforzato,OK
+shipyard,buildings,,,64x64,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+dragonslair,buildings,,,64x64,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+buildingsite,buildings,,,64x64,RGBA,NO_MATCH,nessuna impalcatura nel pack Kenney medievale base,PLACEHOLDER
+wood,resources,medievalEnvironment_12.png,128x128,32x32,RGBA,MEDIO,indice 12 38x35 cluster alberi assunto come bosco raccoglibile,OK
+goldmine,resources,,,32x32,RGBA,NO_MATCH,non presente nel pack Kenney medievale base,PLACEHOLDER
+meadows,terrain,medievalTile_03.png,128x128,64x64,RGBA,MEDIO,indice 03 tile 64x64 assunto come prato base,OK
+forest,terrain,medievalTile_15.png,128x128,64x64,RGBA,MEDIO,indice 15 tile 64x64 assunto come foresta rada,OK
+dense_forest,terrain,medievalTile_18.png,128x128,64x64,RGBA,MEDIO,indice 18 tile 64x64 assunto come foresta fitta,OK
+river,terrain,medievalTile_07.png,128x128,64x64,RGBA,MEDIO,indice 07 tile 64x64 acqua assunta come fiume,OK
+lake,terrain,medievalTile_13.png,128x128,64x64,RGBA,MEDIO,indice 13 tile 64x64 acqua assunta come lago,OK
+sea,terrain,medievalTile_19.png,128x128,64x64,RGBA,MEDIO,indice 19 tile 64x64 acqua assunta come mare,OK
+ocean,terrain,medievalTile_20.png,128x128,64x64,RGBA,MEDIO,indice 20 tile 64x64 acqua scura assunta come oceano,OK
+mountain,terrain,medievalTile_32.png,128x128,64x64,RGBA,MEDIO,indice 32 tile 64x64 assunto come montagna impassabile,OK
+mountain_pass,terrain,medievalTile_27.png,128x128,64x64,RGBA,MEDIO,indice 27 tile 64x64 assunto come passo di montagna,OK
+big_bridge,terrain,medievalTile_24.png,128x128,64x64,RGBA,MEDIO,indice 24 50x36 assunto come ponte,OK
+ford,terrain,medievalTile_38.png,128x128,64x64,RGBA,MEDIO,indice 38 50x36 assunto come guado,OK
+marsh,terrain,medievalTile_41.png,128x128,64x64,RGBA,MEDIO,indice 41 tile 64x64 assunto come palude,OK

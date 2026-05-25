@@ -49,7 +49,7 @@ Sostituirli con sprite richiederebbe una palette di anelli colorati e
 una progress-bar 2D. Decisione: lasciarli come primitive — il costo
 tecnico è basso e il risultato visivo è già adeguato. Anelli di
 selezione e barre HP custom restano come sprite **opzionali** in
-`img/ui/` per round futuri.
+`res/img/ui/` per round futuri.
 
 ### 1.3 Dimensioni tile a varie risoluzioni
 
@@ -267,7 +267,7 @@ from .lib.log import warning
 from .paths import BASE_DIR  # path della root progetto
 
 
-_IMG_ROOT = Path(BASE_DIR) / "img"
+_IMG_ROOT = Path(BASE_DIR) / "res" / "img"
 _cache: dict[str, pygame.Surface | None] = {}
 
 
@@ -375,10 +375,10 @@ I test per `display_object` con sprite NULL useranno monkeypatch su
 `clientsprites.get` → restituisce sempre None, verifica che il
 fallback geometrico viene chiamato.
 
-### 3.5 Struttura cartella `img/` attesa (operatore)
+### 3.5 Struttura cartella `res/img/` attesa (operatore)
 
 ```
-img/
+res/img/
 ├── units/        18 PNG (uno per type_name unità)
 ├── buildings/    22 PNG
 ├── resources/    2  PNG (goldmine, wood)
@@ -429,7 +429,7 @@ Modifiche previste, tutte additive e con fallback geometrico:
 
 ---
 
-## 5. TODO Round 16 (post-img/)
+## 5. TODO Round 16 (post-res/img/)
 
 1. **ALTA** — Creare `soundrts/clientsprites.py` (SpriteCache + category_of).
 2. **ALTA** — Modificare `clientgamegridview.py` per integrare sprite

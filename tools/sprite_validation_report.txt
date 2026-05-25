@@ -1,0 +1,76 @@
+SPRITE VALIDATION REPORT - SoundRTS Round 15-B
+============================================================
+
+DETTAGLIO PER SPRITE
+------------------------------------------------------------
+units/peasant.png  -> OK  (alpha range (0, 255))
+units/footman.png  -> OK  (alpha range (0, 255))
+units/archer.png  -> OK  (alpha range (0, 255))
+units/knight.png  -> OK  (alpha range (0, 255))
+units/mage.png  -> OK  (alpha range (0, 255))
+units/priest.png  -> OK  (alpha range (0, 255))
+units/darkarcher.png  -> OK  (alpha range (0, 255))
+units/necromancer.png  -> OK  (alpha range (0, 255))
+units/zombie.png  -> PLACEHOLDER  (alpha tutto 0)
+units/skeleton.png  -> PLACEHOLDER  (alpha tutto 0)
+units/catapult.png  -> PLACEHOLDER  (alpha tutto 0)
+units/dragon.png  -> PLACEHOLDER  (alpha tutto 0)
+units/new_flyingmachine.png  -> PLACEHOLDER  (alpha tutto 0)
+units/flyingmachine.png  -> PLACEHOLDER  (alpha tutto 0)
+units/boat.png  -> PLACEHOLDER  (alpha tutto 0)
+units/destroyer.png  -> PLACEHOLDER  (alpha tutto 0)
+units/battleship.png  -> PLACEHOLDER  (alpha tutto 0)
+units/submarine.png  -> PLACEHOLDER  (alpha tutto 0)
+buildings/townhall.png  -> OK  (alpha range (0, 255))
+buildings/keep.png  -> OK  (alpha range (0, 255))
+buildings/castle.png  -> OK  (alpha range (0, 255))
+buildings/barracks.png  -> OK  (alpha range (0, 255))
+buildings/farm.png  -> OK  (alpha range (0, 255))
+buildings/lumbermill.png  -> OK  (alpha range (0, 255))
+buildings/blacksmith.png  -> OK  (alpha range (0, 255))
+buildings/stables.png  -> OK  (alpha range (0, 255))
+buildings/workshop.png  -> OK  (alpha range (0, 255))
+buildings/magestower.png  -> OK  (alpha range (0, 255))
+buildings/temple.png  -> OK  (alpha range (0, 255))
+buildings/necropolis.png  -> OK  (alpha range (0, 255))
+buildings/scouttower.png  -> OK  (alpha range (0, 255))
+buildings/guardtower.png  -> OK  (alpha range (0, 255))
+buildings/cannontower.png  -> OK  (alpha range (0, 255))
+buildings/wall.png  -> OK  (alpha range (0, 255))
+buildings/massive_wall.png  -> OK  (alpha range (0, 255))
+buildings/gate.png  -> OK  (alpha range (0, 255))
+buildings/massive_gate.png  -> OK  (alpha range (0, 255))
+buildings/shipyard.png  -> PLACEHOLDER  (alpha tutto 0)
+buildings/dragonslair.png  -> PLACEHOLDER  (alpha tutto 0)
+buildings/buildingsite.png  -> PLACEHOLDER  (alpha tutto 0)
+resources/wood.png  -> OK  (alpha range (0, 255))
+resources/goldmine.png  -> PLACEHOLDER  (alpha tutto 0)
+terrain/meadows.png  -> OK  (alpha range (255, 255))
+terrain/forest.png  -> OK  (alpha range (255, 255))
+terrain/dense_forest.png  -> OK  (alpha range (255, 255))
+terrain/river.png  -> OK  (alpha range (255, 255))
+terrain/lake.png  -> OK  (alpha range (255, 255))
+terrain/sea.png  -> OK  (alpha range (255, 255))
+terrain/ocean.png  -> OK  (alpha range (255, 255))
+terrain/mountain.png  -> OK  (alpha range (255, 255))
+terrain/mountain_pass.png  -> OK  (alpha range (255, 255))
+terrain/big_bridge.png  -> OK  (alpha range (0, 255))
+terrain/ford.png  -> OK  (alpha range (0, 255))
+terrain/marsh.png  -> OK  (alpha range (255, 255))
+
+SUMMARY PER CATEGORIA
+------------------------------------------------------------
+units: OK=8 PLACEHOLDER=10 MANCANTE=0 ERRORE_FORMATO=0
+buildings: OK=19 PLACEHOLDER=3 MANCANTE=0 ERRORE_FORMATO=0
+resources: OK=1 PLACEHOLDER=1 MANCANTE=0 ERRORE_FORMATO=0
+terrain: OK=12 PLACEHOLDER=0 MANCANTE=0 ERRORE_FORMATO=0
+
+SUMMARY GLOBALE
+------------------------------------------------------------
+TOTALE_TARGET: 54
+PRESENTI: 54
+  di cui OK: 40
+  di cui PLACEHOLDER: 14
+MANCANTI: 0
+ERRORI_FORMATO: 0
+STATO_GENERALE: OK
