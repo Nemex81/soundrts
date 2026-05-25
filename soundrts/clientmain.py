@@ -33,6 +33,43 @@ import sys
 import time
 import webbrowser
 
+
+def _seed_language_file() -> None:
+    """Pre-popola cfg/language.txt con il codice ISO-639-1 della lingua del SO
+    se il file e' assente o vuoto. Non sovrascrive mai scelte esplicite
+    dell'utente. Chiamata dopo locale.setlocale() per usare il locale di
+    sistema aggiornato. In caso di errore fallisce silenziosamente.
+    """
+    try:
+        lang_path = Path("cfg") / "language.txt"
+        if lang_path.exists() and lang_path.read_text(encoding="utf-8").strip():
+            return  # valore esplicito: rispetta la scelta dell'utente
+        lang_str, _ = locale.getlocale()
+        if not lang_str:
+            return
+        # Normalizza: "Italian_Italy" (Windows) -> "it", "it_IT" (Unix) -> "it"
+        try:
+            import locale as _locale
+            # Tentativo 1: normalizza diretto (POSIX 'it_IT' -> 'it')
+            normalized = _locale.normalize(lang_str).split(".")[0].split("_")[0]
+            if not (normalized and len(normalized) == 2 and normalized.isalpha()):
+                # Tentativo 2: prima parte in lowercase (Windows 'Italian_Italy' -> 'it')
+                first_part = lang_str.split("_")[0].split("-")[0].lower()
+                normalized = _locale.normalize(first_part).split(".")[0].split("_")[0]
+        except Exception:
+            normalized = ""
+        if not (normalized and len(normalized) == 2 and normalized.isalpha()):
+            normalized = lang_str.replace("-", "_").split("_")[0]
+        if not (normalized and len(normalized) == 2 and normalized.isalpha()):
+            return
+        lang_path.parent.mkdir(parents=True, exist_ok=True)
+        lang_path.write_text(normalized, encoding="utf-8")
+    except Exception:
+        pass  # mai bloccare l'avvio del gioco
+
+
+_seed_language_file()
+
 import cloudpickle
 
 from . import discovery

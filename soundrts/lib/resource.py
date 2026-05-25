@@ -69,13 +69,40 @@ def best_language_match(lang, available_languages):
     return "en"
 
 
+def _normalize_locale_code(lang_str: str) -> str:
+    """Normalizza un nome locale di sistema in codice ISO-639-1 a 2 caratteri.
+
+    Gestisce sia il formato Windows (es. 'Italian_Italy') sia il formato
+    POSIX (es. 'it_IT'). Restituisce la stringa originale se la
+    normalizzazione non produce un codice valido a 2 caratteri.
+    """
+    try:
+        # Tentativo 1: locale.normalize() diretto (funziona per POSIX 'it_IT')
+        normalized = locale.normalize(lang_str).split(".")[0].split("_")[0]
+        if normalized and len(normalized) == 2 and normalized.isalpha():
+            return normalized
+        # Tentativo 2: normalizza la prima parte in lowercase
+        # (funziona per Windows 'Italian_Italy' -> normalize('italian') -> 'it_IT...')
+        first_part = lang_str.split("_")[0].split("-")[0].lower()
+        normalized2 = locale.normalize(first_part).split(".")[0].split("_")[0]
+        if normalized2 and len(normalized2) == 2 and normalized2.isalpha():
+            return normalized2
+    except Exception:
+        pass
+    # Fallback: tronca al primo segmento del codice originale
+    code = lang_str.replace("-", "_").split("_")[0]
+    if code and len(code) == 2 and code.isalpha():
+        return code
+    return lang_str
+
+
 def _preferred_language():
     try:
         with open("cfg/language.txt") as t:
             cfg = t.read().strip()
     except IOError:
-        warning("couldn't read cfg/language.txt")
-        return "en"
+        # File assente: rileva la lingua dal locale di sistema
+        cfg = ""
     if cfg:
         return cfg
     else:
@@ -84,7 +111,7 @@ def _preferred_language():
             lang, _ = locale.getlocale()
             if not lang:
                 return "en"
-            return lang
+            return _normalize_locale_code(lang)
         except (ValueError, locale.Error):
             warning(
                 "Couldn't get the system language. "

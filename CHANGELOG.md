@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+## [1.4.2] — 2026-05-26
+
+> Ciclo Round 12: auto-detect lingua OS, conferma mouse gameplay, etichette HUD risorse localizzate.
+
+### Added
+
+- [R12-T1] `soundrts/lib/resource.py`: `_normalize_locale_code()` helper che converte il nome locale di sistema (formato Windows `"Italian_Italy"` o POSIX `"it_IT"`) in codice ISO-639-1 a 2 caratteri tramite `locale.normalize()` + fallback split.
+- [R12-T1] `soundrts/lib/resource.py`: `_preferred_language()` ora rileva la lingua del SO tramite `locale.getlocale()` quando `cfg/language.txt` è assente o vuoto, invece di tornare immediatamente a `"en"`.
+- [R12-T1] `soundrts/clientmain.py`: `_seed_language_file()` scrive il codice ISO-639-1 in `cfg/language.txt` al primo avvio se il file è assente o vuoto; non sovrascrive scelte esplicite dell'utente.
+- [R12-T3] `soundrts/clientgamehud.py`: `_resource_name()` risolve i token numerici (`131`, `132`, …) tramite `sounds.translate_sound_number()` invece di scartarli; le etichette HUD mostrano ora i nomi localizzati ("oro"/"legno" in italiano, "gold"/"wood" in inglese) coerentemente con il sistema TTS.
+
+### Fixed
+
+- [R12-T1] BUG: `_preferred_language()` ignorava `locale.getlocale()` quando `cfg/language.txt` mancava, tornando sempre a `"en"` → UI Visual mostrava stringhe in inglese anche su sistemi configurati in un'altra lingua.
+- [R12-T3] BUG: `_resource_name()` in `clientgamehud.py` scartava i token numerici di stile (`resource_0_title 131`) con un filtro `p.isdigit()`, producendo sempre le etichette fallback "Resource 1"/"Resource 2" anche quando il sistema TTS aveva la traduzione disponibile.
+
+### Tests
+
+- [R12-T1] `soundrts/tests/unittests/test_clientmain_lang.py`: 6 test — normalizzazione formato Windows/POSIX, seed file assente, nessuna sovrascrittura, locale None silenzioso.
+- [R12-T2] `soundrts/tests/unittests/test_gameplay_mouse.py`: 7 test — verifica struttura handler mouse (già implementato in R11), guard `display_is_active`, comportamento click sx/dx/centrale.
+- [R12-T3] `soundrts/tests/unittests/test_hud_resources.py`: 4 test — fallback senza stile, token IT "oro"/"legno", token EN "gold"/"wood", token non risolto → fallback.
+
 ## [1.4.1] — 2026-05-25
 
 > Ciclo Visual UI menu Round 8→11 stabilizzato, localizzato e con suite verde.

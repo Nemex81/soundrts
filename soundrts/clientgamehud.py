@@ -5,6 +5,7 @@ from typing import Any, Deque, List, Optional, Sequence
 import pygame
 
 from .definitions import style
+from .lib.sound_cache import sounds
 
 
 # Event severity buckets used by the HUD to colour-code the event panel.
@@ -233,10 +234,20 @@ class HudPanel:
             parts = style.get("parameters", key)
         except Exception:
             parts = None
-        # Numeric-only tokens in parameter style parts are sound/type IDs; discard them.
         if isinstance(parts, (list, tuple)):
-            parts = [p for p in parts if not (isinstance(p, str) and p.isdigit())]
-        label = self._parts_to_text(parts)
+            resolved = []
+            for p in parts:
+                if isinstance(p, str) and p.isdigit():
+                    # Risolve il token numerico via il sistema TTS localizzato
+                    # (es. 131 -> "gold"/"oro" in base alla lingua attiva)
+                    text = sounds.translate_sound_number(int(p))
+                    if text and not str(text).isdigit():
+                        resolved.append(str(text))
+                elif isinstance(p, str):
+                    resolved.append(p)
+            label = " ".join(resolved).strip()
+        else:
+            label = self._parts_to_text(parts)
         return label or self._hud_format("resource_n", "Resource {}", index + 1)
 
     def _food_line(self) -> str:
