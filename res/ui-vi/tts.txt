@@ -515,3 +515,5 @@
 4362 đồng cỏ
 4363 rừng
 4364 rừng rậm
+4365 Mũi tên: điều hướng. Enter: xác nhận. Esc: quay lại. Ctrl+F2: hình ảnh tắt
+4366 Enter: xác nhận. Esc: hủy. Ctrl+F2: hình ảnh tắt

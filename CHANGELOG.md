@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [1.4.3] — 2026-05-25
+
+> Round 13: chiusura sospesi R11 (cataloghi i18n hint visuali + allineamento `version.py`).
+
+### Added
+
+- [R13-T2] `res/ui-{be,cs,de,es,fr,pl,pt-BR,ru,sk,vi,zh}/tts.txt`: aggiunti i token `4365` (`VISUAL_MENU_HINT`) e `4366` (`VISUAL_DIALOG_HINT`) per coprire tutte le lingue rilasciate. Le traduzioni sono prodotte come adattamento meccanico della versione EN/IT e devono essere riviste da madrelingua.
+- [R13-T2] `soundrts/tests/unittests/test_i18n_hints.py`: 27 test parametrizzati che verificano la presenza dei token `4365`/`4366` in ogni catalogo `res/ui*/tts.txt`.
+
+### Changed
+
+- [R13-T3] `soundrts/version.py`: `VERSION` allineata da `"1.3.8.1"` a `"1.4.2"`, in coerenza con il CHANGELOG interno. Il bump è sicuro perché `server_is_compatible()` confronta `SERVER_COMPATIBILITY="0"` e non la stringa `VERSION`; l'unico effetto è l'URL del check "update available" che ora punta a `1.4version.txt`.
+
+### Notes
+
+- [R13-T1] SOSPESO-A (handler `WINDOWRESIZED`/`WINDOWSIZECHANGED`): SCARTATO-PREMATURO. `lib/screen.set_screen()` usa `pygame.FULLSCREEN` sia per gameplay sia per `visual_mode=1`; `RESIZABLE` non è mai impostato, quindi un handler resize sarebbe codice morto.
+
 ## [1.4.2] — 2026-05-26
 
 > Ciclo Round 12: auto-detect lingua OS, conferma mouse gameplay, etichette HUD risorse localizzate.

@@ -503,3 +503,5 @@
 4362 prairies
 4363 forêt
 4364 forêt épaisse
+4365 Flèches : naviguer. Entrée : confirmer. Échap : retour. Ctrl+F2 : visuel désactivé
+4366 Entrée : confirmer. Échap : annuler. Ctrl+F2 : visuel désactivé

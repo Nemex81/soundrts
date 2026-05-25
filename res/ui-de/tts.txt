@@ -515,3 +515,5 @@
 4362 Wiese
 4363 Wald
 4364 dichter Wald
+4365 Pfeiltasten: navigieren. Eingabe: bestätigen. Esc: zurück. Ctrl+F2: visuell aus
+4366 Eingabe: bestätigen. Esc: abbrechen. Ctrl+F2: visuell aus

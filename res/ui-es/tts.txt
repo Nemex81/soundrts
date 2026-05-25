@@ -514,3 +514,5 @@
 4362 prados
 4363 bosque
 4364 bosque espeso
+4365 Flechas: navegar. Intro: confirmar. Esc: volver. Ctrl+F2: visual desactivado
+4366 Intro: confirmar. Esc: cancelar. Ctrl+F2: visual desactivado

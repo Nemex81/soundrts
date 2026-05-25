@@ -440,3 +440,5 @@
 4362 lúky
 4363 lesy
 4364 hustý les
+4365 Šípky: navigácia. Enter: potvrdiť. Esc: späť. Ctrl+F2: vizuálny vyp
+4366 Enter: potvrdiť. Esc: zrušiť. Ctrl+F2: vizuálny vyp

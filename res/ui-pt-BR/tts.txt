@@ -517,3 +517,5 @@
 4362 terra
 4363 floresta
 4364 floresta densa
+4365 Setas: navegar. Enter: confirmar. Esc: voltar. Ctrl+F2: visual desligado
+4366 Enter: confirmar. Esc: cancelar. Ctrl+F2: visual desligado

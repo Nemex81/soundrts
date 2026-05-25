@@ -514,3 +514,5 @@
 4363 las
 4364 puszcza
  
+4365 Strzałki: nawiguj. Enter: potwierdź. Esc: wstecz. Ctrl+F2: wizualny wył
+4366 Enter: potwierdź. Esc: anuluj. Ctrl+F2: wizualny wył

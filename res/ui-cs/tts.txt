@@ -440,3 +440,5 @@
 4362 prérie
 4363 lesy
 4364 hustý les
+4365 Šipky: navigace. Enter: potvrdit. Esc: zpět. Ctrl+F2: vizuální vyp
+4366 Enter: potvrdit. Esc: zrušit. Ctrl+F2: vizuální vyp

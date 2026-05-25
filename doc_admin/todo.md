@@ -519,3 +519,47 @@ Motivazione:
 - [ ] Tradurre `4365` e `4366` anche nei cataloghi non italiani (`res/ui-fr`, `res/ui-es`, `res/ui-de`, ecc.) se si vuole evitare fallback inglese nelle altre lingue.
 - [ ] Allineare `soundrts/version.py` con il CHANGELOG interno 1.4.x quando l'operatore decide il prossimo tag.
 
+## Round 12 — Auto-detect lingua + HUD + Mouse
+
+Avvio: 25 maggio 2026
+Stato globale: COMPLETATO
+Suite finale: 262 passed / 0 failed / 0 errors
+(baseline ingresso: 245)
+
+### Completati
+
+- [x] TASK-1: `_seed_language_file()` in `clientmain.py`; `_normalize_locale_code()` e fix IOError->fallthrough in `resource.py`. Bug architetturale risolto: `version.py` importava `resource.py` prima di `setlocale()`.
+- [x] TASK-2: Mouse gameplay gia presente da round precedenti. Aggiunti 7 test in `test_gameplay_mouse.py`.
+- [x] TASK-3: `_resource_name()` risolve token numerici via `sounds.translate_sound_number()`. "risorsa 1"/"risorsa 2" -> "oro"/"legno".
+- [x] `doc_admin/round12_plan.md` creato.
+- [x] `CHANGELOG.md` aggiornato.
+
+### TODO rimandati a Round 13
+
+- [ ] SOSPESO-A: WINDOWRESIZED/windowed mode
+- [ ] SOSPESO-B: trad. 4365/4366 cataloghi extra
+- [ ] SOSPESO-C: allineamento `version.py` / release
+
+## Round 13 — Sospesi R11 + Chiusura R12
+
+Avvio: 25 maggio 2026
+Stato globale: COMPLETATO
+Suite finale: 289 passed / 0 failed / 0 errors
+(baseline ingresso: 262)
+
+### Completati
+
+- [x] TASK-0: chiusura formale R12 in `doc_admin/todo.md`.
+- [x] TASK-1 SOSPESO-A: **SCARTATO-PREMATURO**. Motivazione: `lib/screen.set_screen()` usa `pygame.FULLSCREEN` anche in `visual_mode=1`; `RESIZABLE` non è mai impostato, quindi `WINDOWRESIZED`/`WINDOWSIZECHANGED` non sono mai prodotti dal flusso. Handler sarebbe codice morto.
+- [x] TASK-2 SOSPESO-B: **IMPLEMENTATO**. Motivazione: 11 cataloghi `res/ui-{be,cs,de,es,fr,pl,pt-BR,ru,sk,vi,zh}/tts.txt` privi dei token `4365`/`4366`. Aggiunte traduzioni (revisione madrelingua rimandata a R14).
+- [x] TASK-3 SOSPESO-C: **RAMO-BUMP**. Versione target: `1.4.2`. `server_is_compatible()` confronta `SERVER_COMPATIBILITY="0"` e non la stringa `VERSION`; bump sicuro per protocollo.
+- [x] Test aggiunti: 27 (`test_i18n_hints.py`) + 1 skip documentale (`test_visual_resize.py`).
+- [x] `doc_admin/round13_plan.md` creato.
+- [x] `CHANGELOG.md` aggiornato (`[1.4.3] — 2026-05-25`).
+
+### TODO Round 14
+
+- [ ] Revisione madrelingua delle traduzioni `4365`/`4366` aggiunte in R13.
+- [ ] Decidere tag release `v1.4.3` (LEGGE-8: nessun comando git eseguito autonomamente).
+- [ ] Verificare disponibilità `1.4version.txt` su `jlpo.free.fr` per update-check.
+
