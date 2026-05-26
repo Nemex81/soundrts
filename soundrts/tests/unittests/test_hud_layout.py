@@ -89,7 +89,7 @@ def _capture_layout(monkeypatch, resolution):
 def _estimated_content_height(panel, snapshot, panel_name):
     header_height = panel.panel_header_height
     if panel_name == "res":
-        return header_height + (len(snapshot.resources) + 1) * panel.line_height
+        return panel.res_bar_height
     if panel_name == "events":
         return header_height + max(1, len(snapshot.events)) * panel.line_height
     if panel_name == "group":
@@ -493,3 +493,44 @@ def test_hit_test_uses_unshifted_map_coordinates(monkeypatch):
 
     assert grid_view.square_from_mousepos(pos) == grid[(xc, yc)]
     assert grid_view.square_from_mousepos((square * 10 + 1, pos[1])) is None
+
+
+# ────────────────────────────────────────────────────────────────
+# Round 16 — RES horizontal top bar
+# ────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_res_bar_full_width(monkeypatch, resolution):
+    """T_RES_BAR_FULL_WIDTH: RES panel spans full usable width (screen_w - 2*margin)."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    width, _ = resolution
+    expected_width = width - 2 * panel.margin
+    assert rects["res"].width == expected_width, (
+        "RES width {} != expected {} at {}".format(
+            rects["res"].width, expected_width, _resolution_id(resolution)
+        )
+    )
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_res_bar_height_equals_constant(monkeypatch, resolution):
+    """T_RES_BAR_HEIGHT: RES panel height equals HudPanel.res_bar_height."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    assert rects["res"].height == panel.res_bar_height, (
+        "RES height {} != res_bar_height {} at {}".format(
+            rects["res"].height, panel.res_bar_height, _resolution_id(resolution)
+        )
+    )
+
+
+@pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
+def test_time_panel_starts_below_res_bar(monkeypatch, resolution):
+    """T_TIME_BELOW_RES_BAR: TIME panel top >= res_bar_bottom (margin + res_bar_height + margin)."""
+    panel, _, rects = _capture_layout(monkeypatch, resolution)
+    res_bar_bottom = panel.margin + panel.res_bar_height + panel.margin
+    assert rects["time"].top >= res_bar_bottom, (
+        "TIME top {} < res_bar_bottom {} at {}".format(
+            rects["time"].top, res_bar_bottom, _resolution_id(resolution)
+        )
+    )

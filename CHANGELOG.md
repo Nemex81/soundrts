@@ -10,6 +10,7 @@
 
 ### Changed
 
+- [R16] HUD: pannello risorse convertito da layout verticale a barra orizzontale stile Age of Empires (top bar). Le risorse sono ora visualizzate affiancate su una singola riga nella parte superiore dello schermo (`height=40px`, larghezza intera `screen_w - 2*margin`). Ogni risorsa occupa una cella proporzionale con testo centrato; l'ultima cella mostra `Pop/Food`. Separatori verticali `(70,110,120)` tra le celle. Tutti i pannelli sottostanti (TIME, EVENTS, PLAYER, GROUP) riposizionati di conseguenza tramite `res_bar_bottom = margin + res_bar_height + margin`. Aggiunta costante di classe `HudPanel.res_bar_height = 40`.
 - [R16] `.gitignore`: esclusi `/res/img/` (54 PNG asset binari generati localmente da `tools/normalize_sprites.py`) e `/tools/sprite_validation_report.txt` (output volatile QA). Coerente con la decisione D2 di R15-B (no `git add` su binari).
 
 ### Notes

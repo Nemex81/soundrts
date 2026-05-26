@@ -62,6 +62,7 @@ class HudPanel:
     panel_header_height = 36
     player_height = 36
     time_height = 88
+    res_bar_height = 40
     event_text_max_length = 23
 
     def __init__(self, interface: Any) -> None:
@@ -113,33 +114,45 @@ class HudPanel:
         bottom = height - self.margin
         self._panel_rects = {}
 
-        # --- RES panel (top-left) ---
-        res_rect = (left, top, 180, self.panel_header_height + (len(snapshot.resources) + 1) * self.line_height)
+        # --- Layout anchor: horizontal resource bar ---
+        res_bar_height = self.res_bar_height
+        res_bar_bottom = self.margin + res_bar_height + self.margin
+
+        # --- RES bar (horizontal, full-width top bar) ---
+        bar_width = right - left
+        res_rect = (left, top, bar_width, res_bar_height)
         self._draw_panel(screen, res_rect)
         self._panel_rects["res"] = pygame.Rect(*res_rect)
-        screen_render_header(self._hud_text("panel_res", "RES"), (left + 6, top + 4), color=(120, 220, 190))
-        y = top + self.panel_header_height
-        for line in snapshot.resources:
+        num_cells = max(1, len(snapshot.resources) + 1)
+        cell_width = bar_width / num_cells
+        bar_center_y = top + res_bar_height // 2
+        for i, line in enumerate(snapshot.resources):
             label, _, value = line.partition(":")
-            screen_render(label + ":", (left + 6, y), color=(220, 220, 210))
-            if value:
-                screen_render(value.strip(), (left + 100, y), color=(255, 235, 130))
-            y += self.line_height
-        screen_render(snapshot.food, (left + 6, y), color=(220, 220, 210))
+            text = "{}: {}".format(label.strip(), value.strip()) if value else label.strip()
+            cell_center_x = left + int(i * cell_width) + int(cell_width / 2)
+            screen_render(text, (cell_center_x, bar_center_y), center=True, color=(255, 235, 130))
+            if i > 0:
+                sep_x = left + int(i * cell_width)
+                pygame.draw.line(screen, (70, 110, 120), (sep_x, top + 1), (sep_x, top + res_bar_height - 1), 1)
+        food_cell_left = left + int(len(snapshot.resources) * cell_width)
+        food_cell_center_x = food_cell_left + int(cell_width / 2)
+        if snapshot.resources:
+            pygame.draw.line(screen, (70, 110, 120), (food_cell_left, top + 1), (food_cell_left, top + res_bar_height - 1), 1)
+        screen_render(snapshot.food, (food_cell_center_x, bar_center_y), center=True, color=(220, 220, 210))
 
-        # --- TIME panel (top-right) ---
+        # --- TIME panel (top-right, below res bar) ---
         time_width = 175
-        time_rect = (right - time_width, top, time_width, self.time_height)
+        time_rect = (right - time_width, res_bar_bottom, time_width, self.time_height)
         self._draw_panel(screen, time_rect)
         self._panel_rects["time"] = pygame.Rect(*time_rect)
-        screen_render_header(self._hud_text("panel_time", "TIME"), (right - time_width + 6, top + 4), color=(160, 210, 255))
-        screen_render(snapshot.time, (right - time_width + 6, top + self.panel_header_height), color=(220, 235, 245))
-        screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, top + self.panel_header_height + self.line_height), color=(220, 235, 245))
+        screen_render_header(self._hud_text("panel_time", "TIME"), (right - time_width + 6, res_bar_bottom + 4), color=(160, 210, 255))
+        screen_render(snapshot.time, (right - time_width + 6, res_bar_bottom + self.panel_header_height), color=(220, 235, 245))
+        screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, res_bar_bottom + self.panel_header_height + self.line_height), color=(220, 235, 245))
 
         # --- EVENTS panel (right side, below TIME) — aligned to col_right_width R6 ---
         col_right_width = 295  # unified right-column width (EVENTS = PLAYER = GROUP)
         event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
-        event_top = top + self.time_height + self.margin
+        event_top = res_bar_bottom + self.time_height + self.margin
         event_rect = (right - col_right_width, event_top, col_right_width, event_height)
         self._draw_panel(screen, event_rect)
         self._panel_rects["events"] = pygame.Rect(*event_rect)
