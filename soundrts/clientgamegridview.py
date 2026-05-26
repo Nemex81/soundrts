@@ -131,21 +131,26 @@ class GridView:
         # behaviour identical for placeholders and for entities
         # without artwork (Legge IA #8: audio invariant; the fallback
         # is the previous code path verbatim).
+        #
+        # sprite_size is clamped to at least half the cell width so
+        # that sprites are clearly visible even on small maps where
+        # R_vis * 2 would produce a 16-pixel thumbnail.
+        sprite_size = max(R_vis * 2, self.square_view_width // 2)
         category = clientsprites.category_of(o)
         sprite = (
-            clientsprites.get(category, o.type_name, R_vis * 2)
+            clientsprites.get(category, o.type_name, sprite_size)
             if category is not None
             else None
         )
         if o.shape() == "square":
             rect = x - R_vis, y - R_vis, R_vis * 2, R_vis * 2
             if sprite is not None:
-                get_screen().blit(sprite, (x - R_vis, y - R_vis))
+                get_screen().blit(sprite, (x - sprite_size // 2, y - sprite_size // 2))
             else:
                 draw_rect(o.corrected_color(), rect, width)
         else:
             if sprite is not None:
-                get_screen().blit(sprite, (x - R_vis, y - R_vis))
+                get_screen().blit(sprite, (x - sprite_size // 2, y - sprite_size // 2))
             elif o.collision:
                 pygame.draw.circle(get_screen(), o.corrected_color(), (x, y), R_vis, width)
             elif self.interface.target is not None and self.interface.target is o:

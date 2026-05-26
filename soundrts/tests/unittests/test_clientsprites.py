@@ -136,6 +136,7 @@ def _make_gridview_with_object(shape: str, type_name: str):
     iface.player.allied = []
     iface.player.player_is_an_enemy = MagicMock(return_value=False)
     gv.interface = iface
+    gv.square_view_width = 32  # needed by display_object's sprite_size calc
     obj = MagicMock()
     obj.is_inside = False
     obj.id = "obj-1"
@@ -195,6 +196,47 @@ def test_display_object_circle_uses_sprite_when_available(monkeypatch):
                                              (40 - 8, 40 - 8))
     draw_circle.assert_not_called()
     fake_screen.set_at.assert_not_called()
+
+
+# --- T4b: sprite_size grows with cell width --------------------------------
+
+def test_display_object_sprite_size_scales_with_cell(monkeypatch):
+    """sprite_size must be max(R_vis*2, square_view_width//2) so sprites
+    are visible even when R_vis*2 is very small."""
+    gv, obj = _make_gridview_with_object("circle", "peasant")
+    gv.square_view_width = 64  # override: larger cell → sprite_size=32
+    monkeypatch.setattr(clientgamegridview, "R", 4, raising=False)
+    monkeypatch.setattr(gv, "_object_coords", lambda o: (40, 40))
+    fake_screen = MagicMock()
+    monkeypatch.setattr(clientgamegridview, "get_screen", lambda: fake_screen)
+    fake_sprite = object()
+    monkeypatch.setattr(clientsprites, "get", lambda *a, **kw: fake_sprite)
+    with patch.object(clientgamegridview.pygame.draw, "circle"):
+        gv.display_object(obj)
+    # R_vis=8, square_view_width=64 → sprite_size=max(16,32)=32; blit centered
+    fake_screen.blit.assert_called_once_with(fake_sprite, (40 - 16, 40 - 16))
+
+
+# --- T7b: stride sampling fixes townhall false negative -------------------
+
+def test_ring_sprite_not_classified_as_placeholder():
+    """A sprite with a transparent center and transparent corners but
+    opaque pixels elsewhere (e.g. townhall.png) must NOT be treated
+    as a fully-transparent placeholder after the stride-sampling fix."""
+    _headless_display()
+    img = pygame.Surface((64, 64), pygame.SRCALPHA)
+    img.fill((0, 0, 0, 0))
+    # Draw an opaque ring between radius ~14 and ~22 from the centre.
+    # The centre pixel (32,32) and the four corners remain transparent.
+    cx, cy = 32, 32
+    for px in range(64):
+        for py in range(64):
+            r2 = (px - cx) ** 2 + (py - cy) ** 2
+            if 190 < r2 < 490:
+                img.set_at((px, py), (200, 100, 50, 255))
+    assert img.get_at((32, 32))[3] == 0  # centre is transparent
+    assert img.get_at((0, 0))[3] == 0   # corner is transparent
+    assert not clientsprites._is_fully_transparent(img)
 
 
 # --- T5: GridView._display terrain fallback is preserved -------------------

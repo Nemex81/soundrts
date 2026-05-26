@@ -80,16 +80,14 @@ def _is_fully_transparent(surface: pygame.Surface) -> bool:
     if w == 0 or h == 0:
         return True
     try:
-        samples = (
-            surface.get_at((0, 0))[3],
-            surface.get_at((w - 1, 0))[3],
-            surface.get_at((0, h - 1))[3],
-            surface.get_at((w - 1, h - 1))[3],
-            surface.get_at((w // 2, h // 2))[3],
-        )
+        stride = max(1, min(w, h) // 8)
+        for py in range(0, h, stride):
+            for px in range(0, w, stride):
+                if surface.get_at((px, py))[3] > 0:
+                    return False
     except (pygame.error, IndexError):
         return False
-    return all(a == 0 for a in samples)
+    return True
 
 
 def get(category: str, name: str, size: int) -> Optional[pygame.Surface]:
