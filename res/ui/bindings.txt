@@ -251,3 +251,6 @@ CTRL SPACE: immersion
 
 BACKQUOTE: console
 CTRL BACKQUOTE: reload_parameters
+
+PAUSE: toggle_pause
+ALT p: toggle_pause

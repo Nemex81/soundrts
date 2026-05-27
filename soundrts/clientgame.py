@@ -181,6 +181,7 @@ class GameInterface:
     def __init__(self, server, speed=config.speed):
         self.server = server
         self.speed = speed
+        self.is_paused = False
         self.alert_squares = {}
         self.dobjets = {}
         self.group = []
@@ -629,10 +630,13 @@ class GameInterface:
         menu = Menu(mp.MENU)
         menu.append(mp.CANCEL_GAME, self.gm_quit)
         if self.is_admin():
-            menu.append(mp.SET_SPEED_TO_SLOW, self.gm_slow_speed)
-            menu.append(mp.SET_SPEED_TO_NORMAL, self.gm_normal_speed)
-            menu.append(mp.SET_SPEED_TO_FAST, self.gm_fast_speed)
-            menu.append(mp.SET_SPEED_TO_FAST + nb2msg(4), self.gm_very_fast_speed)
+            menu.append(mp.SET_SPEED_1, self.gm_speed_1)
+            menu.append(mp.SET_SPEED_2, self.gm_speed_2)
+            menu.append(mp.SET_SPEED_3, self.gm_speed_3)
+            menu.append(mp.SET_SPEED_4, self.gm_speed_4)
+            menu.append(mp.SET_SPEED_5, self.gm_speed_5)
+            menu.append(mp.SET_SPEED_6, self.gm_speed_6)
+            menu.append(mp.SET_SPEED_7, self.gm_speed_7)
         if self.can_save():
             menu.append(mp.SAVE, self.gm_save)
         menu.append(mp.CONTINUE_GAME, None)
@@ -660,17 +664,34 @@ class GameInterface:
     def _set_speed(self, speed):
         self.server.write_line("speed %s" % speed)
 
-    def gm_slow_speed(self):
+    def gm_speed_1(self):
+        self._set_speed(0.25)
+
+    def gm_speed_2(self):
         self._set_speed(0.5)
 
-    def gm_normal_speed(self):
+    def gm_speed_3(self):
         self._set_speed(1.0)
 
-    def gm_fast_speed(self):
+    def gm_speed_4(self):
         self._set_speed(2.0)
 
-    def gm_very_fast_speed(self):
+    def gm_speed_5(self):
+        self._set_speed(3.0)
+
+    def gm_speed_6(self):
         self._set_speed(4.0)
+
+    def gm_speed_7(self):
+        self._set_speed(5.0)
+
+    def cmd_toggle_pause(self):
+        self.is_paused = not self.is_paused
+        if self.is_paused:
+            voice.item(mp.PAUSE_ON)
+        else:
+            self.next_update = time.time()
+            voice.item(mp.PAUSE_OFF)
 
     def can_save(self):
         return hasattr(self.server, "save_game")
@@ -799,6 +820,8 @@ class GameInterface:
         self.next_update = time.time() + interval
 
     def _time_to_ask_for_next_update(self):
+        if self.is_paused:
+            return False
         return not self.waiting_for_world_update and time.time() >= self.next_update
 
     _terrain_noises = []

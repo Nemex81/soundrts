@@ -517,3 +517,13 @@
 4364 dense forest
 4365 Arrow keys: navigate. Enter: confirm. Esc: back. Ctrl+F2: visual off
 4366 Enter: confirm. Esc: cancel. Ctrl+F2: visual off
+
+4367 set speed to 1 very slow
+4368 set speed to 2 slow
+4369 set speed to 3 normal
+4370 set speed to 4 fast
+4371 set speed to 5
+4372 set speed to 6 very fast
+4373 set speed to 7 maximum
+4374 game paused
+4375 game resumed

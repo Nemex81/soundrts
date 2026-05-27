@@ -103,6 +103,20 @@ class HudPanel:
             return
         snapshot = self.get_snapshot()
         self._draw_snapshot(screen, snapshot)
+        if getattr(self.interface, "is_paused", False):
+            self._draw_pause_overlay(screen)
+
+    def _draw_pause_overlay(self, screen: pygame.Surface) -> None:
+        from .lib.screen import screen_render
+
+        width, height = screen.get_size()
+        center_x = width // 2
+        center_y = height // 2
+        overlay = pygame.Surface((220, 60), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        screen.blit(overlay, (center_x - 110, center_y - 30))
+        pygame.draw.rect(screen, (255, 220, 0), pygame.Rect(center_x - 110, center_y - 30, 220, 60), 2)
+        screen_render("|| PAUSA", (center_x, center_y), center=True, color=(255, 220, 0))
 
     def _draw_snapshot(self, screen: pygame.Surface, snapshot: HudSnapshot) -> None:
         from .lib.screen import screen_render, screen_render_header
