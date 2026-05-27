@@ -188,3 +188,56 @@ def test_pause_msgparts_constants():
     assert hasattr(mp, "PAUSE_OFF"), "mp.PAUSE_OFF missing"
     assert isinstance(mp.PAUSE_ON, list) and len(mp.PAUSE_ON) == 1
     assert isinstance(mp.PAUSE_OFF, list) and len(mp.PAUSE_OFF) == 1
+
+
+# ---------------------------------------------------------------------------
+# OBIETTIVO 3 — Retrocompatibilità save file (__setstate__)
+# ---------------------------------------------------------------------------
+
+def test_setstate_without_is_paused_in_dict():
+    """__setstate__ must set is_paused=False even when the dictionary (pre-Task1 save)
+    does not contain the key — prevents AttributeError in _time_to_ask_for_next_update."""
+    from soundrts.clientgame import GameInterface
+
+    with patch.object(GameInterface, "__init__", lambda self, *a, **kw: None):
+        gi = GameInterface.__new__(GameInterface)
+
+    # Simulate a pre-Task1 save dictionary without 'is_paused'
+    old_save_dict = {
+        "speed": 1.0,
+        "waiting_for_world_update": False,
+        "next_update": 0.0,
+    }
+    with (
+        patch("soundrts.clientgame.HudPanel"),
+        patch("soundrts.clientgame.psounds"),
+        patch("soundrts.clientgame.queue.Queue"),
+    ):
+        gi.__setstate__(old_save_dict)
+
+    assert gi.is_paused is False, "is_paused must be False after __setstate__ without key"
+
+
+def test_setstate_resets_is_paused_to_false_on_load():
+    """__setstate__ must always reset is_paused to False on game load,
+    even if the save was made while paused."""
+    from soundrts.clientgame import GameInterface
+
+    with patch.object(GameInterface, "__init__", lambda self, *a, **kw: None):
+        gi = GameInterface.__new__(GameInterface)
+
+    # Simulate a save-while-paused dictionary
+    paused_save_dict = {
+        "speed": 1.0,
+        "is_paused": True,
+        "waiting_for_world_update": False,
+        "next_update": 0.0,
+    }
+    with (
+        patch("soundrts.clientgame.HudPanel"),
+        patch("soundrts.clientgame.psounds"),
+        patch("soundrts.clientgame.queue.Queue"),
+    ):
+        gi.__setstate__(paused_save_dict)
+
+    assert gi.is_paused is False, "is_paused must be reset to False on game load"

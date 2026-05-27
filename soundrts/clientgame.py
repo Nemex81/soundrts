@@ -177,6 +177,7 @@ class GameInterface:
     shortcut_mode = False
     zoom_mode = False
     zoom = None
+    is_paused = False
 
     def __init__(self, server, speed=config.speed):
         self.server = server
@@ -214,6 +215,7 @@ class GameInterface:
         self.hud_panel = HudPanel(self)
         psounds.listener = self
         self.waiting_for_world_update = False
+        self.is_paused = False
 
     @property
     def display_is_active(self):

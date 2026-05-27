@@ -10,7 +10,11 @@
 - [Speed+Pause] `res/ui/bindings.txt`: doppio binding `PAUSE` e `ALT p` → `toggle_pause` (sezione miscellaneous). Nessun binding esistente rimosso.
 - [Speed+Pause] `soundrts/msgparts.py`: costanti `SET_SPEED_1` … `SET_SPEED_7` (IDs 4367–4373), `PAUSE_ON` (4374), `PAUSE_OFF` (4375). Costanti precedenti mantenute per retrocompatibilità.
 - [Speed+Pause] `res/ui/tts.txt`: voci TTS 4367–4375 per i 7 livelli velocità e pausa/ripresa.
-- [Speed+Pause] `soundrts/tests/unittests/test_speed_and_pause.py`: 16 test minimali (valori speed, esistenza metodi, rimozione obsoleti, is_paused, toggle_pause, costanti mp.*).
+- [Speed+Pause] `soundrts/tests/unittests/test_speed_and_pause.py`: 18 test (16 originali + 2 per `__setstate__` retrocompatibilità: save pre-Task1 senza `is_paused`, save-while-paused che viene reset).
+
+### Fixed
+
+- [Speed+Pause] `soundrts/clientgame.py`: `AttributeError: 'GameInterface' object has no attribute 'is_paused'` nel loop `_time_to_ask_for_next_update()` quando si carica un save file creato prima dell'introduzione della feature pause (il path di deserializzazione `cloudpickle.load → __setstate__` non passava da `__init__`). Fix duale: (1) `is_paused = False` aggiunto come attributo di classe come fallback universale; (2) `__setstate__` imposta esplicitamente `self.is_paused = False` per garantire stato neutro al caricamento, indipendentemente dall'età del save.
 
  nuovo modulo `SpriteCache` per la Visual UI. API pubblica: `get(category, name, size)` lazy con cache `dict[str, Surface | None]` chiavata su `"{cat}/{name}@{size}"`, `clear()` per invalidazione su resize, `category_of(o)` resolver statico (lookup hardcoded delle 54 entità rinderizzabili documentate in `tools/sprite_mapping.csv`). Errori file/pygame → `None` (fallback geometrico). I PNG completamente trasparenti generati da R15-B (`tools/normalize_sprites.py`) vengono rilevati via sampling alpha sui quattro angoli + centro e trattati come "sprite assente" per preservare il fallback.
 - [R16] `soundrts/clientgamegridview.py`: integrazione additiva sprite in 3 punti — PR-1 in `_display()` (blit del terrain sprite sopra `draw_rect` di fondo, con `sq.type_name.lstrip("_")` per i terreni auto-applicati), PR-2 in `display_object()` ramo `shape == "square"` (buildings), PR-3 in `display_object()` ramo circle (units/resources). Tutti i fallback geometrici preesistenti restano invariati. Aggiunto metodo `GridView.invalidate_sprite_cache()` come hook per futuri cambi di risoluzione.
