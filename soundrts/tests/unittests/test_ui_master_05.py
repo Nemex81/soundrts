@@ -147,7 +147,10 @@ def test_cancel_handler_removes_row_immediately_for_ui_feedback():
     hud = _make_hud()
     unit = _make_unit()
     # Pre-populate as if the activity panel had been rendered.
-    hud._panel_rects["activity_row_0"] = pygame.Rect(0, 0, 100, 20)
+    row_rect = pygame.Rect(0, 0, 100, 20)
+    hud._panel_rects["activity_row_0"] = row_rect
+    # UI-MASTER-07/OPT-1: hit-test now uses the dedicated dict.
+    hud._activity_row_rects[0] = row_rect
     hud._activity_row_texts[0] = "[T] orc 40%"
     hud._activity_row_units[0] = unit
     hud._activity_row_kinds[0] = "training"

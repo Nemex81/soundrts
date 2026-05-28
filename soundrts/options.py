@@ -10,7 +10,23 @@ soundpacks = None
 port = 2500
 
 
-def _parse_options():
+def parse_args(argv=None):
+    """Parse ``argv`` and update the module-level option globals.
+
+    UI-MASTER-07/P0-OPTIONS-FIX: previously this function was invoked
+    unconditionally at import time, so any sibling tool (pytest,
+    sphinx, mypy) whose ``sys.argv`` contained tokens that did not
+    match this parser would terminate the interpreter with
+    ``SystemExit: 2`` before its own code could run. Entry points
+    (``soundrts.py``, ``server.py``) now call ``parse_args()``
+    explicitly *before* importing ``clientmain``/``servermain`` so that
+    consumers binding ``options.port`` as a default argument value
+    (e.g. ``clientserver.connect_and_play``) still see the
+    command-line override.
+
+    ``argv`` defaults to ``None`` which forwards to optparse's own
+    ``sys.argv`` handling.
+    """
     global ip, mods, soundpacks, port
     default_port = port
     parser = optparse.OptionParser()
@@ -19,7 +35,7 @@ def _parse_options():
     parser.add_option("-s", "--soundpacks", type="string")
     parser.add_option("-p", type="int", help=optparse.SUPPRESS_HELP)
     parser.set_defaults(ip=None, mods=None, p=default_port, g=False)
-    options, _ = parser.parse_args()
+    options, _ = parser.parse_args(argv)
     ip = options.ip
     mods = options.mods
     soundpacks = options.soundpacks
@@ -30,4 +46,6 @@ def _parse_options():
         warning("using port %s (instead of %s)", port, default_port)
 
 
-_parse_options()
+# Backward-compatible alias (kept private) — used by legacy callers
+# that monkeypatched the previous symbol name.
+_parse_options = parse_args

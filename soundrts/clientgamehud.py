@@ -111,6 +111,13 @@ class HudPanel:
         # cancel_upgrading / cancel_building) instead of dropping the
         # order client-only.
         self._activity_row_kinds: Dict[int, str] = {}
+        # UI-MASTER-07/OPT-1 (hit-test O(n)->O(k)): dedicated mapping
+        # ``{row_index: pygame.Rect}`` populated alongside the
+        # ``activity_row_N`` entries in ``_panel_rects``. Click and
+        # hover handlers iterate this dict directly instead of
+        # scanning the whole ``_panel_rects`` (size n ~= 20+) with a
+        # ``startswith('activity_row_')`` filter. k <= 8 in practice.
+        self._activity_row_rects: Dict[int, Any] = {}
         # T9-TOOLTIP-GLOBAL: keep the last rendered snapshot so the
         # hover handler can read per-cell values (resources, units,
         # bottom bar) without re-querying the interface.
@@ -173,28 +180,29 @@ class HudPanel:
         # order of the unit that produced that row. Only honoured when
         # the panel is expanded; collapsed panels never expose rows.
         if self.activity_visible:
-            for key, r in self._panel_rects.items():
-                if not key.startswith("activity_row_"):
+            # UI-MASTER-07/OPT-1: scan only activity-row rects (k<=8)
+            # instead of every panel rect (n~=20+).
+            for idx, r in self._activity_row_rects.items():
+                if not r.collidepoint(pos):
                     continue
-                if r.collidepoint(pos):
-                    try:
-                        idx = int(key.split("_", 2)[2])
-                    except (ValueError, IndexError):
-                        continue
-                    unit = self._activity_row_units.get(idx)
-                    kind = self._activity_row_kinds.get(idx, "")
-                    if unit is not None:
-                        self._cancel_unit_order(unit, kind)
-                        # T10-CANCEL-SERVER (STEP T10CS.2): immediate UI
-                        # feedback. Drop the row from the per-frame
-                        # mappings so the activity panel visibly
-                        # collapses before the next snapshot lands,
-                        # reducing the "flash" between click and the
-                        # server-side state update.
-                        self._activity_row_texts.pop(idx, None)
-                        self._activity_row_units.pop(idx, None)
-                        self._activity_row_kinds.pop(idx, None)
-                    return True
+                unit = self._activity_row_units.get(idx)
+                kind = self._activity_row_kinds.get(idx, "")
+                if unit is not None:
+                    self._cancel_unit_order(unit, kind)
+                    # T10-CANCEL-SERVER (STEP T10CS.2): immediate UI
+                    # feedback. Drop the row from the per-frame
+                    # mappings so the activity panel visibly
+                    # collapses before the next snapshot lands,
+                    # reducing the "flash" between click and the
+                    # server-side state update.
+                    self._activity_row_texts.pop(idx, None)
+                    self._activity_row_units.pop(idx, None)
+                    self._activity_row_kinds.pop(idx, None)
+                    self._activity_row_rects.pop(idx, None)
+                    self._panel_rects.pop(
+                        "activity_row_{}".format(idx), None
+                    )
+                return True
         # T4: tab strip hit-testing
         for tab_key in ("all", "training", "research", "build"):
             r = self._panel_rects.get("activity_tab_" + tab_key)
@@ -227,14 +235,9 @@ class HudPanel:
             return
         # T8-ACTIVITY: per-row tooltip with full activity text.
         if self.activity_visible:
-            for key, r in self._panel_rects.items():
-                if not key.startswith("activity_row_"):
-                    continue
+            # UI-MASTER-07/OPT-1: same dedicated dict as the hit-test.
+            for idx, r in self._activity_row_rects.items():
                 if r.collidepoint(pos):
-                    try:
-                        idx = int(key.split("_", 2)[2])
-                    except (ValueError, IndexError):
-                        continue
                     full_text = self._activity_row_texts.get(idx, "")
                     if full_text:
                         # T9-CANCEL: append the cancel hint so the
@@ -441,6 +444,8 @@ class HudPanel:
         self._activity_row_units = {}
         # T10-CANCEL-SERVER: reset per-frame mapping row -> activity kind.
         self._activity_row_kinds = {}
+        # UI-MASTER-07/OPT-1: reset per-frame O(k) hit-test mapping.
+        self._activity_row_rects = {}
 
         # --- Layout anchor: horizontal resource bar ---
         res_bar_height = self.res_bar_height
@@ -613,6 +618,8 @@ class HudPanel:
             for key in list(self._panel_rects.keys()):
                 if key.startswith("activity_tab_") or key.startswith("activity_row_"):
                     self._panel_rects.pop(key, None)
+            # UI-MASTER-07/OPT-1: keep the parallel mapping in sync.
+            self._activity_row_rects.clear()
 
         # --- T8-BOTTOMBAR: horizontal bottom bar with time and speed ---
         bottom_bar_top = height - self.margin - self.bottom_bar_height
@@ -830,9 +837,10 @@ class HudPanel:
                 pygame.draw.rect(screen, (140, 220, 140), fill_rect)
             screen_render(self._fit(line, 38), (left + 6, y), color=(220, 235, 245))
             # Hit-test rect for tooltip / future cancel-click.
-            self._panel_rects["activity_row_{}".format(row_index)] = pygame.Rect(
-                left, y, width, self.line_height
-            )
+            row_rect = pygame.Rect(left, y, width, self.line_height)
+            self._panel_rects["activity_row_{}".format(row_index)] = row_rect
+            # UI-MASTER-07/OPT-1: parallel dict for O(k) hit-test.
+            self._activity_row_rects[row_index] = row_rect
             self._activity_row_texts[row_index] = line
             # T9-CANCEL: remember the source unit for this row so a
             # left-click can resolve which unit's first order to drop.

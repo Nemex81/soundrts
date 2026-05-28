@@ -28,6 +28,18 @@ Data: 23 maggio 2026
 
 - Indicatore visivo di selezione unità (rect highlight) sul gruppo selezionato nella mappa. (riportato da UI-MASTER-06)
 - Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei. (riportato da UI-MASTER-06)
+
+## UI-MASTER-07 (28 maggio 2026) — completato
+
+- [x] P0-OPTIONS-FIX: rimossa la chiamata top-level `_parse_options()` da `soundrts/options.py`. Funzione rinominata `parse_args(argv=None)` e resa pubblica. Entry points `soundrts.py` e `server.py` chiamano `options.parse_args()` PRIMA degli import di `clientmain`/`server` per preservare il binding di `options.port` come default argument in `clientserver.connect_and_play`. `python -m pytest <path>` ora funziona senza `SystemExit: 2`.
+- [x] P1-UNIT-SELECTION: nuova costante `_SELECTION_HIGHLIGHT_COLOR = (100, 255, 100)` in `soundrts/clientgamegridview.py`. `display_object()` disegna un rect-highlight bordo (width=2) attorno alle unità in `interface.group`, side = `max(R_vis*2+4, square_view_width//2)`. Drawn DOPO il cerchio colore PRIMA della barra HP. Risolve il problema del cerchio centrale `R_vis//2` poco visibile su mappe grandi.
+- [x] OPT-GLOBAL/OPT-1: `_activity_row_rects` dict separato per hit-test O(k) (k ≤ 8) invece di scan O(n) (n ≈ 20+) di `_panel_rects` con filtro `startswith`. Applicato in `handle_mouse_event` + `_update_tooltip`. Test esistente `test_cancel_handler_removes_row_immediately_for_ui_feedback` aggiornato al nuovo contratto.
+- [x] OPT-GLOBAL/AREA-1,2,4,5,6: valutate e documentate in CHANGELOG sezione "Optimization (Not Applied)" con giustificazione per LEGGE-OPT-2 (leggibilità > micro-opt) o assenza di guadagno reale.
+
+### Aperture per UI-MASTER-08
+
+- Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei. (riportato da UI-MASTER-06/07)
+- AREA-2 (ActivityRow dataclass) e AREA-1 (FlashEffect dataclass) potranno essere applicate se viene introdotto un secondo flash type o se i 3 dict `_activity_row_*` crescono ulteriormente.
 - Audit di altri test pollution potenziali: applicare lo stesso pattern di fixture `_reset_style_singleton` a `test_clientgamehud.py` come modello, valutare se serve un `conftest.py` di unittests che resetti `style._dict` per tutti i test che dipendono dai default EN.
 
 ## Stato fasi

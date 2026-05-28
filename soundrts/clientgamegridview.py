@@ -21,6 +21,14 @@ UNIT_SCALE = 2.0  # visual multiplier for unit radius (MAP-SCALE-1, R7b)
 # `_update_coefs` from HudPanel.res_bar_height/margin + this margin.
 HUD_MAP_MARGIN = 4
 
+# UI-MASTER-07/P1-UNIT-SELECTION: tinta del rect-highlight per le
+# unita' appartenenti a ``interface.group``. Verde chiaro pastello,
+# scelto per distinguersi sia dal verde acceso del marker centrale
+# del gruppo ``(0, 255, 0)`` sia dal verde scuro alleato
+# ``(60, 140, 60)``. Spessore bordo gestito alla call-site
+# (``draw_rect(..., width=2)``).
+_SELECTION_HIGHLIGHT_COLOR = (100, 255, 100)
+
 _AUTO_TERRAIN_FALLBACK = {
     "_meadows": (35, 80, 35),
     "_forest": (25, 65, 30),
@@ -199,6 +207,22 @@ class GridView:
             else:
                 color = (180, 180, 180)
             pygame.draw.circle(get_screen(), color, (x, y), max(2, R_vis // 2), 0)
+            # UI-MASTER-07/P1-UNIT-SELECTION: rect-highlight attorno
+            # alle unita' del gruppo corrente. Bordo (width=2), niente
+            # fill, colore distinto rispetto al cerchio centrale verde
+            # ``(0,255,0)`` e al verde scuro alleato ``(60,140,60)``.
+            # Il rect viene disegnato DOPO il cerchio colore, cosi'
+            # non lo nasconde, e PRIMA della barra HP per restare un
+            # decoro di selezione e non confondersi col feedback HP.
+            if o.id in self.interface.group:
+                side = max(R_vis * 2 + 4, self.square_view_width // 2)
+                hl_rect = (
+                    x - side // 2,
+                    y - side // 2,
+                    side,
+                    side,
+                )
+                draw_rect(_SELECTION_HIGHLIGHT_COLOR, hl_rect, 2)
             if getattr(o, "hp", None) is not None and o.hp != o.hp_max:
                 hp_prop = 100 * o.hp // o.hp_max
                 if hp_prop > 80:
