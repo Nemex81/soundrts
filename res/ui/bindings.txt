@@ -255,12 +255,10 @@ CTRL BACKQUOTE: reload_parameters
 PAUSE: toggle_pause
 ALT p: toggle_pause
 
-; T3: events panel collapse/expand (visual HUD)
-ALT e: toggle_events
-
-; T4: activity panel (visual HUD) — open/close + tab selection
-ALT a: toggle_activity_panel
-ALT 1: activity_tab_all
-ALT 2: activity_tab_training
-ALT 3: activity_tab_research
-ALT 4: activity_tab_build
+; visual HUD controls
+b: toggle_events
+m: toggle_activity_panel
+COMMA: activity_tab_all
+PERIOD: activity_tab_training
+SLASH: activity_tab_research
+CTRL SLASH: activity_tab_build

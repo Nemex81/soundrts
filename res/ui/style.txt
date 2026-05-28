@@ -758,3 +758,12 @@ tab_research || RESEARCH
 tab_build || BUILD
 events_collapsed || (hidden)
 activity_empty || (no active production)
+event_fmt {event}: {object}
+event_with_place_fmt {event}: {object} at {place}
+tooltip_events_show Show events
+tooltip_events_hide Hide events
+tooltip_activity_tab Switch to {tab}
+activity_prefix_training T
+activity_prefix_research R
+activity_prefix_build B
+activity_prefix_unknown ?

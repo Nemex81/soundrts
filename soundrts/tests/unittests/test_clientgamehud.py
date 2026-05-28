@@ -45,6 +45,11 @@ def test_hud_snapshot_collects_gameplay_data():
 
 def test_hud_event_buffer_keeps_recent_events_first():
     panel = HudPanel(DummyInterface())
+    panel._hud_text = lambda key, default: (
+        "{event}: {object} at {place}"
+        if key == "event_with_place_fmt"
+        else default
+    )
     entity = DummyUnit()
     entity.place = type("Place", (), {"col": 2, "row": 4})()
 

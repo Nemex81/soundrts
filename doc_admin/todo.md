@@ -788,3 +788,14 @@ Stato: COMPLETATO
 - [x] FASE-R - 18 test esistenti + lint sintassi tutti OK.
 - [x] FASE-T - +17 test (test_ui_master_01.py); totale 35/35 PASS sui moduli toccati.
 - [x] FASE-D - CHANGELOG [Unreleased] aggiornato + questo TODO.
+
+## Round UI-MASTER-02 (autonomo)
+
+- [x] FASE 0 - Lettura obbligatoria completata su HUD/client/gamegrid/bindings/style/tts/msgparts/clientmedia/worldclient.
+- [x] FIX-T3 - `HudPanel.events_visible` default `False`; toggle via tasto/click invariato.
+- [x] FIX-T4 - ACTIVITY spostato nella colonna destra sotto GROUP, larghezza 295px e altezza dinamica.
+- [x] FIX-T5 - Binding HUD spostati da `ALT a`/`ALT e` a combinazioni libere; middle-click corregge target assignment; rotella supporta Ctrl/Shift.
+- [x] FIX-T1B - Pattern evento HUD localizzati (`event_fmt`, `event_with_place_fmt`) e prefissi attività localizzati.
+- [x] T7 - Tooltip visuali localizzati per header EVENTS e tab ACTIVITY.
+- [x] FASE-T - `py_compile` OK; test mirati 43/43 PASS; suite completa 385 passed / 1 skipped.
+- [x] FASE-D - CHANGELOG e TODO aggiornati.

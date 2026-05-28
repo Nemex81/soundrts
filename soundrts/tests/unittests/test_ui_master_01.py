@@ -29,15 +29,16 @@ def _make_hud():
     return HudPanel(interface)
 
 
-def test_hud_panel_defaults_events_visible_true():
+def test_hud_panel_defaults_events_visible_false():
     hud = _make_hud()
-    assert hud.events_visible is True
+    assert hud.events_visible is False
 
 
 def test_hud_panel_defaults_activity_hidden_tab_all():
     hud = _make_hud()
     assert hud.activity_visible is False
     assert hud.activity_tab == "all"
+    assert hud.activity_width == 295
 
 
 def test_hud_classify_order_training():
@@ -165,6 +166,130 @@ def test_cmd_activity_tab_training_sets_state_and_opens_panel():
     voice_mock.item.assert_called_once_with(mp.ACTIVITY_TAB_TRAINING)
 
 
+def test_hud_named_format_event_with_place():
+    hud = _make_hud()
+    hud._hud_text = lambda key, default: default
+    out = hud._hud_named_format(
+        "event_with_place_fmt",
+        "{event}: {object} at {place}",
+        event="attack",
+        object="soldier",
+        place="3,4",
+    )
+    assert out == "attack: soldier at 3,4"
+
+
+def test_hud_format_event_uses_localized_pattern():
+    hud = _make_hud()
+    entity = SimpleNamespace(type_name="worker", place=SimpleNamespace(name="A1"))
+
+    def fake_hud_text(key, default):
+        if key == "event_with_place_fmt":
+            return "{event} / {object} / {place}"
+        return default
+
+    hud._hud_text = fake_hud_text
+    assert hud._format_event(entity, "under_attack") == "under attack / worker / A1"
+
+
+def test_hud_tooltip_events_header_uses_visible_state():
+    import pygame
+
+    hud = _make_hud()
+    tooltip_map = {
+        "tooltip_events_show": "Show events",
+        "tooltip_events_hide": "Hide events",
+    }
+    hud._hud_text = lambda key, default: tooltip_map.get(key, default)
+    hud.events_visible = False
+    hud._panel_rects["events_header"] = pygame.Rect(10, 10, 100, 30)
+    hud._update_tooltip((20, 20))
+    assert hud._tooltip_text == "Show events"
+    hud.events_visible = True
+    hud._update_tooltip((20, 20))
+    assert hud._tooltip_text == "Hide events"
+
+
+def test_hud_activity_panel_is_drawn_in_right_column():
+    import pygame
+    from soundrts.clientgamehud import HudPanel, HudSnapshot
+
+    hud = _make_hud()
+    hud.activity_visible = True
+    snapshot = HudSnapshot(
+        resources=[],
+        food="Pop: 0/0",
+        time="Time: 00:00",
+        speed="Speed: x1.0",
+        units=[],
+        events=[],
+        player="Player",
+    )
+    screen = pygame.Surface((800, 600))
+    captured = {}
+
+    def fake_draw_activity_panel(self, screen, left, top, width, bottom):
+        captured.update(left=left, top=top, width=width, bottom=bottom)
+
+    with patch("soundrts.lib.screen.screen_render"), \
+         patch("soundrts.lib.screen.screen_render_header"), \
+         patch.object(HudPanel, "_draw_activity_panel", fake_draw_activity_panel):
+        hud._draw_snapshot(screen, snapshot)
+
+    assert captured["left"] == 800 - hud.margin - 295
+    assert captured["width"] == 295
+    assert captured["top"] > hud.margin + hud.res_bar_height
+
+
+# ---------------------------------------------------------------------------
+# UI-MASTER-02 / FIX-T5 — mouse modifiers and middle click
+# ---------------------------------------------------------------------------
+
+def test_mouse_select_unit_args_maps_shift_and_ctrl():
+    from soundrts import clientgame
+
+    iface = SimpleNamespace()
+    args = clientgame.GameInterface._mouse_select_unit_args(
+        iface,
+        clientgame.KMOD_SHIFT | clientgame.KMOD_CTRL,
+    )
+    assert args == ["local", "idle"]
+
+
+def test_middle_mouse_sets_target_before_command_unit():
+    from soundrts import clientgame
+
+    target = object()
+    iface = SimpleNamespace(
+        hud_panel=SimpleNamespace(handle_mouse_event=MagicMock(return_value=False)),
+        grid_view=SimpleNamespace(object_from_mousepos=MagicMock(return_value=target)),
+        cmd_command_unit=MagicMock(),
+    )
+    event = SimpleNamespace(type=clientgame.MOUSEBUTTONDOWN, button=2, pos=(10, 20))
+    with patch.object(clientgame.pygame.key, "get_mods", return_value=0):
+        clientgame.GameInterface._process_fullscreen_mode_mouse_event(iface, event)
+    assert iface.target is target
+    iface.cmd_command_unit.assert_called_once_with()
+
+
+def test_mouse_wheel_passes_modifier_args_to_select_unit():
+    from soundrts import clientgame
+
+    iface = SimpleNamespace(
+        hud_panel=SimpleNamespace(handle_mouse_event=MagicMock(return_value=False)),
+        cmd_select_unit=MagicMock(),
+    )
+    iface._mouse_select_unit_args = clientgame.GameInterface._mouse_select_unit_args.__get__(iface)
+    event = SimpleNamespace(type=clientgame.MOUSEBUTTONDOWN, button=5, pos=(10, 20))
+    with patch.object(
+        clientgame.pygame.key,
+        "get_mods",
+        return_value=clientgame.KMOD_SHIFT | clientgame.KMOD_CTRL,
+    ):
+        clientgame.GameInterface._process_fullscreen_mode_mouse_event(iface, event)
+    iface.cmd_select_unit.assert_called_once_with(1, "local", "idle")
+
+
 # ---------------------------------------------------------------------------
 # T6 — display_is_active honours config.visual_mode
 # ---------------------------------------------------------------------------
@@ -266,3 +391,24 @@ def test_all_languages_have_round_tts_ids():
     assert missing == [], (
         "missing TTS entries: " + ", ".join(f"{p}->{i}" for p, i in missing)
     )
+
+
+def test_en_it_style_have_ui_master_02_keys():
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[3]
+    expected = [
+        "event_fmt",
+        "event_with_place_fmt",
+        "tooltip_events_show",
+        "tooltip_events_hide",
+        "tooltip_activity_tab",
+        "activity_prefix_training",
+        "activity_prefix_research",
+        "activity_prefix_build",
+        "activity_prefix_unknown",
+    ]
+    for rel in ("res/ui/style.txt", "res/ui-it/style.txt"):
+        text = (repo_root / rel).read_text(encoding="utf-8", errors="replace")
+        missing = [key for key in expected if key not in text]
+        assert missing == [], f"{rel} missing {missing}"

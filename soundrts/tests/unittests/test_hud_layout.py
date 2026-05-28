@@ -91,7 +91,9 @@ def _estimated_content_height(panel, snapshot, panel_name):
     if panel_name == "res":
         return panel.res_bar_height
     if panel_name == "events":
-        return header_height + max(1, len(snapshot.events)) * panel.line_height
+        if panel.events_visible:
+            return header_height + max(1, len(snapshot.events)) * panel.line_height
+        return header_height
     if panel_name == "group":
         return header_height + max(1, len(snapshot.units)) * panel.line_height
     raise AssertionError("unexpected dynamic panel: {}".format(panel_name))
@@ -438,8 +440,11 @@ def test_map_viewport_is_clipped_to_hud_free_width(monkeypatch, resolution):
     grid_view, _, _ = _make_grid_view(monkeypatch, resolution)
     width, height = resolution
     hud_right = grid_view._hud_right_width()
+    from soundrts.clientgamegridview import HUD_MAP_MARGIN
+
+    hud_top = HudPanel.res_bar_height + 2 * HudPanel.margin + HUD_MAP_MARGIN
     map_w = max(width // 2, width - hud_right)
-    expected_sq = min(map_w // 10, height // 8)
+    expected_sq = min(map_w // 10, (height - hud_top) // 8)
 
     grid_view._update_coefs()
 
@@ -447,7 +452,7 @@ def test_map_viewport_is_clipped_to_hud_free_width(monkeypatch, resolution):
     assert grid_view.square_view_height == expected_sq
     assert grid_view.square_view_width >= 1
     assert grid_view.square_view_width * 10 <= map_w
-    assert grid_view.ymax <= height
+    assert grid_view.ymax <= height - hud_top
 
 
 @pytest.mark.parametrize("R", [4, 5, 6, 8, 10, 12, 16])
@@ -489,7 +494,10 @@ def test_hit_test_uses_unshifted_map_coordinates(monkeypatch):
     grid_view._update_coefs()
     square = grid_view.square_view_width
     xc, yc = 3, 4
-    pos = (xc * square + square // 2, grid_view.ymax - (yc * square + square // 2))
+    pos = (
+        xc * square + square // 2,
+        grid_view._y_offset + grid_view.ymax - (yc * square + square // 2),
+    )
 
     assert grid_view.square_from_mousepos(pos) == grid[(xc, yc)]
     assert grid_view.square_from_mousepos((square * 10 + 1, pos[1])) is None

@@ -29,3 +29,12 @@ tab_research || RICERCHE
 tab_build || COSTR.
 events_collapsed || (nascosti)
 activity_empty || (nessuna produzione attiva)
+event_fmt {event}: {object}
+event_with_place_fmt {event}: {object} a {place}
+tooltip_events_show Mostra eventi
+tooltip_events_hide Nascondi eventi
+tooltip_activity_tab Vai a {tab}
+activity_prefix_training A
+activity_prefix_research R
+activity_prefix_build C
+activity_prefix_unknown ?

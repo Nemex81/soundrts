@@ -961,9 +961,9 @@ class GameInterface:
                     else:
                         set_cursor("tri_left")
         elif e.type == MOUSEBUTTONDOWN:
+            mods = pygame.key.get_mods()
             if e.button == 1:  # left mouse button
                 if self.an_order_requiring_a_target_is_selected:
-                    mods = pygame.key.get_mods()
                     args = []
                     if mods & KMOD_SHIFT:
                         args += ["queue_order"]
@@ -975,7 +975,6 @@ class GameInterface:
             elif e.button == 3:  # right mouse button
                 # do nothing if the mouse is pointing on nothing
                 if self.grid_view.square_from_mousepos(e.pos) is not None:
-                    mods = pygame.key.get_mods()
                     args = []
                     if mods & KMOD_SHIFT:
                         args += ["queue_order"]
@@ -985,17 +984,18 @@ class GameInterface:
             # T5: extended mouse controls.
             #   button 2 (middle): give an order to the unit under the
             #       cursor (equivalent to cmd_command_unit).
-            #   button 4 (scroll up): cycle to the previous unit.
-            #   button 5 (scroll down): cycle to the next unit.
+            #   button 4/5 (wheel): cycle units, with Ctrl/Shift filters.
             # These additions are voiced via the underlying cmd_*
             # methods, so they remain fully accessible.
             elif e.button == 2:
-                if self.grid_view.object_from_mousepos(e.pos):
+                target = self.grid_view.object_from_mousepos(e.pos)
+                if target is not None:
+                    self.target = target
                     self.cmd_command_unit()
             elif e.button == 4:
-                self.cmd_select_unit(-1)
+                self.cmd_select_unit(-1, *self._mouse_select_unit_args(mods))
             elif e.button == 5:
-                self.cmd_select_unit(1)
+                self.cmd_select_unit(1, *self._mouse_select_unit_args(mods))
         elif e.type == MOUSEBUTTONUP:
             if e.button == 1:  # left mouse button
                 if self.mouse_select_origin == e.pos:
@@ -1007,6 +1007,14 @@ class GameInterface:
                     )
                     self.say_group()
                 self.mouse_select_origin = None
+
+    def _mouse_select_unit_args(self, mods):
+        args = []
+        if mods & KMOD_SHIFT:
+            args.append("local")
+        if mods & KMOD_CTRL:
+            args.append("idle")
+        return args
 
     def load_bindings(self, s):
         self._bindings.load(s, self)

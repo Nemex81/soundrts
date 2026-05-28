@@ -260,6 +260,7 @@ def test_display_terrain_calls_sprite_cache(monkeypatch):
     gv.square_view_width = 32
     gv.square_view_height = 32
     gv.ymax = 32
+    gv._y_offset = 0
     calls = []
 
     def fake_get(category, name, size):

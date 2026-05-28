@@ -64,6 +64,9 @@ class HudPanel:
     time_height = 88
     res_bar_height = 40
     event_text_max_length = 23
+    activity_width = 295
+    activity_max_rows = 8
+    activity_min_height = panel_header_height + line_height * 2 + margin
 
     def __init__(self, interface: Any) -> None:
         self.interface = interface
@@ -73,11 +76,13 @@ class HudPanel:
         # T3: collapse/expand state of the EVENTS panel. When False the
         # panel renders only its header and the rest of the right column
         # slides up to fill the freed space.
-        self.events_visible: bool = True
+        self.events_visible: bool = False
         # T4: activity panel state (visible flag + active tab).
         # Tab values: "all" | "training" | "research" | "build".
         self.activity_visible: bool = False
         self.activity_tab: str = "all"
+        self._tooltip_text = ""
+        self._tooltip_pos: Optional[tuple] = None
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -94,11 +99,15 @@ class HudPanel:
           - Left click on the EVENTS panel header toggles `events_visible`.
           - Left click on an ACTIVITY tab label switches `activity_tab`.
         """
-        if getattr(event, "type", None) != pygame.MOUSEBUTTONDOWN:
+        event_type = getattr(event, "type", None)
+        pos = getattr(event, "pos", None)
+        if event_type == pygame.MOUSEMOTION:
+            self._update_tooltip(pos)
+            return False
+        if event_type != pygame.MOUSEBUTTONDOWN:
             return False
         if getattr(event, "button", None) != 1:
             return False
-        pos = getattr(event, "pos", None)
         if pos is None:
             return False
         events_rect = self._panel_rects.get("events_header")
@@ -112,6 +121,31 @@ class HudPanel:
                 self.activity_tab = tab_key
                 return True
         return False
+
+    def _update_tooltip(self, pos: Any) -> None:
+        self._tooltip_text = ""
+        self._tooltip_pos = None
+        if pos is None:
+            return
+        events_rect = self._panel_rects.get("events_header")
+        if events_rect is not None and events_rect.collidepoint(pos):
+            key = "tooltip_events_hide" if self.events_visible else "tooltip_events_show"
+            default = ""
+            self._tooltip_text = self._hud_text(key, default)
+            self._tooltip_pos = pos
+            return
+        for tab_key in self._ACTIVITY_TABS:
+            r = self._panel_rects.get("activity_tab_" + tab_key)
+            if r is not None and r.collidepoint(pos):
+                style_key, default_label = self._ACTIVITY_TAB_LABELS[tab_key]
+                tab_label = self._hud_text(style_key, default_label)
+                self._tooltip_text = self._hud_named_format(
+                    "tooltip_activity_tab",
+                    "{tab}",
+                    tab=tab_label,
+                )
+                self._tooltip_pos = pos
+                return
 
     def get_snapshot(self) -> HudSnapshot:
         return HudSnapshot(
@@ -269,13 +303,17 @@ class HudPanel:
 
         # --- T4: ACTIVITY panel (bottom-left, only when visible) ---
         if self.activity_visible:
-            self._draw_activity_panel(screen, left, bottom)
+            activity_top = group_top + group_height + self.margin
+            if activity_top < bottom - self.panel_header_height:
+                self._draw_activity_panel(screen, player_left, activity_top, group_width, bottom)
         else:
             # Clear cached tab rects so handle_mouse_event doesn't react
             # to clicks on an invisible strip.
             for key in ("activity_tab_all", "activity_tab_training",
                         "activity_tab_research", "activity_tab_build"):
                 self._panel_rects.pop(key, None)
+
+            self._draw_tooltip(screen)
 
     def _event_style(self, severity: str):
         if severity == "combat":
@@ -294,9 +332,6 @@ class HudPanel:
         "research": ("tab_research", "RESEARCH"),
         "build": ("tab_build", "BUILD"),
     }
-    activity_width = 320
-    activity_max_rows = 8
-
     def _classify_order(self, order: Any) -> str:
         """Return 'training' | 'research' | 'build' | '' for a worldorder
         instance. Defensive: never raises."""
@@ -350,10 +385,16 @@ class HudPanel:
             pass
         return items
 
-    def _draw_activity_panel(self, screen: pygame.Surface, left: int, bottom: int) -> None:
+    def _draw_activity_panel(
+        self,
+        screen: pygame.Surface,
+        left: int,
+        top: int,
+        width: int,
+        bottom: int,
+    ) -> None:
         from .lib.screen import screen_render, screen_render_header
 
-        width = self.activity_width
         items = self._collect_activity()
         # Pre-compute counters per tab for the strip labels.
         counts = {"all": len(items), "training": 0, "research": 0, "build": 0}
@@ -363,10 +404,15 @@ class HudPanel:
             filtered = items
         else:
             filtered = [it for it in items if it[0] == self.activity_tab]
-        rows = min(len(filtered), self.activity_max_rows)
+        available_height = max(self.activity_min_height, bottom - top)
+        rows_fit = max(
+            1,
+            (available_height - self.panel_header_height - self.line_height - self.margin)
+            // self.line_height,
+        )
+        rows = min(len(filtered), self.activity_max_rows, rows_fit)
         body_height = max(1, rows) * self.line_height
         height = self.panel_header_height + self.line_height + body_height + self.margin
-        top = bottom - height
         rect = (left, top, width, height)
         self._draw_panel(screen, rect)
         self._panel_rects["activity"] = pygame.Rect(*rect)
@@ -406,10 +452,10 @@ class HudPanel:
             y = body_top
             for kind, name, pct in filtered[: self.activity_max_rows]:
                 _prefix_key = {
-                    "training": "T",
-                    "research": "R",
-                    "build": "B",
-                }.get(kind, "?")
+                    "training": self._hud_text("activity_prefix_training", "T"),
+                    "research": self._hud_text("activity_prefix_research", "R"),
+                    "build": self._hud_text("activity_prefix_build", "B"),
+                }.get(kind, self._hud_text("activity_prefix_unknown", "?"))
                 line = "[{}] {} {}%".format(_prefix_key, name, pct)
                 screen_render(self._fit(line, 38), (left + 6, y), color=(220, 235, 245))
                 y += self.line_height
@@ -426,6 +472,21 @@ class HudPanel:
         else:
             prefix = "="
         return "{} {}".format(prefix, speed_text)
+
+    def _draw_tooltip(self, screen: pygame.Surface) -> None:
+        if not self._tooltip_text or self._tooltip_pos is None:
+            return
+        from .lib.screen import screen_render
+
+        x, y = self._tooltip_pos
+        text = self._fit(self._tooltip_text, 36)
+        tooltip_width = max(90, min(260, len(text) * 8 + 16))
+        tooltip_height = 26
+        left = min(max(self.margin, x + 12), screen.get_width() - tooltip_width - self.margin)
+        top = min(max(self.margin, y + 12), screen.get_height() - tooltip_height - self.margin)
+        rect = (left, top, tooltip_width, tooltip_height)
+        self._draw_panel(screen, rect)
+        screen_render(text, (left + 8, top + 5), color=(240, 235, 190))
 
     def _draw_panel(self, screen: pygame.Surface, rect: Sequence[int]) -> None:
         panel = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
@@ -546,8 +607,25 @@ class HudPanel:
         place = getattr(entity, "place", None)
         place_text = self._place_text(place)
         if place_text:
-            return self._fit("{}: {} at {}".format(event_text, label, place_text), 80)
-        return self._fit("{}: {}".format(event_text, label), 80)
+            return self._fit(
+                self._hud_named_format(
+                    "event_with_place_fmt",
+                    "{event}: {object} {place}",
+                    event=event_text,
+                    object=label,
+                    place=place_text,
+                ),
+                80,
+            )
+        return self._fit(
+            self._hud_named_format(
+                "event_fmt",
+                "{event}: {object}",
+                event=event_text,
+                object=label,
+            ),
+            80,
+        )
 
     def _place_text(self, place: Any) -> str:
         if place is None:
@@ -589,6 +667,13 @@ class HudPanel:
             return template.format(*args)
         except Exception:
             return default.format(*args)
+
+    def _hud_named_format(self, key: str, default: str, **kwargs: Any) -> str:
+        template = self._hud_text(key, default)
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return default.format(**kwargs)
 
     def _fit(self, text: str, max_length: int) -> str:
         if len(text) <= max_length:
