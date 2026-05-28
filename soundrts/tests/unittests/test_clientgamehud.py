@@ -1,4 +1,35 @@
+import pytest
+
 from soundrts.clientgamehud import HudPanel
+from soundrts.definitions import style
+
+
+@pytest.fixture(autouse=True)
+def _reset_style_singleton():
+    """UI-MASTER-06 P1-TEST-ISOLATION.
+
+    Il singleton globale ``soundrts.definitions.style`` viene riempito
+    con la lingua di sistema (IT su Windows it-IT) non appena un test
+    precedente nella suite istanzia ``ResourceStack`` — vedi
+    ``soundrts/tests/test_cache.py``: ``ResourceStack.__init__`` chiama
+    ``_reload()`` che a sua volta invoca ``load_style()``.
+
+    Senza reset, ``_hud_text`` restituisce le chiavi IT (``"Risorsa 1"``,
+    ``"Giocatore"``, ...) invece dei default EN che questi test si
+    aspettano. Pollution presente da prima di UI-MASTER-06.
+
+    Fixture function-scope: ripristina lo stato vuoto prima di ogni test
+    e lo riazzera dopo, così non perturba la suite a valle.
+    """
+    saved = style._dict if hasattr(style, "_dict") else None
+    style._dict = {}
+    try:
+        yield
+    finally:
+        if saved is not None:
+            style._dict = saved
+        else:
+            style._dict = {}
 
 
 class DummyOrder:

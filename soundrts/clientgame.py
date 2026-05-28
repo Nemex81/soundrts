@@ -1004,13 +1004,25 @@ class GameInterface:
                     if mods & KMOD_CTRL:
                         args += ["imperative"]
                     self.cmd_default(*args)
-                    # T10-MOVE-INDICATOR: surface a transient green
-                    # circle on the clicked cell so mouse users get a
-                    # visual confirmation of the issued default order
-                    # (typically a move). Defensive: HUD failures must
-                    # never break the RTS click flow.
+                    # T10-MOVE-INDICATOR / UI-MASTER-06 P2: surface a
+                    # transient green circle on the clicked cell so
+                    # mouse users get a visual confirmation of the
+                    # issued default order (typically a move). The
+                    # flash is anchored at the geometric centre of the
+                    # destination square — not at the raw click pixel
+                    # — so the indicator stays semantically aligned
+                    # with the addressed cell even when the click
+                    # lands near a border. Defensive: HUD failures
+                    # must never break the RTS click flow.
                     try:
-                        self.hud_panel.flash_move_target(right_square, e.pos)
+                        flash_pos = self.grid_view.screen_pos_of_square(
+                            right_square
+                        )
+                        if flash_pos is None:
+                            flash_pos = e.pos
+                        self.hud_panel.flash_move_target(
+                            right_square, flash_pos
+                        )
                     except Exception:
                         pass
             # T5: extended mouse controls.

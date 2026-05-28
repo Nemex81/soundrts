@@ -18,6 +18,18 @@ Data: 23 maggio 2026
 - Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei.
 - Risolvere test pollution cross-file su `test_clientgamehud.py::test_hud_snapshot_collects_gameplay_data` e `test_hud_player_line_falls_back_when_missing` (passano isolati, falliscono quando preceduti da test che caricano la traduzione IT in stato globale).
 
+## UI-MASTER-06 (29 maggio 2026) — completato
+
+- [x] P1-TEST-ISOLATION: aggiunta fixture autouse function-scope `_reset_style_singleton` in `soundrts/tests/unittests/test_clientgamehud.py`. Causa pollution identificata: `soundrts/tests/test_cache.py` istanzia `ResourceStack` che chiama `load_style()` con la lingua di sistema (IT su Windows it-IT) prima di `test_clientgamehud.py` (ordine alfabetico path). Verdetto suite: 466 passed (era 455 passed + 2 failed).
+- [x] P2-MOVE-INDICATOR: nuovo metodo pubblico `GridView.screen_pos_of_square(square)` in `soundrts/clientgamegridview.py`; `clientgame.py` usa il centro geometrico come ancora del flash con fallback su `e.pos`. Chiusa la deviazione documentata in UI-MASTER-05/T10-MOVE-INDICATOR.
+- [x] P3-L10N-COMPLETION: tradotte tutte le chiavi `def hud` placeholder UI-MASTER-02b/03/04 in FR (con tipografia francese: spazio fine prima di `:`) e PT-BR. Rimossi i marker `; TODO: tradurre`. Chiavi puramente strutturali mantenute identiche (lingua-agnostiche).
+
+### Aperture per UI-MASTER-07
+
+- Indicatore visivo di selezione unità (rect highlight) sul gruppo selezionato nella mappa. (riportato da UI-MASTER-06)
+- Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei. (riportato da UI-MASTER-06)
+- Audit di altri test pollution potenziali: applicare lo stesso pattern di fixture `_reset_style_singleton` a `test_clientgamehud.py` come modello, valutare se serve un `conftest.py` di unittests che resetti `style._dict` per tutti i test che dipendono dai default EN.
+
 ## Stato fasi
 
 ### [x] Fase 0 - Analisi totale

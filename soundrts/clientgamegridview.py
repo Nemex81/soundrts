@@ -126,6 +126,27 @@ class GridView:
     def _xy_coords(self, ox, oy):
         return self._get_view_coords_from_world_coords(ox / 1000.0, oy / 1000.0)
 
+    def screen_pos_of_square(self, square):
+        """UI-MASTER-06 P2-MOVE-INDICATOR.
+
+        Restituisce il centro geometrico di ``square`` in coordinate
+        schermo (stesso sistema di ``square_from_mousepos``).
+
+        Aggiorna i coefficienti di vista prima di proiettare, così la
+        chiamata e' robusta anche se invocata fuori da un ciclo di
+        rendering attivo (es. handler eventi mouse). Restituisce
+        ``None`` se ``square`` non espone ``.x``/``.y`` validi.
+        """
+        if square is None:
+            return None
+        try:
+            sx = square.x
+            sy = square.y
+        except AttributeError:
+            return None
+        self._update_coefs()
+        return self._get_view_coords_from_world_coords(sx, sy)
+
     def display_object(self, o):
         if getattr(o, "is_inside", False):
             return

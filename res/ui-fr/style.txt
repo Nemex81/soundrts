@@ -35,26 +35,26 @@ def gate
 shortcut p
 
 def hud
-; UI-MASTER-02b/UI-MASTER-03 placeholders (EN fallback) - TODO: tradurre
+; UI-MASTER-02b/UI-MASTER-03 — traduit FR (UI-MASTER-06 P3)
 tooltip_event_full {prefix} {text}
 tooltip_map_entity {name} {hp} {owner} {order} {coords}
-tooltip_map_hp HP: {hp}/{hp_max}
+tooltip_map_hp PV : {hp}/{hp_max}
 tooltip_map_owner [{owner}]
 tooltip_map_coords ({col},{row})
 entity_na ?
 bottom_bar_time_fmt {time}
 bottom_bar_speed_fmt {speed}
-activity_collapsed || (hidden)
-tooltip_activity_show Show activity
-tooltip_activity_hide Hide activity
-; UI-MASTER-04 placeholders (EN fallback) - TODO: tradurre
-tooltip_activity_cancel_hint Click to cancel
+activity_collapsed || (masqué)
+tooltip_activity_show Afficher l'activité
+tooltip_activity_hide Masquer l'activité
+; UI-MASTER-04 — traduit FR (UI-MASTER-06 P3)
+tooltip_activity_cancel_hint Cliquer pour annuler
 tooltip_activity_row_full {row}  - {cancel_hint}
 tooltip_res_cell {name}: {value}
-tooltip_food_cell Food: {food}
-tooltip_player_panel Player: {name}
-tooltip_unit_row {label} - {hp}/{hp_max} HP - {status}
+tooltip_food_cell Nourriture : {food}
+tooltip_player_panel Joueur : {name}
+tooltip_unit_row {label} - {hp}/{hp_max} PV - {status}
 tooltip_unit_row_nohp {label} - {status}
-tooltip_bottom_time Game time: {time}
-tooltip_bottom_speed Game speed: {speed}
-tooltip_map_empty_cell Cell ({col},{row})
+tooltip_bottom_time Temps de jeu : {time}
+tooltip_bottom_speed Vitesse de jeu : {speed}
+tooltip_map_empty_cell Cellule ({col},{row})
