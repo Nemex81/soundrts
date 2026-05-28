@@ -799,3 +799,13 @@ Stato: COMPLETATO
 - [x] T7 - Tooltip visuali localizzati per header EVENTS e tab ACTIVITY.
 - [x] FASE-T - `py_compile` OK; test mirati 43/43 PASS; suite completa 385 passed / 1 skipped.
 - [x] FASE-D - CHANGELOG e TODO aggiornati.
+
+## Round UI-MASTER-02b (autonomo)
+
+- [x] FASE 0 - Lettura `clientgamehud.py`, `clientgame.py`, `clientgamegridview.py`, `clientgameentity.py`, `style.txt` EN/IT, test esistenti.
+- [x] BUG-T4 - Fix spazio verticale GROUP: riserva `activity_min_height + margin` quando `activity_visible=True`. Verificato che `activity_top < bottom - panel_header_height` per 800x600 e 1024x768.
+- [x] T7-EVENTI - Tooltip popup sulle righe del pannello EVENTS: registrati rect `event_row_N` e dizionario `_event_row_texts` con testi completi non troncati. Hit-test in `_update_tooltip` solo quando `events_visible=True`.
+- [x] T7-MAPPA - Tooltip popup sugli elementi della mappa con delay 400 ms. Nuovi metodi `HudPanel.set_map_hover`, `_build_map_tooltip`, `is_pos_over_hud`. Dispatch MOUSEMOTION in `clientgame.py` riconosce sovrapposizione HUD.
+- [x] LOCALIZZAZIONE - Aggiunte chiavi `tooltip_event_full`, `tooltip_map_entity`, `tooltip_map_hp`, `tooltip_map_owner`, `tooltip_map_coords`, `entity_na` in EN+IT, placeholder nelle altre lingue con `style.txt` (fr, pt-BR).
+- [x] FASE-T - 17 nuovi test in `test_ui_master_02b.py` PASS; suite completa 402 passed / 1 skipped (baseline +17, zero regressioni).
+- [x] FASE-D - CHANGELOG e TODO aggiornati. Nessun comando git eseguito.

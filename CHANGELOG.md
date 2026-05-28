@@ -4,6 +4,11 @@
 
 ### Added
 
+- [UI-MASTER-02b/T7-EVENTI] `soundrts/clientgamehud.py`, `res/ui/style.txt`, `res/ui-it/style.txt`: tooltip popup sulle righe del pannello EVENTS. Hover su una voce mostra la stringa evento completa (non troncata) tramite `tooltip_event_full`. Registrati rect `event_row_N` in `_panel_rects` e dizionario `_event_row_texts` con i testi completi.
+- [UI-MASTER-02b/T7-MAPPA] `soundrts/clientgamehud.py`, `soundrts/clientgame.py`, `res/ui/style.txt`, `res/ui-it/style.txt`: tooltip popup sugli elementi della mappa (unità, edifici, risorse) con delay 400 ms di hover stabile. Nuovi metodi `HudPanel.set_map_hover()`, `HudPanel._build_map_tooltip()`, `HudPanel.is_pos_over_hud()`. Dispatch MOUSEMOTION in `_process_fullscreen_mode_mouse_event` riconosce sovrapposizione HUD e instrada al map-hover solo fuori dai pannelli.
+- [UI-MASTER-02b] `res/ui/style.txt`, `res/ui-it/style.txt`, `res/ui-fr/style.txt`, `res/ui-pt-BR/style.txt`: chiavi `[hud]` `tooltip_event_full`, `tooltip_map_entity`, `tooltip_map_hp` (IT: `PV`), `tooltip_map_owner`, `tooltip_map_coords`, `entity_na`. Le altre lingue ereditano dal default EN.
+- [UI-MASTER-02b] `soundrts/tests/unittests/test_ui_master_02b.py`: 17 test per BUG-T4 (riserva spazio ACTIVITY), T7-EVENTI (rect + tooltip full text), T7-MAPPA (delay 400 ms, attributi difensivi, sovrapposizione HUD), wiring MOUSEMOTION in `clientgame.py`.
+- [UI-MASTER-02b] `tools/_apply_t7_loc.py`: script idempotente per propagare i placeholder localizzati alle lingue secondarie.
 - [UI-MASTER-02/T7] `soundrts/clientgamehud.py`, `res/ui/style.txt`, `res/ui-it/style.txt`: tooltip visuali localizzati per controlli HUD cliccabili. Hover su header EVENTS mostra `Show events/Hide events` (IT: `Mostra eventi/Nascondi eventi`); hover sui tab ACTIVITY mostra `Switch to {tab}` (IT: `Vai a {tab}`).
 - [UI-MASTER-02/FIX-T5] `soundrts/tests/unittests/test_ui_master_01.py`: test aggiunti per middle-click target assignment, wheel modifiers Ctrl/Shift, tooltip HUD, pattern evento localizzato e layout ACTIVITY in colonna destra.
 - [UI-MASTER-01/T3] `soundrts/clientgamehud.py`, `soundrts/clientgame.py`: pannello EVENTS collassabile. Nuovo attributo `HudPanel.events_visible` (default False da UI-MASTER-02), nuovo metodo `cmd_toggle_events()` su `GameInterface` con voicing TTS, hit-test sul rect `events_header` in `HudPanel.handle_mouse_event()`. Header mostra il suffisso `(hidden)` quando collassato.
@@ -18,6 +23,8 @@
 
 ### Fixed
 
+- [UI-MASTER-02b/BUG-T4] `soundrts/clientgamehud.py`: corretto calcolo `available_h` per il pannello GROUP. Quando `activity_visible=True` il blocco GROUP riserva `activity_min_height + margin` di spazio verticale, così `activity_top < bottom - panel_header_height` e il pannello ACTIVITY viene effettivamente disegnato sotto GROUP. Prima del fix, con events_visible=True e 8 unità a 800x600, `activity_top=592 ≥ bottom-header=556` e ACTIVITY non veniva mai disegnato.
+- [UI-MASTER-02b] `soundrts/clientgamehud.py`: tooltip overlay (`_draw_tooltip`) spostato fuori dal ramo `else` di `if self.activity_visible`, dove era erroneamente confinato. Il popup ora si renderizza in tutti gli stati del pannello attività.
 - [UI-MASTER-02/FIX-T3] `soundrts/clientgamehud.py`: `HudPanel.events_visible` ora parte da `False`; il pannello EVENTS è chiuso di default al primo frame e resta apribile via tasto o click header.
 - [UI-MASTER-02/FIX-T4] `soundrts/clientgamehud.py`: pannello ACTIVITY riposizionato da bottom-left a colonna destra, subito sotto GROUP, con larghezza `col_right_width=295`. Il calcolo del gruppo riserva spazio verticale minimo quando ACTIVITY è visibile.
 - [UI-MASTER-02/FIX-T5] `soundrts/clientgame.py`, `res/ui/bindings.txt`: corrette collisioni binding `ALT a`/`ALT e` con comandi storici (`order_shortcut`, worker idle). Middle-click ora assegna `self.target` prima di chiamare `cmd_command_unit`; rotella mouse supporta Shift=`local`, Ctrl=`idle`.

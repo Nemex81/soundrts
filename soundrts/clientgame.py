@@ -933,8 +933,26 @@ class GameInterface:
         # C1: HUD hit-test hook. Returns False today (no-op); reserved for
         # future clickable widgets without altering the RTS mouse flow.
         if self.hud_panel.handle_mouse_event(e):
+            # T7-MAPPA: clicking on the HUD invalidates any pending
+            # map-hover tooltip.
+            try:
+                self.hud_panel.set_map_hover(None, None)
+            except Exception:
+                pass
             return
         if e.type == MOUSEMOTION:
+            # T7-MAPPA: feed the HUD with the current map-hover entity
+            # so it can show a delayed tooltip popup. When the mouse is
+            # over the HUD chrome we skip the map probe to avoid
+            # overriding HUD tooltips.
+            try:
+                if self.hud_panel.is_pos_over_hud(e.pos):
+                    self.hud_panel.set_map_hover(None, None)
+                else:
+                    map_entity = self.grid_view.object_from_mousepos(e.pos)
+                    self.hud_panel.set_map_hover(map_entity, e.pos)
+            except Exception:
+                pass
             square = self.grid_view.square_from_mousepos(e.pos)
             target = self.grid_view.object_from_mousepos(e.pos)
             if target is not None:

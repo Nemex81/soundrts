@@ -1,6 +1,7 @@
+import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Deque, List, Optional, Sequence
+from typing import Any, Deque, Dict, List, Optional, Sequence
 
 import pygame
 
@@ -83,6 +84,14 @@ class HudPanel:
         self.activity_tab: str = "all"
         self._tooltip_text = ""
         self._tooltip_pos: Optional[tuple] = None
+        # T7-EVENTI: full (non-truncated) text of each rendered event row,
+        # keyed by row index. Populated in _draw_snapshot, consumed in
+        # _update_tooltip to feed the hover popup.
+        self._event_row_texts: Dict[int, str] = {}
+        # T7-MAPPA: map hover tracking with debounce delay.
+        self._map_hover_entity: Any = None
+        self._map_hover_start: float = 0.0
+        self._map_tooltip_delay: float = 0.4
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -146,6 +155,23 @@ class HudPanel:
                 )
                 self._tooltip_pos = pos
                 return
+        # T7-EVENTI: hover over a single event row in the EVENTS panel.
+        # Only honoured when the panel is expanded, so a collapsed panel
+        # never leaks tooltip popups for hidden rows.
+        if self.events_visible:
+            for key, r in self._panel_rects.items():
+                if not key.startswith("event_row_"):
+                    continue
+                if r.collidepoint(pos):
+                    try:
+                        idx = int(key.split("_", 2)[2])
+                    except (ValueError, IndexError):
+                        continue
+                    full_text = self._event_row_texts.get(idx, "")
+                    if full_text:
+                        self._tooltip_text = full_text
+                        self._tooltip_pos = pos
+                        return
 
     def get_snapshot(self) -> HudSnapshot:
         return HudSnapshot(
@@ -196,6 +222,8 @@ class HudPanel:
         right = width - self.margin
         bottom = height - self.margin
         self._panel_rects = {}
+        # T7-EVENTI: reset per-frame mapping from event row index -> full text.
+        self._event_row_texts = {}
 
         # --- Layout anchor: horizontal resource bar ---
         res_bar_height = self.res_bar_height
@@ -259,13 +287,28 @@ class HudPanel:
             if not events:
                 screen_render(self._hud_text("no_events", "No recent events"), (right - col_right_width + 6, y), color=(230, 220, 205))
             else:
-                for ev in events[: self.max_events]:
+                for row_index, ev in enumerate(events[: self.max_events]):
                     prefix, ev_color = self._event_style(ev.severity)
+                    full_line = self._hud_named_format(
+                        "tooltip_event_full",
+                        "{prefix} {text}",
+                        prefix=prefix,
+                        text=ev.text,
+                    )
                     screen_render(
                         self._fit("{} {}".format(prefix, ev.text), self.event_text_max_length),
                         (right - col_right_width + 6, y),
                         color=ev_color,
                     )
+                    # T7-EVENTI: register a hit-test rect for the full row
+                    # and remember the non-truncated text for the tooltip.
+                    self._panel_rects["event_row_{}".format(row_index)] = pygame.Rect(
+                        right - col_right_width,
+                        y,
+                        col_right_width,
+                        self.line_height,
+                    )
+                    self._event_row_texts[row_index] = full_line
                     y += self.line_height
 
         # --- PLAYER panel (bottom-right, below EVENTS) — Round 5 ---
@@ -281,8 +324,20 @@ class HudPanel:
 
         # --- GROUP panel (bottom-right, below PLAYER) — Round 5 ---
         group_top = player_top + self.player_height + 4
-        # Adaptive strategy A: cap visible units to available vertical space
-        available_h = max(0, bottom - group_top - self.panel_header_height)
+        # Adaptive strategy A: cap visible units to available vertical space.
+        # UI-MASTER-02b BUG-T4: when ACTIVITY is open we must reserve
+        # vertical room for it under GROUP, otherwise the GROUP panel
+        # consumes everything and `activity_top` ends up past `bottom`,
+        # making the ACTIVITY panel impossible to draw.
+        reserved_for_activity = (
+            self.activity_min_height + self.margin
+            if self.activity_visible
+            else 0
+        )
+        available_h = max(
+            0,
+            bottom - group_top - self.panel_header_height - reserved_for_activity,
+        )
         max_units_fit = max(1, available_h // self.line_height)
         units_to_show = max(1, min(self.max_units, int(max_units_fit)))
         unit_count = max(1, min(max(1, len(snapshot.units)), units_to_show))
@@ -301,7 +356,7 @@ class HudPanel:
             screen_render(line, (player_left + 6, y), color=(220, 235, 245))
             y += self.line_height
 
-        # --- T4: ACTIVITY panel (bottom-left, only when visible) ---
+        # --- T4: ACTIVITY panel (bottom-right, only when visible) ---
         if self.activity_visible:
             activity_top = group_top + group_height + self.margin
             if activity_top < bottom - self.panel_header_height:
@@ -313,7 +368,11 @@ class HudPanel:
                         "activity_tab_research", "activity_tab_build"):
                 self._panel_rects.pop(key, None)
 
-            self._draw_tooltip(screen)
+        # UI-MASTER-02b: tooltip overlay must render regardless of the
+        # ACTIVITY panel visibility (previous indentation kept it inside
+        # the `else` branch and suppressed all popups when activity was
+        # open).
+        self._draw_tooltip(screen)
 
     def _event_style(self, severity: str):
         if severity == "combat":
@@ -472,6 +531,120 @@ class HudPanel:
         else:
             prefix = "="
         return "{} {}".format(prefix, speed_text)
+
+    # ------------------------------------------------------------------
+    # T7-MAPPA: map hover tooltip
+    # ------------------------------------------------------------------
+    def is_pos_over_hud(self, pos: Any) -> bool:
+        """Return True when the screen position overlaps any HUD panel
+        rect. Used by clientgame to skip map-hover tooltips while the
+        mouse is over the HUD chrome."""
+        if pos is None:
+            return False
+        for key, r in self._panel_rects.items():
+            # Skip purely virtual rects (tab rects live inside the
+            # activity panel rect already, so the parent check covers
+            # them).
+            if key.startswith("event_row_") or key.startswith("activity_tab_"):
+                continue
+            if r is not None and r.collidepoint(pos):
+                return True
+        return False
+
+    def set_map_hover(self, entity: Any, pos: Any) -> None:
+        """Track the map-cell hover state and surface a tooltip after a
+        short stable delay (``_map_tooltip_delay`` seconds). When
+        ``entity`` is ``None`` the hover state and any active tooltip
+        are cleared. Defensive: never raises.
+        """
+        if entity is None:
+            self._map_hover_entity = None
+            self._map_hover_start = 0.0
+            # Only clear the tooltip if it was set by us; HUD-driven
+            # tooltips (events/tabs) are re-evaluated by _update_tooltip.
+            self._tooltip_text = ""
+            self._tooltip_pos = None
+            return
+        now = time.monotonic()
+        if entity is not self._map_hover_entity:
+            self._map_hover_entity = entity
+            self._map_hover_start = now
+            return
+        if (now - self._map_hover_start) >= self._map_tooltip_delay:
+            try:
+                text = self._build_map_tooltip(entity, pos)
+            except Exception:
+                text = ""
+            if text:
+                self._tooltip_text = text
+                self._tooltip_pos = pos
+
+    def _build_map_tooltip(self, entity: Any, pos: Any) -> str:
+        """Compose the localized tooltip text for a hovered map entity.
+
+        Every player-visible token is sourced from the ``[hud]`` style
+        section (LEGGE-4). Each attribute access on ``entity`` is
+        defensive: missing attributes simply skip their segment.
+        """
+        # name --------------------------------------------------------------
+        try:
+            name = getattr(entity, "type_name", None)
+        except Exception:
+            name = None
+        if not name:
+            name = self._hud_text("entity_na", "?")
+        # hp / hp_max -------------------------------------------------------
+        hp_str = ""
+        try:
+            hp = getattr(entity, "hp", None)
+            hp_max = getattr(entity, "hp_max", None)
+            if hp is not None and hp_max is not None:
+                hp_str = self._hud_named_format(
+                    "tooltip_map_hp",
+                    "HP: {hp}/{hp_max}",
+                    hp=int(hp),
+                    hp_max=int(hp_max),
+                )
+        except Exception:
+            hp_str = ""
+        # owner -------------------------------------------------------------
+        owner_str = ""
+        try:
+            owner = getattr(entity, "player", None) or getattr(entity, "owner", None)
+            if owner is not None:
+                owner_name = getattr(owner, "name", None) or getattr(owner, "login", None)
+                if owner_name:
+                    owner_str = self._hud_named_format(
+                        "tooltip_map_owner",
+                        "[{owner}]",
+                        owner=str(owner_name),
+                    )
+        except Exception:
+            owner_str = ""
+        # first order -------------------------------------------------------
+        order_str = ""
+        try:
+            orders = getattr(entity, "orders", None) or []
+            if orders:
+                first = orders[0]
+                kw = getattr(first, "keyword", None)
+                if kw is None:
+                    cls = getattr(first, "cls", None)
+                    kw = getattr(cls, "keyword", None) if cls is not None else None
+                if kw:
+                    order_str = str(kw)
+        except Exception:
+            order_str = ""
+        text = self._hud_named_format(
+            "tooltip_map_entity",
+            "{name} {hp} {owner} {order}",
+            name=name,
+            hp=hp_str,
+            owner=owner_str,
+            order=order_str,
+        )
+        # Collapse double spaces left by empty segments and trim.
+        return " ".join(text.split()).strip()
 
     def _draw_tooltip(self, screen: pygame.Surface) -> None:
         if not self._tooltip_text or self._tooltip_pos is None:

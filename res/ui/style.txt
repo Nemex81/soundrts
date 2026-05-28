@@ -767,3 +767,9 @@ activity_prefix_training T
 activity_prefix_research R
 activity_prefix_build B
 activity_prefix_unknown ?
+tooltip_event_full {prefix} {text}
+tooltip_map_entity {name} {hp} {owner} {order}
+tooltip_map_hp HP: {hp}/{hp_max}
+tooltip_map_owner [{owner}]
+tooltip_map_coords ({col},{row})
+entity_na ?
