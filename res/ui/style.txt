@@ -768,8 +768,13 @@ activity_prefix_research R
 activity_prefix_build B
 activity_prefix_unknown ?
 tooltip_event_full {prefix} {text}
-tooltip_map_entity {name} {hp} {owner} {order}
+tooltip_map_entity {name} {hp} {owner} {order} {coords}
 tooltip_map_hp HP: {hp}/{hp_max}
 tooltip_map_owner [{owner}]
 tooltip_map_coords ({col},{row})
 entity_na ?
+bottom_bar_time_fmt {time}
+bottom_bar_speed_fmt {speed}
+activity_collapsed || (hidden)
+tooltip_activity_show Show activity
+tooltip_activity_hide Hide activity

@@ -23,7 +23,7 @@ RESOLUTIONS = [
 ]
 
 FUNCTIONAL_RESOLUTIONS = RESOLUTIONS[2:]
-PANEL_NAMES = ("res", "time", "events", "player", "group")
+PANEL_NAMES = ("res", "events", "player", "group")
 
 
 def _resolution_id(resolution):
@@ -181,11 +181,13 @@ def test_dynamic_panel_content_fits_estimated_height(monkeypatch, resolution):
 
 @pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
 def test_time_panel_has_minimum_height(monkeypatch, resolution):
-    """T_TIME_PADDING: TIME panel must be at least 68px to avoid descender clipping."""
+    """UI-MASTER-03 T8-BOTTOMBAR: legacy TIME panel removed. The
+    horizontal bottom bar now carries the time/speed lines and must be
+    at least 36px tall to host the text comfortably."""
     _, _, rects = _capture_layout(monkeypatch, resolution)
-    assert rects["time"].height >= 68, (
-        "TIME panel height {} < 68px at {}; text at y+42 would be clipped".format(
-            rects["time"].height,
+    assert rects["bottom_bar"].height >= 36, (
+        "bottom_bar height {} < 36px at {}".format(
+            rects["bottom_bar"].height,
             _resolution_id(resolution),
         )
     )
@@ -443,8 +445,9 @@ def test_map_viewport_is_clipped_to_hud_free_width(monkeypatch, resolution):
     from soundrts.clientgamegridview import HUD_MAP_MARGIN
 
     hud_top = HudPanel.res_bar_height + 2 * HudPanel.margin + HUD_MAP_MARGIN
+    bottom_reserved = HudPanel.bottom_bar_height + HudPanel.margin
     map_w = max(width // 2, width - hud_right)
-    expected_sq = min(map_w // 10, (height - hud_top) // 8)
+    expected_sq = min(map_w // 10, (height - hud_top - bottom_reserved) // 8)
 
     grid_view._update_coefs()
 
@@ -452,7 +455,7 @@ def test_map_viewport_is_clipped_to_hud_free_width(monkeypatch, resolution):
     assert grid_view.square_view_height == expected_sq
     assert grid_view.square_view_width >= 1
     assert grid_view.square_view_width * 10 <= map_w
-    assert grid_view.ymax <= height - hud_top
+    assert grid_view.ymax <= height - hud_top - bottom_reserved
 
 
 @pytest.mark.parametrize("R", [4, 5, 6, 8, 10, 12, 16])
@@ -534,11 +537,13 @@ def test_res_bar_height_equals_constant(monkeypatch, resolution):
 
 @pytest.mark.parametrize("resolution", FUNCTIONAL_RESOLUTIONS, ids=_resolution_id)
 def test_time_panel_starts_below_res_bar(monkeypatch, resolution):
-    """T_TIME_BELOW_RES_BAR: TIME panel top >= res_bar_bottom (margin + res_bar_height + margin)."""
+    """UI-MASTER-03 T8-BOTTOMBAR: TIME panel relocated to the bottom
+    bar. Verify the bottom_bar sits at the very bottom of the screen."""
     panel, _, rects = _capture_layout(monkeypatch, resolution)
-    res_bar_bottom = panel.margin + panel.res_bar_height + panel.margin
-    assert rects["time"].top >= res_bar_bottom, (
-        "TIME top {} < res_bar_bottom {} at {}".format(
-            rects["time"].top, res_bar_bottom, _resolution_id(resolution)
+    _, height = resolution
+    expected_top = height - panel.margin - panel.bottom_bar_height
+    assert rects["bottom_bar"].top == expected_top, (
+        "bottom_bar top {} != expected {} at {}".format(
+            rects["bottom_bar"].top, expected_top, _resolution_id(resolution)
         )
     )

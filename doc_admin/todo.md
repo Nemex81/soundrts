@@ -809,3 +809,15 @@ Stato: COMPLETATO
 - [x] LOCALIZZAZIONE - Aggiunte chiavi `tooltip_event_full`, `tooltip_map_entity`, `tooltip_map_hp`, `tooltip_map_owner`, `tooltip_map_coords`, `entity_na` in EN+IT, placeholder nelle altre lingue con `style.txt` (fr, pt-BR).
 - [x] FASE-T - 17 nuovi test in `test_ui_master_02b.py` PASS; suite completa 402 passed / 1 skipped (baseline +17, zero regressioni).
 - [x] FASE-D - CHANGELOG e TODO aggiornati. Nessun comando git eseguito.
+
+## Round UI-MASTER-03 (autonomo)
+
+- [x] FASE 0 - Lettura `clientgamehud.py` (init, _draw_snapshot, _update_tooltip, set_map_hover, _draw_activity_panel), `clientgame.py` (dispatch MOUSEMOTION), `clientgamegridview.py` (_update_coefs, _hud_right_width), `style.txt` EN/IT, test esistenti `test_ui_master_02b.py` e `test_hud_layout.py`. Prodotto REPORT-F0 con stato HUD pre-round.
+- [x] C1-HITTEST - Aggiunta API pubblica `HudPanel.rect_for(name)` e `HudPanel.panel_names()`: ritorna copie read-only senza esporre `_panel_rects`. Tutti i call site del progetto continuano a usare l'attributo privato; la nuova API è destinata a consumer esterni (tooltip, hit-test programmatico, futuri test).
+- [x] T7-COORD - Coordinate `(col,row)` nel tooltip mappa. `set_map_hover` e `_build_map_tooltip` accettano `square=None`; nuovo segmento `coords` composto via `tooltip_map_coords` e iniettato in `tooltip_map_entity` come `{coords}`. Pulizia automatica quando `col`/`row` mancano.
+- [x] T8-BOTTOMBAR - Pannello TIME rimosso dalla colonna destra. Nuova `bottom_bar_height = 40`. Barra inferiore full-width disegnata tra le colonne sinistra e destra del HUD, con due celle (tempo, velocità) localizzate via `bottom_bar_time_fmt` e `bottom_bar_speed_fmt`. Mappa: `sh_effective` di `clientgamegridview._update_coefs` ora sottrae `bottom_bar_height + margin` per evitare overlap.
+- [x] T8-ACTIVITY - Pannello ACTIVITY di prima classe. Header sempre disegnato anche quando `activity_visible=False` (mostra suffisso `activity_collapsed` localizzato). Click sull'header in `handle_mouse_event` commuta `activity_visible`. Quando aperto: tab strip + righe ordini con barra di progresso visiva (rettangolo verde proporzionale a `pct`). Ogni riga ha rect `activity_row_N` registrato + testo completo in `_activity_row_texts` per tooltip. Tooltip header usa `tooltip_activity_show`/`tooltip_activity_hide` (default visibili nelle stringhe EN per fallback unit-test).
+- [x] LOCALIZZAZIONE - Aggiunte chiavi `bottom_bar_time_fmt`, `bottom_bar_speed_fmt`, `activity_collapsed`, `tooltip_activity_show`, `tooltip_activity_hide` in EN+IT. Aggiornata `tooltip_map_entity` con `{coords}`. Placeholder TODO in fr/pt-BR.
+- [x] FASE-T - 19 nuovi test in `test_ui_master_03.py` PASS; aggiornati `test_hud_layout.py` (PANEL_NAMES senza `time`, viewport con bottom_reserved, test TIME ricalibrati su `bottom_bar`) e `test_ui_master_02b.py` (kwarg `square=None`). Suite completa 421 passed / 1 skipped (baseline +19, zero regressioni).
+- [x] FASE-D - CHANGELOG e TODO aggiornati. Sezione ACTIVITY ora di primo piano nella colonna destra — pronta per futuri click su righe per annullare ordini (T9). Nessun comando git eseguito.
+

@@ -301,7 +301,7 @@ def test_mousemotion_dispatches_set_map_hover_off_hud():
     event = SimpleNamespace(type=clientgame.MOUSEMOTION, pos=(100, 200))
     with patch.object(clientgame, "set_cursor"):
         clientgame.GameInterface._process_fullscreen_mode_mouse_event(iface, event)
-    hud.set_map_hover.assert_called_with(target, (100, 200))
+    hud.set_map_hover.assert_called_with(target, (100, 200), square=None)
 
 
 def test_mousemotion_clears_map_hover_when_over_hud():

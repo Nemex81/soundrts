@@ -223,11 +223,14 @@ class GridView:
         sw, sh = screen.get_size()
         hud_right = self._hud_right_width()
         # T2: reserve vertical space at the top for the HUD resource bar.
-        # We import lazily to avoid a circular import (clientgamehud also
-        # imports utilities from this module via the interface).
+        # UI-MASTER-03 T8-BOTTOMBAR: also reserve space at the bottom for
+        # the new horizontal time/speed bar so the map never draws on top
+        # of it. We import lazily to avoid a circular import (clientgamehud
+        # also imports utilities from this module via the interface).
         from .clientgamehud import HudPanel
         self._y_offset = HudPanel.res_bar_height + 2 * HudPanel.margin + HUD_MAP_MARGIN
-        sh_effective = max(1, sh - self._y_offset)
+        bottom_reserved = HudPanel.bottom_bar_height + HudPanel.margin
+        sh_effective = max(1, sh - self._y_offset - bottom_reserved)
         map_w = max(sw // 2, sw - hud_right)
         self.square_view_width = self.square_view_height = min(
             map_w // (self.interface.xcmax + 1),

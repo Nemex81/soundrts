@@ -64,6 +64,8 @@ class HudPanel:
     player_height = 36
     time_height = 88
     res_bar_height = 40
+    # T8-BOTTOMBAR: horizontal bottom strip with time + speed.
+    bottom_bar_height = 40
     event_text_max_length = 23
     activity_width = 295
     activity_max_rows = 8
@@ -92,6 +94,13 @@ class HudPanel:
         self._map_hover_entity: Any = None
         self._map_hover_start: float = 0.0
         self._map_tooltip_delay: float = 0.4
+        # T7-COORD: last hovered map square (cell with col/row), kept on
+        # the instance so set_map_hover can re-feed _build_map_tooltip
+        # after the debounce timer elapses.
+        self._map_hover_square: Any = None
+        # T8-ACTIVITY: full text of each rendered activity row, used by
+        # _update_tooltip to surface a popup on hover.
+        self._activity_row_texts: Dict[int, str] = {}
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -123,6 +132,12 @@ class HudPanel:
         if events_rect is not None and events_rect.collidepoint(pos):
             self.events_visible = not self.events_visible
             return True
+        # T8-ACTIVITY: header click toggles activity_visible (analogous
+        # to the EVENTS header toggle).
+        activity_header_rect = self._panel_rects.get("activity_header")
+        if activity_header_rect is not None and activity_header_rect.collidepoint(pos):
+            self.activity_visible = not self.activity_visible
+            return True
         # T4: tab strip hit-testing
         for tab_key in ("all", "training", "research", "build"):
             r = self._panel_rects.get("activity_tab_" + tab_key)
@@ -138,11 +153,36 @@ class HudPanel:
             return
         events_rect = self._panel_rects.get("events_header")
         if events_rect is not None and events_rect.collidepoint(pos):
-            key = "tooltip_events_hide" if self.events_visible else "tooltip_events_show"
-            default = ""
-            self._tooltip_text = self._hud_text(key, default)
+            if self.events_visible:
+                self._tooltip_text = self._hud_text("tooltip_events_hide", "Hide events")
+            else:
+                self._tooltip_text = self._hud_text("tooltip_events_show", "Show events")
             self._tooltip_pos = pos
             return
+        # T8-ACTIVITY: header tooltip (show/hide hint).
+        activity_header_rect = self._panel_rects.get("activity_header")
+        if activity_header_rect is not None and activity_header_rect.collidepoint(pos):
+            if self.activity_visible:
+                self._tooltip_text = self._hud_text("tooltip_activity_hide", "Hide activity")
+            else:
+                self._tooltip_text = self._hud_text("tooltip_activity_show", "Show activity")
+            self._tooltip_pos = pos
+            return
+        # T8-ACTIVITY: per-row tooltip with full activity text.
+        if self.activity_visible:
+            for key, r in self._panel_rects.items():
+                if not key.startswith("activity_row_"):
+                    continue
+                if r.collidepoint(pos):
+                    try:
+                        idx = int(key.split("_", 2)[2])
+                    except (ValueError, IndexError):
+                        continue
+                    full_text = self._activity_row_texts.get(idx, "")
+                    if full_text:
+                        self._tooltip_text = full_text
+                        self._tooltip_pos = pos
+                        return
         for tab_key in self._ACTIVITY_TABS:
             r = self._panel_rects.get("activity_tab_" + tab_key)
             if r is not None and r.collidepoint(pos):
@@ -220,10 +260,14 @@ class HudPanel:
         left = self.margin
         top = self.margin
         right = width - self.margin
-        bottom = height - self.margin
+        # T8-BOTTOMBAR: reserve a horizontal strip at the bottom for the
+        # new TIME+SPEED bar. Every right-column panel now sits above it.
+        bottom = height - self.margin - self.bottom_bar_height
         self._panel_rects = {}
         # T7-EVENTI: reset per-frame mapping from event row index -> full text.
         self._event_row_texts = {}
+        # T8-ACTIVITY: reset per-frame mapping from activity row -> full text.
+        self._activity_row_texts = {}
 
         # --- Layout anchor: horizontal resource bar ---
         res_bar_height = self.res_bar_height
@@ -251,23 +295,19 @@ class HudPanel:
             pygame.draw.line(screen, (70, 110, 120), (food_cell_left, top + 1), (food_cell_left, top + res_bar_height - 1), 1)
         screen_render(snapshot.food, (food_cell_center_x, bar_center_y), center=True, color=(220, 220, 210))
 
-        # --- TIME panel (top-right, below res bar) ---
-        time_width = 175
-        time_rect = (right - time_width, res_bar_bottom, time_width, self.time_height)
-        self._draw_panel(screen, time_rect)
-        self._panel_rects["time"] = pygame.Rect(*time_rect)
-        screen_render_header(self._hud_text("panel_time", "TIME"), (right - time_width + 6, res_bar_bottom + 4), color=(160, 210, 255))
-        screen_render(snapshot.time, (right - time_width + 6, res_bar_bottom + self.panel_header_height), color=(220, 235, 245))
-        screen_render(self._speed_with_icon(snapshot.speed), (right - time_width + 6, res_bar_bottom + self.panel_header_height + self.line_height), color=(220, 235, 245))
+        # --- T8-BOTTOMBAR: TIME panel removed from the right column.
+        # Time and speed are now rendered by the horizontal bottom bar
+        # at the bottom of the screen. The events panel starts directly
+        # below the resource bar.
 
-        # --- EVENTS panel (right side, below TIME) — aligned to col_right_width R6 ---
+        # --- EVENTS panel (right side, below RES BAR) — aligned to col_right_width R6 ---
         col_right_width = 295  # unified right-column width (EVENTS = PLAYER = GROUP)
         # T3: when collapsed, the panel shows only its header row.
         if self.events_visible:
             event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
         else:
             event_height = self.panel_header_height
-        event_top = res_bar_bottom + self.time_height + self.margin
+        event_top = res_bar_bottom
         event_rect = (right - col_right_width, event_top, col_right_width, event_height)
         self._draw_panel(screen, event_rect)
         self._panel_rects["events"] = pygame.Rect(*event_rect)
@@ -325,15 +365,14 @@ class HudPanel:
         # --- GROUP panel (bottom-right, below PLAYER) — Round 5 ---
         group_top = player_top + self.player_height + 4
         # Adaptive strategy A: cap visible units to available vertical space.
-        # UI-MASTER-02b BUG-T4: when ACTIVITY is open we must reserve
-        # vertical room for it under GROUP, otherwise the GROUP panel
-        # consumes everything and `activity_top` ends up past `bottom`,
-        # making the ACTIVITY panel impossible to draw.
-        reserved_for_activity = (
-            self.activity_min_height + self.margin
-            if self.activity_visible
-            else 0
-        )
+        # UI-MASTER-02b BUG-T4: reserve room for the ACTIVITY section.
+        # UI-MASTER-03 T8-ACTIVITY: the activity header is now ALWAYS
+        # visible (acts as a toggle), so we reserve at least its header
+        # height even when activity_visible == False.
+        if self.activity_visible:
+            reserved_for_activity = self.activity_min_height + self.margin
+        else:
+            reserved_for_activity = self.panel_header_height + self.margin
         available_h = max(
             0,
             bottom - group_top - self.panel_header_height - reserved_for_activity,
@@ -356,17 +395,72 @@ class HudPanel:
             screen_render(line, (player_left + 6, y), color=(220, 235, 245))
             y += self.line_height
 
-        # --- T4: ACTIVITY panel (bottom-right, only when visible) ---
+        # --- T8-ACTIVITY: ACTIVITY header always visible (toggle) ---
+        activity_header_top = group_top + group_height + self.margin
+        activity_header_rect = pygame.Rect(
+            player_left, activity_header_top, group_width, self.panel_header_height
+        )
+        self._draw_panel(screen, activity_header_rect)
+        self._panel_rects["activity_header"] = activity_header_rect
+        activity_label = self._hud_text("panel_activity", "ACTIVITY")
+        if not self.activity_visible:
+            activity_label = "{} {}".format(
+                activity_label,
+                self._hud_text("activity_collapsed", "(hidden)"),
+            )
+        screen_render_header(
+            activity_label,
+            (player_left + 6, activity_header_top + 4),
+            color=(255, 220, 130),
+        )
         if self.activity_visible:
-            activity_top = group_top + group_height + self.margin
-            if activity_top < bottom - self.panel_header_height:
-                self._draw_activity_panel(screen, player_left, activity_top, group_width, bottom)
+            body_top = activity_header_top + self.panel_header_height
+            if body_top < bottom - self.line_height:
+                self._draw_activity_panel(
+                    screen, player_left, body_top, group_width, bottom
+                )
         else:
-            # Clear cached tab rects so handle_mouse_event doesn't react
-            # to clicks on an invisible strip.
-            for key in ("activity_tab_all", "activity_tab_training",
-                        "activity_tab_research", "activity_tab_build"):
-                self._panel_rects.pop(key, None)
+            # Clear cached tab and row rects so handle_mouse_event and
+            # _update_tooltip don't react to clicks/hover on an invisible
+            # strip.
+            for key in list(self._panel_rects.keys()):
+                if key.startswith("activity_tab_") or key.startswith("activity_row_"):
+                    self._panel_rects.pop(key, None)
+
+        # --- T8-BOTTOMBAR: horizontal bottom bar with time and speed ---
+        bottom_bar_top = height - self.margin - self.bottom_bar_height
+        bar_rect = (left, bottom_bar_top, right - left, self.bottom_bar_height)
+        self._draw_panel(screen, bar_rect)
+        self._panel_rects["bottom_bar"] = pygame.Rect(*bar_rect)
+        cell_w = (right - left) // 2
+        bar_cy = bottom_bar_top + self.bottom_bar_height // 2
+        time_text = self._hud_named_format(
+            "bottom_bar_time_fmt", "{time}", time=snapshot.time
+        )
+        screen_render(
+            time_text,
+            (left + cell_w // 2, bar_cy),
+            center=True,
+            color=(220, 235, 245),
+        )
+        pygame.draw.line(
+            screen,
+            (70, 110, 120),
+            (left + cell_w, bottom_bar_top + 1),
+            (left + cell_w, bottom_bar_top + self.bottom_bar_height - 1),
+            1,
+        )
+        speed_text = self._hud_named_format(
+            "bottom_bar_speed_fmt",
+            "{speed}",
+            speed=self._speed_with_icon(snapshot.speed),
+        )
+        screen_render(
+            speed_text,
+            (left + cell_w + cell_w // 2, bar_cy),
+            center=True,
+            color=(220, 235, 245),
+        )
 
         # UI-MASTER-02b: tooltip overlay must render regardless of the
         # ACTIVITY panel visibility (previous indentation kept it inside
@@ -452,7 +546,13 @@ class HudPanel:
         width: int,
         bottom: int,
     ) -> None:
-        from .lib.screen import screen_render, screen_render_header
+        """Draw the ACTIVITY body (tab strip + rows + progress bars).
+
+        UI-MASTER-03 T8-ACTIVITY: the header is now rendered by
+        ``_draw_snapshot`` so the panel is always togglable. ``top`` is
+        the body top (immediately below the header).
+        """
+        from .lib.screen import screen_render
 
         items = self._collect_activity()
         # Pre-compute counters per tab for the strip labels.
@@ -463,26 +563,19 @@ class HudPanel:
             filtered = items
         else:
             filtered = [it for it in items if it[0] == self.activity_tab]
-        available_height = max(self.activity_min_height, bottom - top)
+        available_height = max(self.line_height * 2, bottom - top)
         rows_fit = max(
             1,
-            (available_height - self.panel_header_height - self.line_height - self.margin)
-            // self.line_height,
+            (available_height - self.line_height - self.margin) // self.line_height,
         )
         rows = min(len(filtered), self.activity_max_rows, rows_fit)
-        body_height = max(1, rows) * self.line_height
-        height = self.panel_header_height + self.line_height + body_height + self.margin
-        rect = (left, top, width, height)
+        body_rows_height = max(1, rows) * self.line_height
+        total_height = self.line_height + body_rows_height + self.margin
+        rect = pygame.Rect(left, top, width, total_height)
         self._draw_panel(screen, rect)
-        self._panel_rects["activity"] = pygame.Rect(*rect)
-        # Header
-        screen_render_header(
-            self._hud_text("panel_activity", "ACTIVITY"),
-            (left + 6, top + 4),
-            color=(255, 220, 130),
-        )
+        self._panel_rects["activity"] = rect
         # Tab strip
-        tab_strip_top = top + self.panel_header_height
+        tab_strip_top = top
         tab_count = len(self._ACTIVITY_TABS)
         tab_width = (width - 2 * self.margin) // tab_count
         for i, tab_key in enumerate(self._ACTIVITY_TABS):
@@ -491,7 +584,6 @@ class HudPanel:
             self._panel_rects["activity_tab_" + tab_key] = tab_rect
             is_active = (tab_key == self.activity_tab)
             color = (255, 235, 130) if is_active else (180, 190, 200)
-            # Border for active tab
             if is_active:
                 pygame.draw.rect(screen, (255, 200, 80), tab_rect, 1)
             style_key, default_label = self._ACTIVITY_TAB_LABELS[tab_key]
@@ -507,17 +599,36 @@ class HudPanel:
                 (left + 6, body_top),
                 color=(200, 200, 200),
             )
-        else:
-            y = body_top
-            for kind, name, pct in filtered[: self.activity_max_rows]:
-                _prefix_key = {
-                    "training": self._hud_text("activity_prefix_training", "T"),
-                    "research": self._hud_text("activity_prefix_research", "R"),
-                    "build": self._hud_text("activity_prefix_build", "B"),
-                }.get(kind, self._hud_text("activity_prefix_unknown", "?"))
-                line = "[{}] {} {}%".format(_prefix_key, name, pct)
-                screen_render(self._fit(line, 38), (left + 6, y), color=(220, 235, 245))
-                y += self.line_height
+            return
+        y = body_top
+        max_bar_width = max(1, width - 2 * self.margin)
+        for row_index, (kind, name, pct) in enumerate(filtered[:rows]):
+            prefix_key = {
+                "training": "activity_prefix_training",
+                "research": "activity_prefix_research",
+                "build": "activity_prefix_build",
+            }.get(kind, "activity_prefix_unknown")
+            prefix = self._hud_text(prefix_key, "?")
+            line = "[{}] {} {}%".format(prefix, name, pct)
+            # Visual progress bar (thin strip at the row's bottom edge).
+            bar_y = y + self.line_height - 4
+            bg_rect = pygame.Rect(left + self.margin, bar_y, max_bar_width, 3)
+            pygame.draw.rect(screen, (40, 60, 60), bg_rect)
+            try:
+                pct_int = max(0, min(100, int(pct)))
+            except (TypeError, ValueError):
+                pct_int = 0
+            fill_w = max_bar_width * pct_int // 100
+            if fill_w > 0:
+                fill_rect = pygame.Rect(left + self.margin, bar_y, fill_w, 3)
+                pygame.draw.rect(screen, (140, 220, 140), fill_rect)
+            screen_render(self._fit(line, 38), (left + 6, y), color=(220, 235, 245))
+            # Hit-test rect for tooltip / future cancel-click.
+            self._panel_rects["activity_row_{}".format(row_index)] = pygame.Rect(
+                left, y, width, self.line_height
+            )
+            self._activity_row_texts[row_index] = line
+            y += self.line_height
 
     def _speed_with_icon(self, speed_text: str) -> str:
         try:
@@ -551,20 +662,25 @@ class HudPanel:
                 return True
         return False
 
-    def set_map_hover(self, entity: Any, pos: Any) -> None:
+    def set_map_hover(self, entity: Any, pos: Any, square: Any = None) -> None:
         """Track the map-cell hover state and surface a tooltip after a
         short stable delay (``_map_tooltip_delay`` seconds). When
         ``entity`` is ``None`` the hover state and any active tooltip
-        are cleared. Defensive: never raises.
+        are cleared. The optional ``square`` argument (T7-COORD) lets
+        the caller pass the grid cell currently under the cursor so the
+        tooltip can include its (col,row) coordinates. Defensive: never
+        raises.
         """
         if entity is None:
             self._map_hover_entity = None
             self._map_hover_start = 0.0
+            self._map_hover_square = None
             # Only clear the tooltip if it was set by us; HUD-driven
             # tooltips (events/tabs) are re-evaluated by _update_tooltip.
             self._tooltip_text = ""
             self._tooltip_pos = None
             return
+        self._map_hover_square = square
         now = time.monotonic()
         if entity is not self._map_hover_entity:
             self._map_hover_entity = entity
@@ -572,19 +688,21 @@ class HudPanel:
             return
         if (now - self._map_hover_start) >= self._map_tooltip_delay:
             try:
-                text = self._build_map_tooltip(entity, pos)
+                text = self._build_map_tooltip(entity, pos, square=square)
             except Exception:
                 text = ""
             if text:
                 self._tooltip_text = text
                 self._tooltip_pos = pos
 
-    def _build_map_tooltip(self, entity: Any, pos: Any) -> str:
+    def _build_map_tooltip(self, entity: Any, pos: Any, square: Any = None) -> str:
         """Compose the localized tooltip text for a hovered map entity.
 
         Every player-visible token is sourced from the ``[hud]`` style
         section (LEGGE-4). Each attribute access on ``entity`` is
-        defensive: missing attributes simply skip their segment.
+        defensive: missing attributes simply skip their segment. The
+        optional ``square`` (T7-COORD) appends ``(col,row)`` when the
+        cell exposes those attributes.
         """
         # name --------------------------------------------------------------
         try:
@@ -635,16 +753,47 @@ class HudPanel:
                     order_str = str(kw)
         except Exception:
             order_str = ""
+        # coords (T7-COORD) -------------------------------------------------
+        coords_str = ""
+        try:
+            if square is not None:
+                col = getattr(square, "col", None)
+                row = getattr(square, "row", None)
+                if col is not None and row is not None:
+                    coords_str = self._hud_named_format(
+                        "tooltip_map_coords",
+                        "({col},{row})",
+                        col=col,
+                        row=row,
+                    )
+        except Exception:
+            coords_str = ""
         text = self._hud_named_format(
             "tooltip_map_entity",
-            "{name} {hp} {owner} {order}",
+            "{name} {hp} {owner} {order} {coords}",
             name=name,
             hp=hp_str,
             owner=owner_str,
             order=order_str,
+            coords=coords_str,
         )
         # Collapse double spaces left by empty segments and trim.
         return " ".join(text.split()).strip()
+
+    # ------------------------------------------------------------------
+    # C1-HITTEST: public read-only access to panel rects
+    # ------------------------------------------------------------------
+    def rect_for(self, name: str) -> Optional[pygame.Rect]:
+        """Return the pygame.Rect for the named HUD panel, or None if
+        the name is not registered (e.g. the panel is collapsed or has
+        not been drawn yet). Public stable API: external modules must
+        not access ``_panel_rects`` directly."""
+        return self._panel_rects.get(name)
+
+    def panel_names(self) -> tuple:
+        """Return the tuple of all currently registered panel rect
+        names. Useful for diagnostics and tests."""
+        return tuple(self._panel_rects.keys())
 
     def _draw_tooltip(self, screen: pygame.Surface) -> None:
         if not self._tooltip_text or self._tooltip_pos is None:

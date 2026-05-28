@@ -950,7 +950,8 @@ class GameInterface:
                     self.hud_panel.set_map_hover(None, None)
                 else:
                     map_entity = self.grid_view.object_from_mousepos(e.pos)
-                    self.hud_panel.set_map_hover(map_entity, e.pos)
+                    map_square = self.grid_view.square_from_mousepos(e.pos)
+                    self.hud_panel.set_map_hover(map_entity, e.pos, square=map_square)
             except Exception:
                 pass
             square = self.grid_view.square_from_mousepos(e.pos)
