@@ -996,13 +996,23 @@ class GameInterface:
                     self.mouse_select_origin = e.pos
             elif e.button == 3:  # right mouse button
                 # do nothing if the mouse is pointing on nothing
-                if self.grid_view.square_from_mousepos(e.pos) is not None:
+                right_square = self.grid_view.square_from_mousepos(e.pos)
+                if right_square is not None:
                     args = []
                     if mods & KMOD_SHIFT:
                         args += ["queue_order"]
                     if mods & KMOD_CTRL:
                         args += ["imperative"]
                     self.cmd_default(*args)
+                    # T10-MOVE-INDICATOR: surface a transient green
+                    # circle on the clicked cell so mouse users get a
+                    # visual confirmation of the issued default order
+                    # (typically a move). Defensive: HUD failures must
+                    # never break the RTS click flow.
+                    try:
+                        self.hud_panel.flash_move_target(right_square, e.pos)
+                    except Exception:
+                        pass
             # T5: extended mouse controls.
             #   button 2 (middle): give an order to the unit under the
             #       cursor (equivalent to cmd_command_unit).

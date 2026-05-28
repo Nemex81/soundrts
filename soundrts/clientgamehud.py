@@ -105,10 +105,33 @@ class HudPanel:
         # so handle_mouse_event can resolve a row index back to its
         # source unit and cancel its first active order.
         self._activity_row_units: Dict[int, Any] = {}
+        # T10-CANCEL-SERVER: per-row activity kind
+        # ("training"|"research"|"build") so _cancel_unit_order can map
+        # to the proper server keyword (cancel_training /
+        # cancel_upgrading / cancel_building) instead of dropping the
+        # order client-only.
+        self._activity_row_kinds: Dict[int, str] = {}
         # T9-TOOLTIP-GLOBAL: keep the last rendered snapshot so the
         # hover handler can read per-cell values (resources, units,
         # bottom bar) without re-querying the interface.
         self._last_snapshot: Optional[HudSnapshot] = None
+        # T10-TOOLTIP-THROTTLE: debounce state for the empty-cell map
+        # tooltip. Shorter than _map_tooltip_delay (entity hover) to
+        # keep responsiveness while preventing rapid flicker when the
+        # mouse skims over the grid.
+        self._empty_cell_hover_square: Any = None
+        self._empty_cell_hover_start: float = 0.0
+        self._empty_cell_tooltip_delay: float = 0.25
+        # T10-MOVE-INDICATOR: transient visual feedback for a movement
+        # order issued via right-click. _move_flash_pos is the screen
+        # position at the time of the click; computing the geometric
+        # cell centre would require leaking grid_view internals here,
+        # so the click point is used as the visual anchor (visually
+        # indistinguishable inside a cell for the player).
+        self._move_flash_square: Any = None
+        self._move_flash_pos: Optional[tuple] = None
+        self._move_flash_start: float = 0.0
+        self._move_flash_duration: float = 0.5
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -159,8 +182,18 @@ class HudPanel:
                     except (ValueError, IndexError):
                         continue
                     unit = self._activity_row_units.get(idx)
+                    kind = self._activity_row_kinds.get(idx, "")
                     if unit is not None:
-                        self._cancel_unit_order(unit)
+                        self._cancel_unit_order(unit, kind)
+                        # T10-CANCEL-SERVER (STEP T10CS.2): immediate UI
+                        # feedback. Drop the row from the per-frame
+                        # mappings so the activity panel visibly
+                        # collapses before the next snapshot lands,
+                        # reducing the "flash" between click and the
+                        # server-side state update.
+                        self._activity_row_texts.pop(idx, None)
+                        self._activity_row_units.pop(idx, None)
+                        self._activity_row_kinds.pop(idx, None)
                     return True
         # T4: tab strip hit-testing
         for tab_key in ("all", "training", "research", "build"):
@@ -406,6 +439,8 @@ class HudPanel:
         self._activity_row_texts = {}
         # T9-CANCEL: reset per-frame mapping from activity row -> unit.
         self._activity_row_units = {}
+        # T10-CANCEL-SERVER: reset per-frame mapping row -> activity kind.
+        self._activity_row_kinds = {}
 
         # --- Layout anchor: horizontal resource bar ---
         res_bar_height = self.res_bar_height
@@ -625,6 +660,7 @@ class HudPanel:
         # ACTIVITY panel visibility (previous indentation kept it inside
         # the `else` branch and suppressed all popups when activity was
         # open).
+        self._draw_move_flash(screen)
         self._draw_tooltip(screen)
 
     def _event_style(self, severity: str):
@@ -801,6 +837,9 @@ class HudPanel:
             # T9-CANCEL: remember the source unit for this row so a
             # left-click can resolve which unit's first order to drop.
             self._activity_row_units[row_index] = unit
+            # T10-CANCEL-SERVER: remember the kind so the click handler
+            # can pick the right server keyword.
+            self._activity_row_kinds[row_index] = kind
             y += self.line_height
 
     def _speed_with_icon(self, speed_text: str) -> str:
@@ -855,14 +894,43 @@ class HudPanel:
                 self._map_hover_square = None
                 self._tooltip_text = ""
                 self._tooltip_pos = None
+                # T10-TOOLTIP-THROTTLE: clear debounce state on exit so
+                # re-entering a cell starts the timer afresh.
+                self._empty_cell_hover_square = None
+                self._empty_cell_hover_start = 0.0
                 return
-            # T9-TOOLTIP-GLOBAL: empty cell tooltip with coordinates.
+            # T9-TOOLTIP-GLOBAL + T10-TOOLTIP-THROTTLE: empty-cell
+            # tooltip with coordinates, debounced so quick mouse drags
+            # over the grid don't trigger a flickering text. Cell
+            # identity is compared by (col,row) value rather than by
+            # object identity because grid_view.square_from_mousepos
+            # may return a fresh object per call.
             self._map_hover_square = square
+            now = time.monotonic()
             try:
                 col = getattr(square, "col", None)
                 row = getattr(square, "row", None)
             except Exception:
                 col = row = None
+            try:
+                prev = self._empty_cell_hover_square
+                prev_col = getattr(prev, "col", None) if prev is not None else None
+                prev_row = getattr(prev, "row", None) if prev is not None else None
+            except Exception:
+                prev_col = prev_row = None
+            if (col, row) != (prev_col, prev_row):
+                # Cell changed: restart the timer, hide any current
+                # tooltip until the cell stabilises.
+                self._empty_cell_hover_square = square
+                self._empty_cell_hover_start = now
+                self._tooltip_text = ""
+                self._tooltip_pos = None
+                return
+            if (now - self._empty_cell_hover_start) < self._empty_cell_tooltip_delay:
+                # Still within the debounce window: keep tooltip hidden.
+                self._tooltip_text = ""
+                self._tooltip_pos = None
+                return
             if col is not None and row is not None:
                 self._tooltip_text = self._hud_named_format(
                     "tooltip_map_empty_cell",
@@ -976,15 +1044,52 @@ class HudPanel:
         return " ".join(text.split()).strip()
 
     # ------------------------------------------------------------------
-    # T9-CANCEL: client-side order cancellation triggered by a left
-    # click on an ACTIVITY row.
+    # T9-CANCEL / T10-CANCEL-SERVER: client-side order cancellation
+    # triggered by a left click on an ACTIVITY row.
     # ------------------------------------------------------------------
-    def _cancel_unit_order(self, unit: Any) -> None:
-        """Drop the first pending order of ``unit``. Strictly defensive:
-        any exception (immutable orders list, missing attribute, racing
-        snapshot update) is swallowed so a click can never crash the
-        UI loop.
+    def _cancel_unit_order(self, unit: Any, kind: str = "") -> None:
+        """Cancel the relevant order of ``unit`` for the given activity
+        ``kind``.
+
+        Strategy (T10-CANCEL-SERVER, REPORT-F0 strategy C++):
+          * For the three kinds tracked by the activity panel
+            (training/research/build) the world model exposes a
+            dedicated immediate keyword (cancel_training /
+            cancel_upgrading / cancel_building). When the interface
+            exposes ``send_order`` the matching keyword is dispatched
+            to the server first, so the server-authoritative state
+            stays in sync.
+          * ``orders.pop(0)`` is still invoked afterwards as a purely
+            visual "flash reducer": the row disappears immediately
+            from the local snapshot until the next server tick
+            rewrites the queue.
+          * For an unknown / empty ``kind`` the world model does NOT
+            expose a "cancel first order" primitive: only the
+            client-only pop happens, behaviour documented as a known
+            limitation in CHANGELOG.
+
+        Strictly defensive: any exception (immutable orders list,
+        missing attribute, racing snapshot update, send_order failure)
+        is swallowed so a click can never crash the UI loop.
         """
+        keyword_map = {
+            "training": "cancel_training",
+            "research": "cancel_upgrading",
+            "build": "cancel_building",
+        }
+        keyword = keyword_map.get(kind, "")
+        if keyword:
+            send_order = getattr(self.interface, "send_order", None)
+            if callable(send_order):
+                try:
+                    send_order(keyword, None, [])
+                except Exception:
+                    pass
+        # CLIENT-ONLY tail: for unmapped kinds the world model does
+        # not expose a "cancel first order" remote API, so orders.pop
+        # has only a transient visual effect until the next server
+        # snapshot rewrites the queue. See CHANGELOG for the known
+        # limitation.
         try:
             orders = getattr(unit, "orders", None)
             if orders:
@@ -1006,6 +1111,51 @@ class HudPanel:
         """Return the tuple of all currently registered panel rect
         names. Useful for diagnostics and tests."""
         return tuple(self._panel_rects.keys())
+
+    # ------------------------------------------------------------------
+    # T10-MOVE-INDICATOR: transient visual feedback on right-click move
+    # ------------------------------------------------------------------
+    def flash_move_target(self, square: Any, pos: Optional[tuple] = None) -> None:
+        """Mark ``square`` as the current movement target so the next
+        ``_draw_snapshot`` paints a short-lived green circle on it.
+
+        ``pos`` is the screen position of the originating click and is
+        used as the visual anchor: computing the geometric cell centre
+        would require leaking grid_view internals into the HUD layer
+        (see REPORT-F0 deviation notice). The click point is a stable
+        in-cell anchor and visually equivalent for the player. The
+        ``square`` argument is kept for API completeness and future
+        UI-MASTER-06 work (proper centre calculation).
+        Defensive: never raises.
+        """
+        if square is None or pos is None:
+            return
+        try:
+            self._move_flash_square = square
+            self._move_flash_pos = (int(pos[0]), int(pos[1]))
+            self._move_flash_start = time.monotonic()
+        except Exception:
+            pass
+
+    def _draw_move_flash(self, screen: pygame.Surface) -> None:
+        """Render the active move-indicator flash if any. Decays after
+        ``_move_flash_duration`` seconds. Defensive: never raises.
+        """
+        pos = self._move_flash_pos
+        if pos is None or self._move_flash_square is None:
+            return
+        elapsed = time.monotonic() - self._move_flash_start
+        if elapsed >= self._move_flash_duration or elapsed < 0:
+            # Expired: clear so we don't draw it again next frame.
+            self._move_flash_square = None
+            self._move_flash_pos = None
+            return
+        try:
+            overlay = pygame.Surface((24, 24), pygame.SRCALPHA)
+            pygame.draw.circle(overlay, (140, 220, 140, 180), (12, 12), 10)
+            screen.blit(overlay, (pos[0] - 12, pos[1] - 12))
+        except Exception:
+            pass
 
     def _draw_tooltip(self, screen: pygame.Surface) -> None:
         if not self._tooltip_text or self._tooltip_pos is None:

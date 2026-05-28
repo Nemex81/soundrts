@@ -270,9 +270,23 @@ def test_tooltip_on_group_row_without_hp():
 
 
 def test_map_empty_cell_tooltip_via_set_map_hover():
+    """T10-TOOLTIP-THROTTLE: the empty-cell tooltip is now debounced so
+    quick mouse drags over the grid don't flicker. After a single
+    set_map_hover call the tooltip is still suppressed; it materialises
+    only when the same cell stays under the cursor for at least
+    ``_empty_cell_tooltip_delay`` seconds.
+    """
     hud = _make_hud()
     square = SimpleNamespace(col=3, row=7)
+    # First sample: starts the debounce timer, tooltip stays empty.
     hud.set_map_hover(None, (100, 100), square=square)
+    assert hud._tooltip_text == ""
+    # Simulate elapsed time past the debounce window without changing
+    # the hovered cell, then re-feed the same (col,row): tooltip must
+    # now appear with the cell coordinates.
+    hud._empty_cell_hover_start -= hud._empty_cell_tooltip_delay + 0.05
+    same_cell = SimpleNamespace(col=3, row=7)
+    hud.set_map_hover(None, (100, 100), square=same_cell)
     assert hud._tooltip_text != ""
     assert "3" in hud._tooltip_text and "7" in hud._tooltip_text
 

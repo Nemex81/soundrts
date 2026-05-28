@@ -2,6 +2,22 @@
 
 Data: 23 maggio 2026
 
+## UI-MASTER-05 (28 maggio 2026) — completato
+
+- [x] T10-TOOLTIP-THROTTLE: debounce 0.25 s tooltip cella vuota mappa, confronto per valore `(col,row)`.
+- [x] T10-CANCEL-SERVER (Strategia C++): `_cancel_unit_order(unit, kind)` notifica il server per training/research/build via `send_order`. Per kind non mappato resta client-only documentato.
+- [x] T10-MOVE-INDICATOR: flash verde transitorio sul right-click (deviazione documentata: usata pos di click invece del centro geometrico cella).
+- [x] T10-MAP-CLICK: ALREADY-DONE — right-click (`cmd_default`) è già il meccanismo di movimento nello standard RTS del progetto. Nessuna modifica al left-click.
+- [Skip] T10-ENCODING-FIX: premessa falsificata. NOTE: `encoding.py` gestisce con chardet solo `tts.txt` (linee 22-24 forzano `utf-8` per ogni altro basename). Se in futuro si aggiungono file con encoding diverso da UTF-8 oltre `tts.txt`, estendere la logica di `encoding()`.
+
+### Aperture per UI-MASTER-06
+
+- Traduzioni FR / PT-BR delle chiavi TODO accumulate (UI-MASTER-02b → UI-MASTER-05).
+- Move-indicator: spostare il calcolo dal punto di click al centro geometrico della cella esponendo un helper pubblico da `clientgamegridview.GridView` (`screen_coords_of_square(square)`) e iniettando `grid_view` in `flash_move_target`.
+- Indicatore visivo di selezione unità (rect highlight) sul gruppo selezionato nella mappa.
+- Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei.
+- Risolvere test pollution cross-file su `test_clientgamehud.py::test_hud_snapshot_collects_gameplay_data` e `test_hud_player_line_falls_back_when_missing` (passano isolati, falliscono quando preceduti da test che caricano la traduzione IT in stato globale).
+
 ## Stato fasi
 
 ### [x] Fase 0 - Analisi totale
