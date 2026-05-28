@@ -219,7 +219,16 @@ class GameInterface:
 
     @property
     def display_is_active(self):
-        return get_fullscreen() or IS_DEV_VERSION
+        # T6: when visual_mode is enabled via cfg/parameters.toml the
+        # screen is already created in fullscreen by clientmedia, but
+        # the legacy `fullscreen` flag stays False (it is flipped only
+        # by CTRL+F2 at runtime). We therefore include the config flag
+        # here so the HUD/grid renderer actually paint on the screen.
+        return (
+            get_fullscreen()
+            or IS_DEV_VERSION
+            or bool(getattr(config, "visual_mode", 0))
+        )
 
     @property
     def player(self):
@@ -695,6 +704,52 @@ class GameInterface:
             self.next_update = time.time()
             voice.item(mp.PAUSE_OFF)
 
+    # T3: toggle EVENTS panel visibility (visual mode only). Voiced for
+    # NVDA users so the state change is audible even when the screen
+    # cannot be read.
+    def cmd_toggle_events(self):
+        hud = getattr(self, "hud_panel", None)
+        if hud is None:
+            return
+        hud.events_visible = not getattr(hud, "events_visible", True)
+        if hud.events_visible:
+            voice.item(mp.EVENTS_SHOWN)
+        else:
+            voice.item(mp.EVENTS_HIDDEN)
+
+    # T4: toggle ACTIVITY panel visibility (visual mode only).
+    def cmd_toggle_activity_panel(self):
+        hud = getattr(self, "hud_panel", None)
+        if hud is None:
+            return
+        hud.activity_visible = not getattr(hud, "activity_visible", False)
+        if hud.activity_visible:
+            voice.item(mp.ACTIVITY_PANEL_SHOWN)
+        else:
+            voice.item(mp.ACTIVITY_PANEL_HIDDEN)
+
+    # T4: tab selectors for the activity panel.
+    def _set_activity_tab(self, tab: str, msg) -> None:
+        hud = getattr(self, "hud_panel", None)
+        if hud is None:
+            return
+        hud.activity_tab = tab
+        # Auto-open the panel when a tab is selected via keyboard.
+        hud.activity_visible = True
+        voice.item(msg)
+
+    def cmd_activity_tab_all(self):
+        self._set_activity_tab("all", mp.ACTIVITY_TAB_ALL)
+
+    def cmd_activity_tab_training(self):
+        self._set_activity_tab("training", mp.ACTIVITY_TAB_TRAINING)
+
+    def cmd_activity_tab_research(self):
+        self._set_activity_tab("research", mp.ACTIVITY_TAB_RESEARCH)
+
+    def cmd_activity_tab_build(self):
+        self._set_activity_tab("build", mp.ACTIVITY_TAB_BUILD)
+
     def can_save(self):
         return hasattr(self.server, "save_game")
 
@@ -927,6 +982,20 @@ class GameInterface:
                     if mods & KMOD_CTRL:
                         args += ["imperative"]
                     self.cmd_default(*args)
+            # T5: extended mouse controls.
+            #   button 2 (middle): give an order to the unit under the
+            #       cursor (equivalent to cmd_command_unit).
+            #   button 4 (scroll up): cycle to the previous unit.
+            #   button 5 (scroll down): cycle to the next unit.
+            # These additions are voiced via the underlying cmd_*
+            # methods, so they remain fully accessible.
+            elif e.button == 2:
+                if self.grid_view.object_from_mousepos(e.pos):
+                    self.cmd_command_unit()
+            elif e.button == 4:
+                self.cmd_select_unit(-1)
+            elif e.button == 5:
+                self.cmd_select_unit(1)
         elif e.type == MOUSEBUTTONUP:
             if e.button == 1:  # left mouse button
                 if self.mouse_select_origin == e.pos:

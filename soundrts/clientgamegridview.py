@@ -16,6 +16,11 @@ from .worldentity import COLLISION_RADIUS
 R_MIN = 4  # minimum unit circle radius in pixels (MAP-1)
 UNIT_SCALE = 2.0  # visual multiplier for unit radius (MAP-SCALE-1, R7b)
 
+# T2: vertical margin between the HUD resource bar (top of screen) and the
+# top edge of the map viewport. Total offset is computed in
+# `_update_coefs` from HudPanel.res_bar_height/margin + this margin.
+HUD_MAP_MARGIN = 4
+
 _AUTO_TERRAIN_FALLBACK = {
     "_meadows": (35, 80, 35),
     "_forest": (25, 65, 30),
@@ -53,10 +58,14 @@ def fade(color):
 class GridView:
     def __init__(self, interface):
         self.interface = interface
+        # T2: filled in by `_update_coefs`; offset (in pixels) applied to
+        # the top of the map viewport so it does not overlap the HUD
+        # resource bar drawn at y=0.
+        self._y_offset = 0
 
     def _get_rect_from_map_coords(self, xc, yc):
         width, height = self.square_view_width, self.square_view_height
-        left, top = xc * width, self.ymax - (yc + 1) * height
+        left, top = xc * width, self._y_offset + self.ymax - (yc + 1) * height
         return left, top, width, height
 
     def _display(self):
@@ -65,7 +74,7 @@ class GridView:
             (100, 100, 100),
             (
                 0,
-                0,
+                self._y_offset,
                 self.square_view_width * (self.interface.xcmax + 1),
                 self.square_view_height * (self.interface.ycmax + 1),
             ),
@@ -108,7 +117,7 @@ class GridView:
 
     def _get_view_coords_from_world_coords(self, ox, oy):
         x = int(ox / self.interface.square_width * self.square_view_width)
-        y = int(self.ymax - oy / self.interface.square_width * self.square_view_height)
+        y = int(self._y_offset + self.ymax - oy / self.interface.square_width * self.square_view_height)
         return x, y
 
     def _object_coords(self, o):
@@ -213,10 +222,16 @@ class GridView:
         screen = get_screen()
         sw, sh = screen.get_size()
         hud_right = self._hud_right_width()
+        # T2: reserve vertical space at the top for the HUD resource bar.
+        # We import lazily to avoid a circular import (clientgamehud also
+        # imports utilities from this module via the interface).
+        from .clientgamehud import HudPanel
+        self._y_offset = HudPanel.res_bar_height + 2 * HudPanel.margin + HUD_MAP_MARGIN
+        sh_effective = max(1, sh - self._y_offset)
         map_w = max(sw // 2, sw - hud_right)
         self.square_view_width = self.square_view_height = min(
             map_w // (self.interface.xcmax + 1),
-            sh // (self.interface.ycmax + 1),
+            sh_effective // (self.interface.ycmax + 1),
         )
         self.ymax = self.square_view_height * (self.interface.ycmax + 1)
         R = max(
@@ -279,7 +294,10 @@ class GridView:
         self._update_coefs()
         x, y = pos
         xc = x // self.square_view_width
-        yc = (self.ymax - y) // self.square_view_height
+        # T2: reverse the vertical offset applied to map drawing so that
+        # mouse clicks at the very top of the map area resolve to the
+        # correct grid square instead of going off-screen above it.
+        yc = (self._y_offset + self.ymax - y) // self.square_view_height
         if 0 <= xc <= self.interface.xcmax and 0 <= yc <= self.interface.ycmax:
             return self.interface.server.player.world.grid[(xc, yc)]
 

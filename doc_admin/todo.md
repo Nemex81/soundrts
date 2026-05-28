@@ -776,3 +776,15 @@ Stato: COMPLETATO
 
 
 
+
+## Round UI-MASTER-01 (autonomo)
+
+- [x] T1 - Localizzazione SET_SPEED_1..7 + PAUSE_ON/OFF in 13 file tts.txt; hardcode |PAUSA rimosso da clientgamehud.py.
+- [x] T2 - Viewport mappa offset 60px sotto barra risorse (GridView._y_offset, HUD_MAP_MARGIN=4).
+- [x] T3 - Pannello EVENTS collassabile (HudPanel.events_visible, cmd_toggle_events, ALT+e, click su header).
+- [x] T4 - Pannello ACTIVITY con tab-switcher (HudPanel.activity_visible + activity_tab, cmd_activity_tab_*, ALT+a/ALT+1..4, click su tab).
+- [x] T5 - Comandi mouse estesi (button 2 = command_unit, scroll = select_unit +/-1).
+- [x] T6 - display_is_active include config.visual_mode.
+- [x] FASE-R - 18 test esistenti + lint sintassi tutti OK.
+- [x] FASE-T - +17 test (test_ui_master_01.py); totale 35/35 PASS sui moduli toccati.
+- [x] FASE-D - CHANGELOG [Unreleased] aggiornato + questo TODO.

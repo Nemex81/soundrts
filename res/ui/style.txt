@@ -750,3 +750,11 @@ resource_n Resource {}
 time_fmt Time: {:02d}:{:02d}
 pop_fmt Pop: {}/{}
 speed_fmt Speed: x{:.1f}
+pause_label || PAUSED
+panel_activity || ACTIVITY
+tab_all || ALL
+tab_training || TRAIN
+tab_research || RESEARCH
+tab_build || BUILD
+events_collapsed || (hidden)
+activity_empty || (no active production)

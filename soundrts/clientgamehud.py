@@ -70,6 +70,14 @@ class HudPanel:
         self._events: Deque[HudEvent] = deque(maxlen=self.max_events)
         # Cache of HUD panel rectangles for future hit-testing (C1 hook).
         self._panel_rects: dict = {}
+        # T3: collapse/expand state of the EVENTS panel. When False the
+        # panel renders only its header and the rest of the right column
+        # slides up to fill the freed space.
+        self.events_visible: bool = True
+        # T4: activity panel state (visible flag + active tab).
+        # Tab values: "all" | "training" | "research" | "build".
+        self.activity_visible: bool = False
+        self.activity_tab: str = "all"
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -77,9 +85,32 @@ class HudPanel:
             self._events.appendleft(HudEvent(severity=_classify_event(event), text=text))
 
     def handle_mouse_event(self, event: Any) -> bool:
-        """Hook for future HUD interactions. Currently a no-op that always
-        returns False so the main mouse handler keeps full control.
+        """Hit-test the HUD for click events.
+
+        Returns True when the event has been consumed (so the caller
+        should skip default map-click handling); False otherwise.
+
+        Currently handled:
+          - Left click on the EVENTS panel header toggles `events_visible`.
+          - Left click on an ACTIVITY tab label switches `activity_tab`.
         """
+        if getattr(event, "type", None) != pygame.MOUSEBUTTONDOWN:
+            return False
+        if getattr(event, "button", None) != 1:
+            return False
+        pos = getattr(event, "pos", None)
+        if pos is None:
+            return False
+        events_rect = self._panel_rects.get("events_header")
+        if events_rect is not None and events_rect.collidepoint(pos):
+            self.events_visible = not self.events_visible
+            return True
+        # T4: tab strip hit-testing
+        for tab_key in ("all", "training", "research", "build"):
+            r = self._panel_rects.get("activity_tab_" + tab_key)
+            if r is not None and r.collidepoint(pos):
+                self.activity_tab = tab_key
+                return True
         return False
 
     def get_snapshot(self) -> HudSnapshot:
@@ -116,7 +147,11 @@ class HudPanel:
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (center_x - 110, center_y - 30))
         pygame.draw.rect(screen, (255, 220, 0), pygame.Rect(center_x - 110, center_y - 30, 220, 60), 2)
-        screen_render("|| PAUSA", (center_x, center_y), center=True, color=(255, 220, 0))
+        # T1: localized pause label (was hardcoded "|| PAUSA" — violated LEGGE-4).
+        # Falls back to "|| PAUSED" if the active language has no `pause_label`
+        # key under [hud] in style.txt.
+        label = self._hud_text("pause_label", "|| PAUSED")
+        screen_render(label, (center_x, center_y), center=True, color=(255, 220, 0))
 
     def _draw_snapshot(self, screen: pygame.Surface, snapshot: HudSnapshot) -> None:
         from .lib.screen import screen_render, screen_render_header
@@ -165,25 +200,39 @@ class HudPanel:
 
         # --- EVENTS panel (right side, below TIME) — aligned to col_right_width R6 ---
         col_right_width = 295  # unified right-column width (EVENTS = PLAYER = GROUP)
-        event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
+        # T3: when collapsed, the panel shows only its header row.
+        if self.events_visible:
+            event_height = self.panel_header_height + max(1, len(snapshot.events)) * self.line_height
+        else:
+            event_height = self.panel_header_height
         event_top = res_bar_bottom + self.time_height + self.margin
         event_rect = (right - col_right_width, event_top, col_right_width, event_height)
         self._draw_panel(screen, event_rect)
         self._panel_rects["events"] = pygame.Rect(*event_rect)
-        screen_render_header(self._hud_text("panel_events", "EVENTS"), (right - col_right_width + 6, event_top + 4), color=(255, 190, 120))
-        y = event_top + self.panel_header_height
-        events = snapshot.events
-        if not events:
-            screen_render(self._hud_text("no_events", "No recent events"), (right - col_right_width + 6, y), color=(230, 220, 205))
-        else:
-            for ev in events[: self.max_events]:
-                prefix, ev_color = self._event_style(ev.severity)
-                screen_render(
-                    self._fit("{} {}".format(prefix, ev.text), self.event_text_max_length),
-                    (right - col_right_width + 6, y),
-                    color=ev_color,
-                )
-                y += self.line_height
+        # Header rect (used for click-to-toggle in handle_mouse_event).
+        self._panel_rects["events_header"] = pygame.Rect(
+            event_rect[0], event_rect[1], event_rect[2], self.panel_header_height
+        )
+        header_label = self._hud_text("panel_events", "EVENTS")
+        if not self.events_visible:
+            header_label = "{} {}".format(
+                header_label, self._hud_text("events_collapsed", "(hidden)")
+            )
+        screen_render_header(header_label, (right - col_right_width + 6, event_top + 4), color=(255, 190, 120))
+        if self.events_visible:
+            y = event_top + self.panel_header_height
+            events = snapshot.events
+            if not events:
+                screen_render(self._hud_text("no_events", "No recent events"), (right - col_right_width + 6, y), color=(230, 220, 205))
+            else:
+                for ev in events[: self.max_events]:
+                    prefix, ev_color = self._event_style(ev.severity)
+                    screen_render(
+                        self._fit("{} {}".format(prefix, ev.text), self.event_text_max_length),
+                        (right - col_right_width + 6, y),
+                        color=ev_color,
+                    )
+                    y += self.line_height
 
         # --- PLAYER panel (bottom-right, below EVENTS) — Round 5 ---
         group_width = col_right_width
@@ -218,12 +267,152 @@ class HudPanel:
             screen_render(line, (player_left + 6, y), color=(220, 235, 245))
             y += self.line_height
 
+        # --- T4: ACTIVITY panel (bottom-left, only when visible) ---
+        if self.activity_visible:
+            self._draw_activity_panel(screen, left, bottom)
+        else:
+            # Clear cached tab rects so handle_mouse_event doesn't react
+            # to clicks on an invisible strip.
+            for key in ("activity_tab_all", "activity_tab_training",
+                        "activity_tab_research", "activity_tab_build"):
+                self._panel_rects.pop(key, None)
+
     def _event_style(self, severity: str):
         if severity == "combat":
             return "!", (255, 110, 110)
         if severity == "info":
             return "+", (140, 220, 140)
         return "*", (255, 200, 110)
+
+    # ------------------------------------------------------------------
+    # T4: activity panel helpers
+    # ------------------------------------------------------------------
+    _ACTIVITY_TABS = ("all", "training", "research", "build")
+    _ACTIVITY_TAB_LABELS = {
+        "all": ("tab_all", "ALL"),
+        "training": ("tab_training", "TRAIN"),
+        "research": ("tab_research", "RESEARCH"),
+        "build": ("tab_build", "BUILD"),
+    }
+    activity_width = 320
+    activity_max_rows = 8
+
+    def _classify_order(self, order: Any) -> str:
+        """Return 'training' | 'research' | 'build' | '' for a worldorder
+        instance. Defensive: never raises."""
+        kw = ""
+        try:
+            cls = getattr(order, "cls", None)
+            if cls is not None:
+                kw = getattr(cls, "keyword", "") or ""
+        except Exception:
+            kw = ""
+        if not kw:
+            kw = type(order).__name__.lower()
+        if "train" in kw:
+            return "training"
+        if "research" in kw:
+            return "research"
+        if "build" in kw or "upgrade" in kw:
+            return "build"
+        return ""
+
+    def _collect_activity(self) -> List[tuple]:
+        """Return a list of (kind, label, progress_pct) tuples describing
+        the active production/research/construction orders of the local
+        player. Defensive: returns [] on any error."""
+        items: List[tuple] = []
+        try:
+            player = getattr(self.interface, "player", None)
+            if player is None:
+                return items
+            units = getattr(player, "units", None) or []
+            for u in units:
+                orders = getattr(u, "orders", None)
+                if not orders:
+                    continue
+                first = orders[0]
+                kind = self._classify_order(first)
+                if not kind:
+                    continue
+                target_type = getattr(first, "type", None)
+                target_name = getattr(target_type, "type_name", None) or "?"
+                time_left = getattr(first, "time", None)
+                time_cost = getattr(first, "time_cost", None)
+                pct = 0
+                try:
+                    if time_cost and time_cost > 0:
+                        pct = max(0, min(100, int(100 - (float(time_left) * 100.0 / float(time_cost)))))
+                except Exception:
+                    pct = 0
+                items.append((kind, target_name, pct))
+        except Exception:
+            pass
+        return items
+
+    def _draw_activity_panel(self, screen: pygame.Surface, left: int, bottom: int) -> None:
+        from .lib.screen import screen_render, screen_render_header
+
+        width = self.activity_width
+        items = self._collect_activity()
+        # Pre-compute counters per tab for the strip labels.
+        counts = {"all": len(items), "training": 0, "research": 0, "build": 0}
+        for kind, _name, _pct in items:
+            counts[kind] = counts.get(kind, 0) + 1
+        if self.activity_tab == "all":
+            filtered = items
+        else:
+            filtered = [it for it in items if it[0] == self.activity_tab]
+        rows = min(len(filtered), self.activity_max_rows)
+        body_height = max(1, rows) * self.line_height
+        height = self.panel_header_height + self.line_height + body_height + self.margin
+        top = bottom - height
+        rect = (left, top, width, height)
+        self._draw_panel(screen, rect)
+        self._panel_rects["activity"] = pygame.Rect(*rect)
+        # Header
+        screen_render_header(
+            self._hud_text("panel_activity", "ACTIVITY"),
+            (left + 6, top + 4),
+            color=(255, 220, 130),
+        )
+        # Tab strip
+        tab_strip_top = top + self.panel_header_height
+        tab_count = len(self._ACTIVITY_TABS)
+        tab_width = (width - 2 * self.margin) // tab_count
+        for i, tab_key in enumerate(self._ACTIVITY_TABS):
+            tab_left = left + self.margin + i * tab_width
+            tab_rect = pygame.Rect(tab_left, tab_strip_top, tab_width - 2, self.line_height - 2)
+            self._panel_rects["activity_tab_" + tab_key] = tab_rect
+            is_active = (tab_key == self.activity_tab)
+            color = (255, 235, 130) if is_active else (180, 190, 200)
+            # Border for active tab
+            if is_active:
+                pygame.draw.rect(screen, (255, 200, 80), tab_rect, 1)
+            style_key, default_label = self._ACTIVITY_TAB_LABELS[tab_key]
+            label = "{} ({})".format(
+                self._hud_text(style_key, default_label), counts.get(tab_key, 0)
+            )
+            screen_render(self._fit(label, 12), (tab_left + 2, tab_strip_top), color=color)
+        # Body rows
+        body_top = tab_strip_top + self.line_height
+        if not filtered:
+            screen_render(
+                self._hud_text("activity_empty", "(no active production)"),
+                (left + 6, body_top),
+                color=(200, 200, 200),
+            )
+        else:
+            y = body_top
+            for kind, name, pct in filtered[: self.activity_max_rows]:
+                _prefix_key = {
+                    "training": "T",
+                    "research": "R",
+                    "build": "B",
+                }.get(kind, "?")
+                line = "[{}] {} {}%".format(_prefix_key, name, pct)
+                screen_render(self._fit(line, 38), (left + 6, y), color=(220, 235, 245))
+                y += self.line_height
 
     def _speed_with_icon(self, speed_text: str) -> str:
         try:

@@ -520,3 +520,21 @@ controlla la prossima unita' nella locazione
 4364 foresta densa
 4365 Frecce: naviga. Invio: conferma. Esc: indietro. Ctrl+F2: visivo off
 4366 Invio: conferma. Esc: annulla. Ctrl+F2: visivo off
+4367 Velocita 1 (molto lenta)
+4368 Velocita 2 (lenta)
+4369 Velocita 3 (normale)
+4370 Velocita 4 (veloce)
+4371 Velocita 5 (molto veloce)
+4372 Velocita 6 (rapidissima)
+4373 Velocita 7 (massima)
+4374 Gioco in pausa
+4375 Gioco ripreso
+
+4376 Eventi mostrati
+4377 Eventi nascosti
+4378 Pannello attivita aperto
+4379 Pannello attivita chiuso
+4380 Tutto
+4381 Addestramento
+4382 Ricerche
+4383 Costruzioni

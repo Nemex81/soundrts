@@ -21,3 +21,11 @@ resource_n Risorsa {}
 time_fmt Tempo: {:02d}:{:02d}
 pop_fmt Pop: {}/{}
 speed_fmt Velocita: x{:.1f}
+pause_label || IN PAUSA
+panel_activity || ATTIVITA
+tab_all || TUTTO
+tab_training || ADDESTR.
+tab_research || RICERCHE
+tab_build || COSTR.
+events_collapsed || (nascosti)
+activity_empty || (nessuna produzione attiva)

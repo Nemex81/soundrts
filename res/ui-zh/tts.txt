@@ -501,3 +501,24 @@
 4364 密林
 4365 方向键：导航。回车：确认。Esc：返回。Ctrl+F2：视觉关闭
 4366 回车：确认。Esc：取消。Ctrl+F2：视觉关闭
+
+; TODO: tradurre (placeholder EN)
+4367 set speed to 1 very slow
+4368 set speed to 2 slow
+4369 set speed to 3 normal
+4370 set speed to 4 fast
+4371 set speed to 5
+4372 set speed to 6 very fast
+4373 set speed to 7 maximum
+4374 game paused
+4375 game resumed
+
+; TODO: tradurre (placeholder EN)
+4376 events shown
+4377 events hidden
+4378 activity panel open
+4379 activity panel closed
+4380 all
+4381 training
+4382 research
+4383 buildings

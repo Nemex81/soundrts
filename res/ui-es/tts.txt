@@ -516,3 +516,24 @@
 4364 bosque espeso
 4365 Flechas: navegar. Intro: confirmar. Esc: volver. Ctrl+F2: visual desactivado
 4366 Intro: confirmar. Esc: cancelar. Ctrl+F2: visual desactivado
+
+; TODO: tradurre (placeholder EN)
+4367 set speed to 1 very slow
+4368 set speed to 2 slow
+4369 set speed to 3 normal
+4370 set speed to 4 fast
+4371 set speed to 5
+4372 set speed to 6 very fast
+4373 set speed to 7 maximum
+4374 game paused
+4375 game resumed
+
+; TODO: tradurre (placeholder EN)
+4376 events shown
+4377 events hidden
+4378 activity panel open
+4379 activity panel closed
+4380 all
+4381 training
+4382 research
+4383 buildings
