@@ -951,6 +951,9 @@ class GameInterface:
                 else:
                     map_entity = self.grid_view.object_from_mousepos(e.pos)
                     map_square = self.grid_view.square_from_mousepos(e.pos)
+                    # T9-TOOLTIP-GLOBAL: when no entity is under the
+                    # cursor but a map cell is, surface a coords-only
+                    # tooltip via set_map_hover(None, pos, square=...).
                     self.hud_panel.set_map_hover(map_entity, e.pos, square=map_square)
             except Exception:
                 pass

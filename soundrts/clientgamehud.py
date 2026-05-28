@@ -101,6 +101,14 @@ class HudPanel:
         # T8-ACTIVITY: full text of each rendered activity row, used by
         # _update_tooltip to surface a popup on hover.
         self._activity_row_texts: Dict[int, str] = {}
+        # T9-CANCEL: per-row unit reference, set by _draw_activity_panel
+        # so handle_mouse_event can resolve a row index back to its
+        # source unit and cancel its first active order.
+        self._activity_row_units: Dict[int, Any] = {}
+        # T9-TOOLTIP-GLOBAL: keep the last rendered snapshot so the
+        # hover handler can read per-cell values (resources, units,
+        # bottom bar) without re-querying the interface.
+        self._last_snapshot: Optional[HudSnapshot] = None
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -138,6 +146,22 @@ class HudPanel:
         if activity_header_rect is not None and activity_header_rect.collidepoint(pos):
             self.activity_visible = not self.activity_visible
             return True
+        # T9-CANCEL: click on an ACTIVITY row cancels the first active
+        # order of the unit that produced that row. Only honoured when
+        # the panel is expanded; collapsed panels never expose rows.
+        if self.activity_visible:
+            for key, r in self._panel_rects.items():
+                if not key.startswith("activity_row_"):
+                    continue
+                if r.collidepoint(pos):
+                    try:
+                        idx = int(key.split("_", 2)[2])
+                    except (ValueError, IndexError):
+                        continue
+                    unit = self._activity_row_units.get(idx)
+                    if unit is not None:
+                        self._cancel_unit_order(unit)
+                    return True
         # T4: tab strip hit-testing
         for tab_key in ("all", "training", "research", "build"):
             r = self._panel_rects.get("activity_tab_" + tab_key)
@@ -180,7 +204,19 @@ class HudPanel:
                         continue
                     full_text = self._activity_row_texts.get(idx, "")
                     if full_text:
-                        self._tooltip_text = full_text
+                        # T9-CANCEL: append the cancel hint so the
+                        # popup tells the mouse user the row is
+                        # clickable.
+                        hint = self._hud_text(
+                            "tooltip_activity_cancel_hint",
+                            "Click to cancel",
+                        )
+                        self._tooltip_text = self._hud_named_format(
+                            "tooltip_activity_row_full",
+                            "{row}  - {cancel_hint}",
+                            row=full_text,
+                            cancel_hint=hint,
+                        )
                         self._tooltip_pos = pos
                         return
         for tab_key in self._ACTIVITY_TABS:
@@ -212,6 +248,103 @@ class HudPanel:
                         self._tooltip_text = full_text
                         self._tooltip_pos = pos
                         return
+        # T9-TOOLTIP-GLOBAL: per-cell tooltips for the static HUD
+        # widgets (RES bar, BOTTOM bar, PLAYER panel, GROUP rows). All
+        # values are read from the last rendered snapshot so the popup
+        # always matches what the user is seeing on screen.
+        snap = self._last_snapshot
+        # Bottom bar: time cell.
+        bt = self._panel_rects.get("bottom_time")
+        if bt is not None and bt.collidepoint(pos):
+            time_value = snap.time if snap is not None else ""
+            self._tooltip_text = self._hud_named_format(
+                "tooltip_bottom_time", "Game time: {time}", time=time_value
+            )
+            self._tooltip_pos = pos
+            return
+        # Bottom bar: speed cell.
+        bs = self._panel_rects.get("bottom_speed")
+        if bs is not None and bs.collidepoint(pos):
+            speed_value = snap.speed if snap is not None else ""
+            self._tooltip_text = self._hud_named_format(
+                "tooltip_bottom_speed", "Game speed: {speed}", speed=speed_value
+            )
+            self._tooltip_pos = pos
+            return
+        # RES bar: food cell.
+        fc = self._panel_rects.get("food_cell")
+        if fc is not None and fc.collidepoint(pos):
+            food_value = snap.food if snap is not None else ""
+            self._tooltip_text = self._hud_named_format(
+                "tooltip_food_cell", "Food: {food}", food=food_value
+            )
+            self._tooltip_pos = pos
+            return
+        # RES bar: individual resource cells.
+        for key, r in self._panel_rects.items():
+            if not key.startswith("res_cell_"):
+                continue
+            if not r.collidepoint(pos):
+                continue
+            try:
+                idx = int(key.split("_", 2)[2])
+            except (ValueError, IndexError):
+                continue
+            line = ""
+            if snap is not None and 0 <= idx < len(snap.resources):
+                line = snap.resources[idx]
+            label, _, value = line.partition(":")
+            self._tooltip_text = self._hud_named_format(
+                "tooltip_res_cell",
+                "{name}: {value}",
+                name=label.strip() or "?",
+                value=value.strip() or "?",
+            )
+            self._tooltip_pos = pos
+            return
+        # PLAYER panel (hover anywhere on the strip).
+        pr = self._panel_rects.get("player")
+        if pr is not None and pr.collidepoint(pos):
+            name = snap.player if snap is not None else ""
+            self._tooltip_text = self._hud_named_format(
+                "tooltip_player_panel", "Player: {name}", name=name or "?"
+            )
+            self._tooltip_pos = pos
+            return
+        # GROUP rows: one tooltip per unit row.
+        for key, r in self._panel_rects.items():
+            if not key.startswith("group_row_"):
+                continue
+            if not r.collidepoint(pos):
+                continue
+            try:
+                idx = int(key.split("_", 2)[2])
+            except (ValueError, IndexError):
+                continue
+            unit = None
+            if snap is not None and 0 <= idx < len(snap.units):
+                unit = snap.units[idx]
+            if unit is None:
+                return
+            status = unit.status or self._hud_text("idle", "idle")
+            if unit.hit_points is not None and unit.max_hit_points is not None:
+                self._tooltip_text = self._hud_named_format(
+                    "tooltip_unit_row",
+                    "{label} - {hp}/{hp_max} HP - {status}",
+                    label=unit.label,
+                    hp=unit.hit_points,
+                    hp_max=unit.max_hit_points,
+                    status=status,
+                )
+            else:
+                self._tooltip_text = self._hud_named_format(
+                    "tooltip_unit_row_nohp",
+                    "{label} - {status}",
+                    label=unit.label,
+                    status=status,
+                )
+            self._tooltip_pos = pos
+            return
 
     def get_snapshot(self) -> HudSnapshot:
         return HudSnapshot(
@@ -256,6 +389,9 @@ class HudPanel:
     def _draw_snapshot(self, screen: pygame.Surface, snapshot: HudSnapshot) -> None:
         from .lib.screen import screen_render, screen_render_header
 
+        # T9-TOOLTIP-GLOBAL: remember the snapshot so _update_tooltip
+        # can read per-cell values on hover.
+        self._last_snapshot = snapshot
         width, height = screen.get_size()
         left = self.margin
         top = self.margin
@@ -268,6 +404,8 @@ class HudPanel:
         self._event_row_texts = {}
         # T8-ACTIVITY: reset per-frame mapping from activity row -> full text.
         self._activity_row_texts = {}
+        # T9-CANCEL: reset per-frame mapping from activity row -> unit.
+        self._activity_row_units = {}
 
         # --- Layout anchor: horizontal resource bar ---
         res_bar_height = self.res_bar_height
@@ -284,16 +422,26 @@ class HudPanel:
         for i, line in enumerate(snapshot.resources):
             label, _, value = line.partition(":")
             text = "{}: {}".format(label.strip(), value.strip()) if value else label.strip()
-            cell_center_x = left + int(i * cell_width) + int(cell_width / 2)
+            cell_left = left + int(i * cell_width)
+            cell_right = left + int((i + 1) * cell_width)
+            cell_center_x = cell_left + (cell_right - cell_left) // 2
             screen_render(text, (cell_center_x, bar_center_y), center=True, color=(255, 235, 130))
+            # T9-TOOLTIP-GLOBAL: per-resource hit-test rect.
+            self._panel_rects["res_cell_{}".format(i)] = pygame.Rect(
+                cell_left, top, cell_right - cell_left, res_bar_height
+            )
             if i > 0:
-                sep_x = left + int(i * cell_width)
-                pygame.draw.line(screen, (70, 110, 120), (sep_x, top + 1), (sep_x, top + res_bar_height - 1), 1)
+                pygame.draw.line(screen, (70, 110, 120), (cell_left, top + 1), (cell_left, top + res_bar_height - 1), 1)
         food_cell_left = left + int(len(snapshot.resources) * cell_width)
-        food_cell_center_x = food_cell_left + int(cell_width / 2)
+        food_cell_right = left + bar_width
+        food_cell_center_x = food_cell_left + (food_cell_right - food_cell_left) // 2
         if snapshot.resources:
             pygame.draw.line(screen, (70, 110, 120), (food_cell_left, top + 1), (food_cell_left, top + res_bar_height - 1), 1)
         screen_render(snapshot.food, (food_cell_center_x, bar_center_y), center=True, color=(220, 220, 210))
+        # T9-TOOLTIP-GLOBAL: hit-test rect for the food/pop cell.
+        self._panel_rects["food_cell"] = pygame.Rect(
+            food_cell_left, top, food_cell_right - food_cell_left, res_bar_height
+        )
 
         # --- T8-BOTTOMBAR: TIME panel removed from the right column.
         # Time and speed are now rendered by the horizontal bottom bar
@@ -387,12 +535,16 @@ class HudPanel:
         screen_render_header(self._hud_text("panel_group", "GROUP"), (player_left + 6, group_top + 4), color=(180, 220, 255))
         y = group_top + self.panel_header_height
         units = snapshot.units or [HudUnitSnapshot(self._hud_text("no_unit", "No unit selected"), None, None, "")]
-        for unit in units[:units_to_show]:
+        for row_index, unit in enumerate(units[:units_to_show]):
             hp = ""
             if unit.hit_points is not None and unit.max_hit_points is not None:
                 hp = " {}/{} hp".format(unit.hit_points, unit.max_hit_points)
             line = self._fit("{}{} {}".format(unit.label, hp, unit.status).strip(), 40)
             screen_render(line, (player_left + 6, y), color=(220, 235, 245))
+            # T9-TOOLTIP-GLOBAL: per-unit hit-test rect.
+            self._panel_rects["group_row_{}".format(row_index)] = pygame.Rect(
+                player_left, y, group_width, self.line_height
+            )
             y += self.line_height
 
         # --- T8-ACTIVITY: ACTIVITY header always visible (toggle) ---
@@ -461,6 +613,13 @@ class HudPanel:
             center=True,
             color=(220, 235, 245),
         )
+        # T9-TOOLTIP-GLOBAL: hit-test rects for the two bottom-bar cells.
+        self._panel_rects["bottom_time"] = pygame.Rect(
+            left, bottom_bar_top, cell_w, self.bottom_bar_height
+        )
+        self._panel_rects["bottom_speed"] = pygame.Rect(
+            left + cell_w, bottom_bar_top, (right - left) - cell_w, self.bottom_bar_height
+        )
 
         # UI-MASTER-02b: tooltip overlay must render regardless of the
         # ACTIVITY panel visibility (previous indentation kept it inside
@@ -506,9 +665,12 @@ class HudPanel:
         return ""
 
     def _collect_activity(self) -> List[tuple]:
-        """Return a list of (kind, label, progress_pct) tuples describing
-        the active production/research/construction orders of the local
-        player. Defensive: returns [] on any error."""
+        """Return a list of ``(kind, label, progress_pct, unit)`` tuples
+        describing the active production/research/construction orders
+        of the local player. The 4th field (``unit``) is the source
+        unit reference, used by T9-CANCEL to resolve a clicked row
+        back to the unit whose order must be cancelled. Defensive:
+        returns [] on any error."""
         items: List[tuple] = []
         try:
             player = getattr(self.interface, "player", None)
@@ -533,7 +695,7 @@ class HudPanel:
                         pct = max(0, min(100, int(100 - (float(time_left) * 100.0 / float(time_cost)))))
                 except Exception:
                     pct = 0
-                items.append((kind, target_name, pct))
+                items.append((kind, target_name, pct, u))
         except Exception:
             pass
         return items
@@ -555,9 +717,12 @@ class HudPanel:
         from .lib.screen import screen_render
 
         items = self._collect_activity()
-        # Pre-compute counters per tab for the strip labels.
+        # Pre-compute counters per tab for the strip labels. Tolerate
+        # both the legacy 3-tuple and the T9-CANCEL 4-tuple so test
+        # patches that still inject 3-tuples keep working.
         counts = {"all": len(items), "training": 0, "research": 0, "build": 0}
-        for kind, _name, _pct in items:
+        for item in items:
+            kind = item[0] if item else ""
             counts[kind] = counts.get(kind, 0) + 1
         if self.activity_tab == "all":
             filtered = items
@@ -602,7 +767,12 @@ class HudPanel:
             return
         y = body_top
         max_bar_width = max(1, width - 2 * self.margin)
-        for row_index, (kind, name, pct) in enumerate(filtered[:rows]):
+        for row_index, item in enumerate(filtered[:rows]):
+            # Accept both 3-tuple (legacy) and 4-tuple (T9-CANCEL).
+            kind = item[0]
+            name = item[1]
+            pct = item[2]
+            unit = item[3] if len(item) >= 4 else None
             prefix_key = {
                 "training": "activity_prefix_training",
                 "research": "activity_prefix_research",
@@ -628,6 +798,9 @@ class HudPanel:
                 left, y, width, self.line_height
             )
             self._activity_row_texts[row_index] = line
+            # T9-CANCEL: remember the source unit for this row so a
+            # left-click can resolve which unit's first order to drop.
+            self._activity_row_units[row_index] = unit
             y += self.line_height
 
     def _speed_with_icon(self, speed_text: str) -> str:
@@ -665,20 +838,42 @@ class HudPanel:
     def set_map_hover(self, entity: Any, pos: Any, square: Any = None) -> None:
         """Track the map-cell hover state and surface a tooltip after a
         short stable delay (``_map_tooltip_delay`` seconds). When
-        ``entity`` is ``None`` the hover state and any active tooltip
-        are cleared. The optional ``square`` argument (T7-COORD) lets
-        the caller pass the grid cell currently under the cursor so the
-        tooltip can include its (col,row) coordinates. Defensive: never
-        raises.
+        ``entity`` is ``None`` and no ``square`` is provided the hover
+        state and any active tooltip are cleared. When ``entity`` is
+        ``None`` but ``square`` is provided (T9-TOOLTIP-GLOBAL) a
+        coordinates-only tooltip is surfaced immediately so empty map
+        cells still expose their (col,row) to mouse users. The
+        optional ``square`` argument (T7-COORD) lets the caller pass
+        the grid cell currently under the cursor so the tooltip can
+        include its (col,row) coordinates. Defensive: never raises.
         """
         if entity is None:
             self._map_hover_entity = None
             self._map_hover_start = 0.0
-            self._map_hover_square = None
-            # Only clear the tooltip if it was set by us; HUD-driven
-            # tooltips (events/tabs) are re-evaluated by _update_tooltip.
-            self._tooltip_text = ""
-            self._tooltip_pos = None
+            if square is None:
+                # Full clear when leaving both map and HUD.
+                self._map_hover_square = None
+                self._tooltip_text = ""
+                self._tooltip_pos = None
+                return
+            # T9-TOOLTIP-GLOBAL: empty cell tooltip with coordinates.
+            self._map_hover_square = square
+            try:
+                col = getattr(square, "col", None)
+                row = getattr(square, "row", None)
+            except Exception:
+                col = row = None
+            if col is not None and row is not None:
+                self._tooltip_text = self._hud_named_format(
+                    "tooltip_map_empty_cell",
+                    "Cell ({col},{row})",
+                    col=col,
+                    row=row,
+                )
+                self._tooltip_pos = pos
+            else:
+                self._tooltip_text = ""
+                self._tooltip_pos = None
             return
         self._map_hover_square = square
         now = time.monotonic()
@@ -779,6 +974,23 @@ class HudPanel:
         )
         # Collapse double spaces left by empty segments and trim.
         return " ".join(text.split()).strip()
+
+    # ------------------------------------------------------------------
+    # T9-CANCEL: client-side order cancellation triggered by a left
+    # click on an ACTIVITY row.
+    # ------------------------------------------------------------------
+    def _cancel_unit_order(self, unit: Any) -> None:
+        """Drop the first pending order of ``unit``. Strictly defensive:
+        any exception (immutable orders list, missing attribute, racing
+        snapshot update) is swallowed so a click can never crash the
+        UI loop.
+        """
+        try:
+            orders = getattr(unit, "orders", None)
+            if orders:
+                orders.pop(0)
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # C1-HITTEST: public read-only access to panel rects

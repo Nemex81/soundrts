@@ -49,3 +49,15 @@ bottom_bar_speed_fmt {speed}
 activity_collapsed || (nascosta)
 tooltip_activity_show Mostra attivita
 tooltip_activity_hide Nascondi attivita
+; UI-MASTER-04 T9-CANCEL
+tooltip_activity_cancel_hint Clicca per annullare
+tooltip_activity_row_full {row}  - {cancel_hint}
+; UI-MASTER-04 T9-TOOLTIP-GLOBAL
+tooltip_res_cell {name}: {value}
+tooltip_food_cell Cibo: {food}
+tooltip_player_panel Giocatore: {name}
+tooltip_unit_row {label} - {hp}/{hp_max} PV - {status}
+tooltip_unit_row_nohp {label} - {status}
+tooltip_bottom_time Tempo di gioco: {time}
+tooltip_bottom_speed Velocita di gioco: {speed}
+tooltip_map_empty_cell Cella ({col},{row})
