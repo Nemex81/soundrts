@@ -57,6 +57,25 @@ record_cursor(
     ),
 )
 
+# UI-SIGHTED-03/SI-10: "move in every direction" cursor displayed while
+# the player is drawing a rubber-band selection rectangle. The 8x8
+# pattern evokes four diagonal arrows around a hollow centre — visually
+# distinct from "attack" (solid corners) and "target" (centred reticle).
+record_cursor(
+    "sizeall",
+    (4, 4),
+    (
+        " XX  XX ",
+        "XXXXXXXX",
+        " XX  XX ",
+        "X      X",
+        "X      X",
+        " XX  XX ",
+        "XXXXXXXX",
+        " XX  XX ",
+    ),
+)
+
 
 def set_cursor(name):
     """Apply ``name`` cursor. Defensive: unknown / unavailable cursor

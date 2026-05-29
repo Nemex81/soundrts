@@ -78,6 +78,21 @@ Data: 23 maggio 2026
 - KEYS panel: lettura dinamica delle hotkey reali da `res/ui/bindings.txt` invece della lista fissa (attualmente le voci riflettono le scorciatoie RTS canoniche, non i binding remappati dall'utente).
 - Cursore `attack`: pattern bitmap 8×8 funzionale ma minimalista; valutare upgrade a 16×16 con alpha quando pygame avrà supporto stabile per system cursors a colori.
 
+## UI-SIGHTED-03 (29 maggio 2026) — completato
+
+- [x] SI-08 (ALTA, DEBITO-02 chiuso): `HudPanel._load_bindings_from_file()` + `_get_bindings()` con cache leggono dinamicamente `res/ui/bindings.txt` (parser KEY[ MOD]: action, skip commenti `;`/`#`, fallback `{}` su file mancante). `_KEYS_HOTKEYS` esteso a 4-tuple con campo `bindings_action_name` mappato alle 8 azioni reali SoundRTS (`toggle_pause`, `unit_status`, `default`, `do_again`, `immersion`, `examine`, `select_square`, `select_scouted_square`). Aggiunte 8 chiavi L10N EN+IT (`hotkey_pause/status/default/again/immersion/examine/arrows/scout`). Pannello allargato 240→280 px.
+- [x] SI-09 (MEDIA, DEBITO-02 chiuso): badge stack differenziati per owner. `GridView.display_objects()` rifattorizzato per bucketizzare per cella E per categoria (`own`/`enemy`/`ally`) via `player_is_an_enemy(own_player)`, O(N) invariato. `_draw_stack_badge()` esteso con parametri `color` e `border_color` opzionali, retrocompatibile. Verde `(60,166,60)` proprio sopra-destra, rosso `(166,60,60)` nemico sopra-sinistra, grigio `(100,100,120)` alleato sotto-destra.
+- [x] SI-10 (BASSA, DEBITO-02 chiuso): cursore `sizeall` (pattern 8×8 4-frecce) registrato in `lib/mouse.py`. `GameInterface._apply_rubber_band_cursor(pos)` iniettato in MOUSEMOTION handler (con `getattr` difensivo per test SimpleNamespace): durante drag (`mouse_select_origin` popolato e != pos) il cursore diventa `sizeall` con priorità sull'`attack` SI-07. Guardia LEGGE-6 su `display_is_active`.
+- [x] Test `soundrts/tests/unittests/test_ui_sighted_03.py`: 15 nuovi test (5 SI-08 parsing/cache/fallback, 4 SI-09 pixel-perfect color check + aggregazione owner, 6 SI-10 attivazione drag/guardie/priorità). Aggiornato `test_ui_sighted_02.py::test_keys_panel_has_eight_hotkey_entries` per il nuovo schema 4-tuple (LEGGE-7). Suite finale: **515 passed, 1 skipped** (da baseline 500/1, +15 nuovi test, 0 regressioni).
+
+### Aperture per UI-SIGHTED-04
+
+- GAP-05 minimap radar (radar panel in basso a destra o overlay toggleabile).
+- GAP-08-ext indicatore di range visibility/attack/sight come overlay circolare on-hover su unità propria.
+- KEYS panel: aggiungere binding live-refresh quando l'utente modifica `bindings.txt` durante una sessione (al momento la cache è infinita).
+- Cursore `sizeall`: valutare migrazione a `pygame.SYSTEM_CURSOR_SIZEALL` quando il min-pygame supporto sarà garantito (rimuoverebbe la bitmap custom).
+- Badge stack alleato (grigio): valutare se aggregare alleati e nemici sotto un unico badge "non-own" semplificando il dispatch.
+
 ## Stato fasi
 
 ### [x] Fase 0 - Analisi totale

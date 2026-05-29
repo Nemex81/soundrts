@@ -188,8 +188,15 @@ def test_handle_mouse_event_keys_header_toggle():
 
 
 def test_keys_panel_has_eight_hotkey_entries():
+    # UI-SIGHTED-03/SI-08 reshaped each entry from a 3-tuple to a
+    # 4-tuple (added ``bindings_action_name``). The legacy contract
+    # (>= 6 entries, l10n key prefixed with ``hotkey_``, non-empty
+    # default) still holds; we just unpack defensively to stay
+    # forward-compatible.
     assert len(HudPanel._KEYS_HOTKEYS) >= 6
-    for key_label, l10n_key, default in HudPanel._KEYS_HOTKEYS:
+    for entry in HudPanel._KEYS_HOTKEYS:
+        assert len(entry) >= 3
+        key_label, l10n_key, default = entry[0], entry[1], entry[2]
         assert key_label and l10n_key.startswith("hotkey_") and default
 
 

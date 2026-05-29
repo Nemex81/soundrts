@@ -230,6 +230,33 @@ class GameInterface:
             or bool(getattr(config, "visual_mode", 0))
         )
 
+    def _apply_rubber_band_cursor(self, pos):
+        """UI-SIGHTED-03/SI-10: surface the SIZEALL cursor while the
+        player is dragging a rubber-band selection rectangle.
+
+        Returns True when the cursor was applied (the MOUSEMOTION
+        handler then short-circuits so the SI-07 attack/diamond
+        cursors cannot overwrite it). Returns False otherwise so the
+        legacy hover-resolution flow runs unchanged.
+
+        Guards:
+          - ``mouse_select_origin`` must be set (drag in progress).
+          - The drag must have moved at least one pixel (avoids
+            flicker on the first MOUSEBUTTONDOWN frame, mirroring the
+            rubber-band overlay guard in ``display()``).
+          - ``display_is_active`` must be True (LEGGE-6).
+        """
+        try:
+            if not self.display_is_active:
+                return False
+            origin = getattr(self, "mouse_select_origin", None)
+            if origin is None or origin == pos:
+                return False
+            set_cursor("sizeall")
+            return True
+        except Exception:
+            return False
+
     @property
     def player(self):
         try:
@@ -941,6 +968,18 @@ class GameInterface:
                 pass
             return
         if e.type == MOUSEMOTION:
+            # UI-SIGHTED-03/SI-10: while the player is drawing a
+            # rubber-band selection (mouse_select_origin populated by
+            # MOUSEBUTTONDOWN button=1), surface the "sizeall" cursor
+            # so the drag intent is visible. Bails out before the
+            # target/enemy resolution below, so this priority always
+            # wins over the SI-07 attack cursor. LEGGE-6: respects
+            # display_is_active. Defensive ``getattr`` so test
+            # doubles that fake `_process_fullscreen_mode_mouse_event`
+            # on a SimpleNamespace keep working.
+            _apply = getattr(self, "_apply_rubber_band_cursor", None)
+            if _apply is not None and _apply(e.pos):
+                return
             # T7-MAPPA: feed the HUD with the current map-hover entity
             # so it can show a delayed tooltip popup. When the mouse is
             # over the HUD chrome we skip the map probe to avoid

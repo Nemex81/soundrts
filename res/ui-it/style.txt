@@ -90,3 +90,12 @@ hotkey_p Pattuglia
 hotkey_tab Cicla unita
 hotkey_esc Annulla ordine
 hotkey_ctrl_a Seleziona tutto
+; UI-SIGHTED-03 SI-08 hotkey dinamiche (nomi azione da res/ui/bindings.txt)
+hotkey_pause Pausa / Riprendi
+hotkey_status Stato unita
+hotkey_default Ordine predefinito
+hotkey_again Ripeti ultimo ordine
+hotkey_immersion Modalita immersione
+hotkey_examine Esamina
+hotkey_arrows Sposta cursore su mappa
+hotkey_scout Cicla aree esplorate

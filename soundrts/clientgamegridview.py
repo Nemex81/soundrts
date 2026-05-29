@@ -1,4 +1,5 @@
 from math import cos, radians, sin
+from typing import Any, Dict, Optional, Tuple
 
 import pygame
 
@@ -245,11 +246,16 @@ class GridView:
                 )
 
     def display_objects(self):
-        # UI-SIGHTED-02/SI-05: aggregate counts per cell while rendering
-        # individual objects so we can overlay a stack badge afterwards
-        # (single O(N) pass, no extra geometry work).
-        stack_counts = {}
-        stack_anchors = {}
+        # UI-SIGHTED-02/SI-05 + UI-SIGHTED-03/SI-09: aggregate counts
+        # per cell broken down by owner category (own / enemy / ally)
+        # while rendering individual objects. O(N) — three additive
+        # operations per object, no nested loop. Classification reuses
+        # GridView.enemy_at_mousepos semantics (player_is_an_enemy).
+        # When player_is_an_enemy raises we fall back to "ally"
+        # (safe-by-default: neither friendly fire nor accidental count
+        # in the own bucket — see UI-SIGHTED-03 [N] fallback table).
+        own_player = getattr(self.interface, "player", None)
+        stack_data: Dict[int, Dict[str, Any]] = {}
         for o in list(self.interface.dobjets.values()):
             self.display_object(o)
             if getattr(o, "is_inside", False):
@@ -263,23 +269,71 @@ class GridView:
                     if o.is_memory:
                         warning("(memory)")
                 continue
-            key = id(place)
-            stack_counts[key] = stack_counts.get(key, 0) + 1
-            if key not in stack_anchors:
+            obj_player = getattr(o, "player", None)
+            if obj_player is None:
+                # Neutral / unowned (resources, decor) — never counted.
+                continue
+            if obj_player is own_player:
+                category = "own"
+            else:
                 try:
-                    stack_anchors[key] = self._object_coords(o)
+                    if obj_player.player_is_an_enemy(own_player):
+                        category = "enemy"
+                    else:
+                        category = "ally"
                 except Exception:
-                    stack_anchors[key] = None
-        # SI-05: paint the badge only for cells that actually stack.
+                    category = "ally"
+            key = id(place)
+            bucket = stack_data.get(key)
+            if bucket is None:
+                bucket = {
+                    "own": 0, "enemy": 0, "ally": 0,
+                    "anchor_own": None,
+                    "anchor_enemy": None,
+                    "anchor_ally": None,
+                }
+                stack_data[key] = bucket
+            bucket[category] += 1
+            anchor_key = "anchor_" + category
+            if bucket[anchor_key] is None:
+                try:
+                    bucket[anchor_key] = self._object_coords(o)
+                except Exception:
+                    bucket[anchor_key] = None
+        # SI-05/09: paint badges only for categories that actually stack
+        # (count > 1). Empty cells, single-unit categories and missing
+        # anchors are skipped silently.
         screen = get_screen()
-        if screen is not None:
-            for key, count in stack_counts.items():
-                if count <= 1:
-                    continue
-                anchor = stack_anchors.get(key)
-                if anchor is None:
-                    continue
-                self._draw_stack_badge(screen, anchor, count)
+        if screen is None:
+            return
+        for bucket in stack_data.values():
+            if bucket["own"] > 1 and bucket["anchor_own"] is not None:
+                anchor = bucket["anchor_own"]
+                self._draw_stack_badge(
+                    screen,
+                    (anchor[0] + 6, anchor[1] - 16),
+                    bucket["own"],
+                    color=(60, 166, 60),
+                    border_color=(80, 200, 80),
+                )
+            if bucket["enemy"] > 1 and bucket["anchor_enemy"] is not None:
+                anchor = bucket["anchor_enemy"]
+                self._draw_stack_badge(
+                    screen,
+                    (anchor[0] - 24, anchor[1] - 16),
+                    bucket["enemy"],
+                    color=(166, 60, 60),
+                    border_color=(200, 80, 80),
+                )
+            if bucket["ally"] > 1 and bucket["anchor_ally"] is not None:
+                anchor = bucket["anchor_ally"]
+                self._draw_stack_badge(
+                    screen,
+                    (anchor[0] + 6, anchor[1] + 4),
+                    bucket["ally"],
+                    color=(100, 100, 120),
+                    border_color=(140, 140, 160),
+                )
 
     def _hud_right_width(self) -> int:
         """Width reserved for the HUD right column plus margin."""
@@ -459,32 +513,49 @@ class GridView:
             except Exception:
                 pass
 
-    def _draw_stack_badge(self, screen, pos, count):
-        """UI-SIGHTED-02/SI-05: small numeric badge for stacked units.
+    def _draw_stack_badge(
+        self,
+        screen,
+        pos,
+        count,
+        color: Tuple[int, int, int] = (200, 200, 100),
+        border_color: Optional[Tuple[int, int, int]] = None,
+    ):
+        """UI-SIGHTED-02/SI-05 + UI-SIGHTED-03/SI-09: small numeric
+        badge for stacked units.
 
-        Drawn only when ``count > 1``. Positioned just above-right of
-        the unit anchor (``pos``). LEGGE-4: never propagates.
+        Drawn only when ``count > 1``. The ``color`` / ``border_color``
+        parameters let SI-09 differentiate own (green) vs enemy (red)
+        vs ally (grey) stacks. Default values reproduce the SI-05
+        behaviour, keeping legacy callers source-compatible.
+        LEGGE-4: never propagates.
         """
         if count <= 1:
             return
+        if border_color is None:
+            border_color = color
         try:
             label = str(count) if count < 100 else "99+"
             badge_w, badge_h = 18, 14
-            badge_x = pos[0] + 6
-            badge_y = pos[1] - badge_h - 2
+            badge_x = pos[0]
+            badge_y = pos[1]
             badge_surf = pygame.Surface((badge_w, badge_h), pygame.SRCALPHA)
-            badge_surf.fill((30, 30, 30, 210))
+            # Body fill: 210 alpha keeps the digit legible without
+            # fully occluding the unit underneath.
+            badge_surf.fill((color[0], color[1], color[2], 210))
             pygame.draw.rect(
-                badge_surf, (200, 200, 100), pygame.Rect(0, 0, badge_w, badge_h), 1
+                badge_surf, border_color, pygame.Rect(0, 0, badge_w, badge_h), 1
             )
             screen.blit(badge_surf, (badge_x, badge_y))
             try:
                 from .lib.screen import screen_render
+                # Light label for any badge tint (high contrast on the
+                # darkened-but-coloured background).
                 screen_render(
                     label,
                     (badge_x + badge_w // 2, badge_y + 2),
                     center=True,
-                    color=(230, 230, 140),
+                    color=(240, 240, 240),
                 )
             except Exception:
                 pass

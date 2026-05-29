@@ -819,3 +819,12 @@ hotkey_p Patrol
 hotkey_tab Cycle units
 hotkey_esc Cancel order
 hotkey_ctrl_a Select all
+; UI-SIGHTED-03 SI-08 dynamic hotkeys (action names from res/ui/bindings.txt)
+hotkey_pause Pause / Resume
+hotkey_status Unit status
+hotkey_default Default order
+hotkey_again Repeat last order
+hotkey_immersion Immersion mode
+hotkey_examine Examine
+hotkey_arrows Move cursor on map
+hotkey_scout Cycle scouted area

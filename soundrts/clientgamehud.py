@@ -196,6 +196,11 @@ class HudPanel:
         # above the bottom bar (the left column was unused below the
         # map area).
         self.keys_visible: bool = False
+        # UI-SIGHTED-03/SI-08: lazy-loaded {action: key_label} parsed
+        # from res/ui/bindings.txt. None until the KEYS panel is first
+        # expanded; an empty dict means "file missing or unparseable",
+        # which routes the panel to the static fallback labels.
+        self._bindings_cache: Optional[Dict[str, str]] = None
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -1253,22 +1258,99 @@ class HudPanel:
     # ------------------------------------------------------------------
     # UI-SIGHTED-02/SI-06: collapsible hotkey legend panel.
     # ------------------------------------------------------------------
-    _KEYS_PANEL_WIDTH: int = 240
+    _KEYS_PANEL_WIDTH: int = 280
     _KEYS_LINE_HEIGHT: int = 16
-    # (key_label, l10n_key, english_default). Default keys reflect the
-    # canonical RTS shortcuts; players may remap via bindings.txt, so
-    # the descriptive labels are intentionally action-centric (verified
-    # in res/ui/bindings.txt).
-    _KEYS_HOTKEYS: List[Tuple[str, str, str]] = [
-        ("SPACE", "hotkey_space", "Pause / Resume"),
-        ("F", "hotkey_f", "Follow selected unit"),
-        ("S", "hotkey_s", "Stop"),
-        ("A", "hotkey_a", "Attack"),
-        ("P", "hotkey_p", "Patrol"),
-        ("TAB", "hotkey_tab", "Cycle units"),
-        ("ESC", "hotkey_esc", "Cancel order"),
-        ("CTRL+A", "hotkey_ctrl_a", "Select all"),
+    # UI-SIGHTED-03/SI-08: each entry is
+    # (default_key_label, l10n_key, default_description,
+    #  bindings_action_name). The 4th field is the FIRST token of the
+    # action declared in res/ui/bindings.txt; _get_bindings() resolves
+    # it to the real key bound by the user. When the lookup fails the
+    # static default_key_label is rendered as fallback (LEGGE-4).
+    # Actions verified against res/ui/bindings.txt (lines 24, 92, 97,
+    # 250, 255). The legacy RTS shortcuts (S/A/P) are kept as fallback
+    # labels but bound to the closest SoundRTS action when available.
+    _KEYS_HOTKEYS: List[Tuple[str, str, str, str]] = [
+        ("PAUSE",     "hotkey_pause",     "Pause / Resume",     "toggle_pause"),
+        ("SPACE",     "hotkey_status",    "Unit status",        "unit_status"),
+        ("BACKSPACE", "hotkey_default",   "Default order",      "default"),
+        ("ALT+R",     "hotkey_again",     "Repeat last order",  "do_again"),
+        ("CTRL+SPACE","hotkey_immersion", "Immersion mode",     "immersion"),
+        ("LCTRL",     "hotkey_examine",   "Examine",            "examine"),
+        ("ARROWS",    "hotkey_arrows",    "Move cursor on map", "select_square"),
+        ("PAGEUP/DN", "hotkey_scout",     "Cycle scouted area", "select_scouted_square"),
     ]
+
+    def _get_bindings(self) -> Dict[str, str]:
+        """Lazy-load and cache the action→key map from bindings.txt.
+
+        First access parses ``res/ui/bindings.txt`` once; subsequent
+        calls are O(1) cache hits. Failure modes (file missing, parse
+        error) yield an empty dict and the KEYS panel silently falls
+        back to ``_KEYS_HOTKEYS`` default labels (LEGGE-4).
+        """
+        cache = getattr(self, "_bindings_cache", None)
+        if cache is None:
+            try:
+                from pathlib import Path
+                repo_root = Path(__file__).resolve().parents[1]
+                bindings_path = repo_root.parent / "res" / "ui" / "bindings.txt"
+                cache = HudPanel._load_bindings_from_file(str(bindings_path))
+            except Exception as exc:
+                _visual_log_error("get_bindings init failed: {}".format(exc))
+                cache = {}
+            self._bindings_cache = cache
+        return cache
+
+    @staticmethod
+    def _load_bindings_from_file(path: str) -> Dict[str, str]:
+        """Parse ``res/ui/bindings.txt`` into ``{action: key_label}``.
+
+        Each binding line has the form ``KEY[ MOD ...]: action [args]``
+        with ``;`` introducing comments. Only the first binding for a
+        given action keyword wins (later remaps are ignored for the
+        KEYS panel summary). Returns ``{}`` on any I/O failure;
+        malformed lines are logged on stderr and skipped (LEGGE-4).
+        """
+        result: Dict[str, str] = {}
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                for raw in fh:
+                    line = raw.split(";", 1)[0].strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if ":" not in line:
+                        try:
+                            import sys as _sys
+                            _sys.stderr.write(
+                                "[SOUNDRTS-VISUAL][WARNING] bindings: "
+                                "skip malformed line: {!r}\n".format(raw.rstrip())
+                            )
+                        except Exception:
+                            pass
+                        continue
+                    key_part, action_part = line.split(":", 1)
+                    key_label = key_part.strip().upper()
+                    action_tokens = action_part.strip().split()
+                    if not key_label or not action_tokens:
+                        continue
+                    action_keyword = action_tokens[0]
+                    # First binding wins so the panel surfaces the
+                    # primary shortcut, not the modifier-laden variants.
+                    if action_keyword not in result:
+                        result[action_keyword] = key_label
+        except FileNotFoundError:
+            # Silent — caller already handles the empty-dict fallback.
+            pass
+        except Exception as exc:
+            try:
+                import sys as _sys
+                _sys.stderr.write(
+                    "[SOUNDRTS-VISUAL][ERROR] _load_bindings_from_file: "
+                    "{}\n".format(exc)
+                )
+            except Exception:
+                pass
+        return result
 
     def _draw_keys_panel(self, screen: pygame.Surface, left: int, bottom_bar_top: int) -> None:
         """Render the hotkey legend in the bottom-left corner.
@@ -1308,11 +1390,14 @@ class HudPanel:
             )
             if not self.keys_visible:
                 return
+            bindings = self._get_bindings()
             y = rect[1] + self.panel_header_height
-            for key_label, l10n_key, default in self._KEYS_HOTKEYS:
+            for key_label_default, l10n_key, default, action_name in self._KEYS_HOTKEYS:
+                # SI-08: prefer the user-bound key when known.
+                key_label = bindings.get(action_name) or key_label_default
                 desc = self._hud_text(l10n_key, default)
                 screen_render(
-                    "{:<8} {}".format(key_label, desc),
+                    "{:<12} {}".format(key_label, desc),
                     (rect[0] + 6, y),
                     color=(225, 225, 235),
                 )
