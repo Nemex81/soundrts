@@ -970,7 +970,20 @@ class GameInterface:
                         else:
                             set_cursor("target")
                     else:
-                        set_cursor("diamond")
+                        # UI-SIGHTED-02/SI-07: when not in target-pick
+                        # mode, distinguish hostile hover (crosshair)
+                        # from neutral/own hover (legacy diamond).
+                        try:
+                            hostile = (
+                                self.grid_view.enemy_at_mousepos(e.pos)
+                                is not None
+                            )
+                        except Exception:
+                            hostile = False
+                        if hostile:
+                            set_cursor("attack")
+                        else:
+                            set_cursor("diamond")
             elif square is not None:
                 if square != self.place or self.target is not None:
                     self._select_and_say_square(square)
@@ -2252,18 +2265,25 @@ class GameInterface:
         if self.display_is_active:
             self.grid_view.display()
             self.hud_panel.display()
+            # UI-SIGHTED-02/SI-03b: rubber-band selection overlay.
+            # ``mouse_select_origin`` is set in MOUSEBUTTONDOWN button=1
+            # and cleared in MOUSEBUTTONUP (LEGGE-9: pre-existing
+            # selection logic untouched). The overlay is purely visual:
+            # green semi-transparent outline aligned with the
+            # ``_SELECTION_HIGHLIGHT_COLOR`` rect used by the unit-group
+            # marker, so sighted players read both cues as one family.
             if (
                 self.mouse_select_origin
                 and self.mouse_select_origin != pygame.mouse.get_pos()
             ):
-                x, y = self.mouse_select_origin
-                x2, y2 = pygame.mouse.get_pos()
-                pygame.draw.rect(
-                    get_screen(),
-                    (255, 255, 255),
-                    (min(x, x2), min(y, y2), abs(x - x2), abs(y - y2)),
-                    1,
-                )
+                try:
+                    self.grid_view.draw_rubber_band(
+                        get_screen(),
+                        self.mouse_select_origin,
+                        pygame.mouse.get_pos(),
+                    )
+                except Exception:
+                    pass
         elif not IS_DEV_VERSION:
             screen_render(
                 "[Ctrl + F2] display",

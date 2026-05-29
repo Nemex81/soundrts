@@ -38,10 +38,35 @@ record_cursor(
     ),
 )
 
+# UI-SIGHTED-02/SI-07: crosshair cursor surfaced when hovering over a
+# hostile entity outside of an order-targeting workflow. Visually
+# distinct from "target" (which is the inner-square reticle used while
+# selecting a target for a queued order).
+record_cursor(
+    "attack",
+    (4, 4),
+    (
+        "XX    XX",
+        "XXX  XXX",
+        " XXXXXX ",
+        "  XXXX  ",
+        "  XXXX  ",
+        " XXXXXX ",
+        "XXX  XXX",
+        "XX    XX",
+    ),
+)
+
 
 def set_cursor(name):
-    if name in my_cursors:
-        cursor = my_cursors[name]
-    else:
-        cursor = getattr(pygame.cursors, name)
-    pygame.mouse.set_cursor(*cursor)
+    """Apply ``name`` cursor. Defensive: unknown / unavailable cursor
+    names are silently ignored so a missing pygame.cursors entry can
+    never crash the input loop (LEGGE-4 / SI-07 portability)."""
+    try:
+        if name in my_cursors:
+            cursor = my_cursors[name]
+        else:
+            cursor = getattr(pygame.cursors, name)
+        pygame.mouse.set_cursor(*cursor)
+    except Exception:
+        pass

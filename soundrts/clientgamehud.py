@@ -190,6 +190,12 @@ class HudPanel:
         # issued through the context menu. Key = order keyword, value =
         # OrderFlash. Drawn by _draw_order_flashes after _draw_move_flash.
         self._order_flashes: Dict[str, "OrderFlash"] = {}
+        # UI-SIGHTED-02/SI-06: collapsible hotkey legend panel.
+        # Collapsed by default so the existing layout is unchanged for
+        # players that don't open it. Drawn in the bottom-left corner
+        # above the bottom bar (the left column was unused below the
+        # map area).
+        self.keys_visible: bool = False
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -238,6 +244,11 @@ class HudPanel:
         activity_header_rect = self._panel_rects.get("activity_header")
         if activity_header_rect is not None and activity_header_rect.collidepoint(pos):
             self.activity_visible = not self.activity_visible
+            return True
+        # UI-SIGHTED-02/SI-06: KEYS panel header toggle.
+        keys_rect = self._panel_rects.get("keys_header")
+        if keys_rect is not None and keys_rect.collidepoint(pos):
+            self.keys_visible = not self.keys_visible
             return True
         # T9-CANCEL: click on an ACTIVITY row cancels the first active
         # order of the unit that produced that row. Only honoured when
@@ -736,6 +747,8 @@ class HudPanel:
         # open).
         self._draw_move_flash(screen)
         self._draw_order_flashes(screen)
+        # UI-SIGHTED-02/SI-06: hotkey legend (collapsed by default).
+        self._draw_keys_panel(screen, left, bottom_bar_top)
         self._draw_tooltip(screen)
         # UI-SIGHTED-01/SI-01: floating menu is drawn last so it sits
         # above every other HUD layer (panels, flashes, tooltips).
@@ -1236,6 +1249,76 @@ class HudPanel:
             screen.blit(overlay, (pos[0] - 12, pos[1] - 12))
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # UI-SIGHTED-02/SI-06: collapsible hotkey legend panel.
+    # ------------------------------------------------------------------
+    _KEYS_PANEL_WIDTH: int = 240
+    _KEYS_LINE_HEIGHT: int = 16
+    # (key_label, l10n_key, english_default). Default keys reflect the
+    # canonical RTS shortcuts; players may remap via bindings.txt, so
+    # the descriptive labels are intentionally action-centric (verified
+    # in res/ui/bindings.txt).
+    _KEYS_HOTKEYS: List[Tuple[str, str, str]] = [
+        ("SPACE", "hotkey_space", "Pause / Resume"),
+        ("F", "hotkey_f", "Follow selected unit"),
+        ("S", "hotkey_s", "Stop"),
+        ("A", "hotkey_a", "Attack"),
+        ("P", "hotkey_p", "Patrol"),
+        ("TAB", "hotkey_tab", "Cycle units"),
+        ("ESC", "hotkey_esc", "Cancel order"),
+        ("CTRL+A", "hotkey_ctrl_a", "Select all"),
+    ]
+
+    def _draw_keys_panel(self, screen: pygame.Surface, left: int, bottom_bar_top: int) -> None:
+        """Render the hotkey legend in the bottom-left corner.
+
+        Collapsed by default (only the header is visible). Click on the
+        header toggles ``keys_visible``. LEGGE-4: every failure routes
+        to stderr without breaking the HUD pipeline. LEGGE-6: caller
+        already guards on ``display_is_active``.
+        """
+        from .lib.screen import screen_render, screen_render_header
+
+        try:
+            if self.keys_visible:
+                body_h = len(self._KEYS_HOTKEYS) * self._KEYS_LINE_HEIGHT
+                panel_h = self.panel_header_height + body_h + 4
+            else:
+                panel_h = self.panel_header_height
+            panel_top = bottom_bar_top - self.margin - panel_h
+            if panel_top < self.margin:
+                panel_top = self.margin
+            rect = (left, panel_top, self._KEYS_PANEL_WIDTH, panel_h)
+            self._draw_panel(screen, rect)
+            self._panel_rects["keys"] = pygame.Rect(*rect)
+            self._panel_rects["keys_header"] = pygame.Rect(
+                rect[0], rect[1], rect[2], self.panel_header_height
+            )
+            header_label = self._hud_text("panel_keys", "KEYS")
+            if not self.keys_visible:
+                header_label = "{} {}".format(
+                    header_label,
+                    self._hud_text("keys_collapsed", "(hidden)"),
+                )
+            screen_render_header(
+                header_label,
+                (rect[0] + 6, rect[1] + 4),
+                color=(200, 230, 255),
+            )
+            if not self.keys_visible:
+                return
+            y = rect[1] + self.panel_header_height
+            for key_label, l10n_key, default in self._KEYS_HOTKEYS:
+                desc = self._hud_text(l10n_key, default)
+                screen_render(
+                    "{:<8} {}".format(key_label, desc),
+                    (rect[0] + 6, y),
+                    color=(225, 225, 235),
+                )
+                y += self._KEYS_LINE_HEIGHT
+        except Exception as exc:
+            _visual_log_error("draw_keys_panel failed: {}".format(exc))
 
     # ------------------------------------------------------------------
     # UI-SIGHTED-01/SI-04: per-order transient flash on issued commands.

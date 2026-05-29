@@ -61,6 +61,23 @@ Data: 23 maggio 2026
 - GAP-08 indicatore di range (visibility/attack/sight) on-hover su unità propria.
 - Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei. (riportato da UI-MASTER-06/07)
 
+## UI-SIGHTED-02 (29 maggio 2026) — completato
+
+- [x] SI-L10N (CRITICA): portate in `res/ui/style.txt` (EN) le 15 chiavi `ctx_*` aggiunte solo in IT durante UI-SIGHTED-01. Aggiunte anche 12 chiavi `panel_keys`/`hotkey_*` in EN+IT per SI-06.
+- [x] SI-03b (ALTA, GAP-03 enhancement): rubber-band selection overlay verde semi-trasparente `(100,200,100,180)` via `GridView.draw_rubber_band(screen, start, end)`. Sostituito il rect bianco width=1 precedente in `clientgame.display()` con chiamata centralizzata + try/except. LEGGE-7: zero side-effect su logica audio.
+- [x] SI-05 (MEDIA, GAP-06): stack indicator. Nuovo `GridView._draw_stack_badge(screen, pos, count)` che disegna un badge numerico 18×14 px sopra-destra dell'ancora; `display_objects()` aggrega `id(place)` durante il loop esistente (O(N) invariato) e disegna solo per celle con > 1 unità. Mostra `"99+"` per count > 99.
+- [x] SI-06 (MEDIA, GAP-07): pannello HUD `KEYS` collassabile in basso a sinistra. `HudPanel.keys_visible` default `False`, header cliccabile via `_panel_rects["keys_header"]`, lista hotkey via `_KEYS_HOTKEYS` (8 voci). Tutte le label via `_hud_text` con fallback EN.
+- [x] SI-07 (MEDIA, GAP-08): cursore custom `attack` (crosshair) registrato in `lib/mouse.py`. `GridView.enemy_at_mousepos(pos)` rileva entità nemiche. MOUSEMOTION handler in `clientgame.py` commuta `attack`/`diamond` in base al `player_is_an_enemy(own_player)`. `set_cursor` reso difensivo (cursori mancanti non crashano l'input loop).
+- [x] Test `soundrts/tests/unittests/test_ui_sighted_02.py`: 14 nuovi test (2 SI-L10N, 3 SI-03b, 3 SI-05, 3 SI-06, 3 SI-07). Suite finale: **500 passed, 1 skipped** (da baseline 487/1, +13 nuovi test netti, 0 regressioni).
+
+### Aperture per UI-SIGHTED-03
+
+- GAP-05 minimap radar (non ancora affrontato).
+- GAP-06 mini-portrait unità selezionata nel HUD (resta separato dallo stack badge di SI-05).
+- Indicatore di range (visibility/attack/sight) on-hover come overlay attorno all'unità.
+- KEYS panel: lettura dinamica delle hotkey reali da `res/ui/bindings.txt` invece della lista fissa (attualmente le voci riflettono le scorciatoie RTS canoniche, non i binding remappati dall'utente).
+- Cursore `attack`: pattern bitmap 8×8 funzionale ma minimalista; valutare upgrade a 16×16 con alpha quando pygame avrà supporto stabile per system cursors a colori.
+
 ## Stato fasi
 
 ### [x] Fase 0 - Analisi totale

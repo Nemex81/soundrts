@@ -245,18 +245,41 @@ class GridView:
                 )
 
     def display_objects(self):
+        # UI-SIGHTED-02/SI-05: aggregate counts per cell while rendering
+        # individual objects so we can overlay a stack badge afterwards
+        # (single O(N) pass, no extra geometry work).
+        stack_counts = {}
+        stack_anchors = {}
         for o in list(self.interface.dobjets.values()):
             self.display_object(o)
-            if (
-                o.place is None
-                and not o.is_inside
-                and not (
+            if getattr(o, "is_inside", False):
+                continue
+            place = getattr(o, "place", None)
+            if place is None:
+                if not (
                     self.interface.already_asked_to_quit or self.interface.end_loop
-                )
-            ):
-                warning("%s.place is None", o.type_name)
-                if o.is_memory:
-                    warning("(memory)")
+                ):
+                    warning("%s.place is None", o.type_name)
+                    if o.is_memory:
+                        warning("(memory)")
+                continue
+            key = id(place)
+            stack_counts[key] = stack_counts.get(key, 0) + 1
+            if key not in stack_anchors:
+                try:
+                    stack_anchors[key] = self._object_coords(o)
+                except Exception:
+                    stack_anchors[key] = None
+        # SI-05: paint the badge only for cells that actually stack.
+        screen = get_screen()
+        if screen is not None:
+            for key, count in stack_counts.items():
+                if count <= 1:
+                    continue
+                anchor = stack_anchors.get(key)
+                if anchor is None:
+                    continue
+                self._draw_stack_badge(screen, anchor, count)
 
     def _hud_right_width(self) -> int:
         """Width reserved for the HUD right column plus margin."""
@@ -377,6 +400,102 @@ class GridView:
             return None
         except Exception:
             return None
+
+    def enemy_at_mousepos(self, pos):
+        """UI-SIGHTED-02/SI-07: return the unit under ``pos`` when it
+        belongs to an enemy player. Returns ``None`` for empty cells,
+        own units, allies or unresolved players. Used by clientgame to
+        switch the mouse cursor to ``attack`` on hostile hover.
+        Defensive: any exception becomes ``None``.
+        """
+        try:
+            obj = self.object_from_mousepos(pos)
+            if obj is None:
+                return None
+            own_player = getattr(self.interface, "player", None)
+            obj_player = getattr(obj, "player", None)
+            if obj_player is None or own_player is None:
+                return None
+            if obj_player is own_player:
+                return None
+            try:
+                if obj_player.player_is_an_enemy(own_player):
+                    return obj
+            except Exception:
+                return None
+            return None
+        except Exception:
+            return None
+
+    def draw_rubber_band(self, screen, start, end):
+        """UI-SIGHTED-02/SI-03b: draw the rubber-band selection rect.
+
+        Outline only, no fill, semi-transparent green to match the
+        ``_SELECTION_HIGHLIGHT_COLOR`` cue used by the unit-group
+        marker (UI-MASTER-07/P1). LEGGE-4: graceful degradation —
+        any pygame failure is logged on stderr without propagating.
+        """
+        try:
+            x = min(start[0], end[0])
+            y = min(start[1], end[1])
+            w = abs(end[0] - start[0])
+            h = abs(end[1] - start[1])
+            if w < 2 or h < 2:
+                return
+            overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+            pygame.draw.rect(
+                overlay,
+                (100, 200, 100, 180),
+                pygame.Rect(0, 0, w, h),
+                1,
+            )
+            screen.blit(overlay, (x, y))
+        except Exception as exc:
+            try:
+                import sys
+                sys.stderr.write(
+                    "[SOUNDRTS-VISUAL][ERROR] draw_rubber_band: {}\n".format(exc)
+                )
+            except Exception:
+                pass
+
+    def _draw_stack_badge(self, screen, pos, count):
+        """UI-SIGHTED-02/SI-05: small numeric badge for stacked units.
+
+        Drawn only when ``count > 1``. Positioned just above-right of
+        the unit anchor (``pos``). LEGGE-4: never propagates.
+        """
+        if count <= 1:
+            return
+        try:
+            label = str(count) if count < 100 else "99+"
+            badge_w, badge_h = 18, 14
+            badge_x = pos[0] + 6
+            badge_y = pos[1] - badge_h - 2
+            badge_surf = pygame.Surface((badge_w, badge_h), pygame.SRCALPHA)
+            badge_surf.fill((30, 30, 30, 210))
+            pygame.draw.rect(
+                badge_surf, (200, 200, 100), pygame.Rect(0, 0, badge_w, badge_h), 1
+            )
+            screen.blit(badge_surf, (badge_x, badge_y))
+            try:
+                from .lib.screen import screen_render
+                screen_render(
+                    label,
+                    (badge_x + badge_w // 2, badge_y + 2),
+                    center=True,
+                    color=(230, 230, 140),
+                )
+            except Exception:
+                pass
+        except Exception as exc:
+            try:
+                import sys
+                sys.stderr.write(
+                    "[SOUNDRTS-VISUAL][ERROR] _draw_stack_badge: {}\n".format(exc)
+                )
+            except Exception:
+                pass
 
     def units_from_mouserect(self, pos, pos2):
         result = []

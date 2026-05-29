@@ -790,3 +790,32 @@ tooltip_unit_row_nohp {label} - {status}
 tooltip_bottom_time Game time: {time}
 tooltip_bottom_speed Game speed: {speed}
 tooltip_map_empty_cell Cell ({col},{row})
+; UI-SIGHTED-01 SI-01 context menu
+ctx_move Move
+ctx_attack Attack
+ctx_stop Stop
+ctx_patrol Patrol
+ctx_build Build
+ctx_train Train
+ctx_research Research
+ctx_repair Repair
+ctx_use Use
+ctx_default Default
+ctx_cancel_training Cancel training
+ctx_cancel_upgrading Cancel research
+ctx_cancel_building Cancel construction
+ctx_join_group Join group
+ctx_reset_group Reset group
+; UI-SIGHTED-02 SI-06 hotkey legend
+panel_keys KEYS
+keys_collapsed (hidden)
+tooltip_keys_show Show hotkeys
+tooltip_keys_hide Hide hotkeys
+hotkey_space Pause / Resume
+hotkey_f Follow selected unit
+hotkey_s Stop
+hotkey_a Attack
+hotkey_p Patrol
+hotkey_tab Cycle units
+hotkey_esc Cancel order
+hotkey_ctrl_a Select all

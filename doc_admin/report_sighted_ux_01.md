@@ -300,11 +300,22 @@ intestazioni):
 - **GAP-03 (rubber-band outline visivo durante drag):** la
   funzionalita base e gia presente; manca solo il feedback visivo
   durante il trascinamento. Rimandato a UI-SIGHTED-02.
+  → **STATUS UI-SIGHTED-02: ✅ COMPLETATO (SI-03b)** — overlay verde
+  semi-trasparente via `GridView.draw_rubber_band`.
 - **GAP-05 (bordo colorato per relazione):** rimandato.
 - **GAP-06 (stack indicator):** rimandato.
+  → **STATUS UI-SIGHTED-02: ✅ COMPLETATO (SI-05)** — badge numerico
+  18×14 px via `GridView._draw_stack_badge`, mostrato per celle con
+  > 1 unità.
 - **GAP-07 (legenda hotkey overlay):** rimandato.
+  → **STATUS UI-SIGHTED-02: ✅ COMPLETATO (SI-06)** — pannello HUD
+  `KEYS` collassabile (default chiuso), 8 hotkey RTS canoniche,
+  header cliccabile per toggle.
 - **GAP-08 (cursor contestuale esteso):** copertura attuale gia
   sufficiente.
+  → **STATUS UI-SIGHTED-02: ✅ COMPLETATO (SI-07)** — nuovo cursore
+  custom `attack` (crosshair) attivato su hover di entità nemiche
+  via `GridView.enemy_at_mousepos`.
 
 ### Criteri di Accettazione per Release
 

@@ -77,3 +77,16 @@ ctx_cancel_upgrading Annulla ricerca
 ctx_cancel_building Annulla costruzione
 ctx_join_group Unisci al gruppo
 ctx_reset_group Reimposta gruppo
+; UI-SIGHTED-02 SI-06 hotkey legend
+panel_keys TASTI
+keys_collapsed (nascosto)
+tooltip_keys_show Mostra tasti
+tooltip_keys_hide Nascondi tasti
+hotkey_space Pausa / Riprendi
+hotkey_f Segui unita selezionata
+hotkey_s Stop
+hotkey_a Attacca
+hotkey_p Pattuglia
+hotkey_tab Cicla unita
+hotkey_esc Annulla ordine
+hotkey_ctrl_a Seleziona tutto
