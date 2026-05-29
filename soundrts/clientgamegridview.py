@@ -357,6 +357,27 @@ class GridView:
             if square_of_distance(x, y, xo, yo) <= R2 + 1:  # is + 1 necessary?
                 return o
 
+    def entity_at_mousepos(self, pos):
+        """UI-SIGHTED-01/SI-01: return the unit under ``pos`` only when
+        it belongs to ``interface.player``. Returns ``None`` for empty
+        cells, enemies, allies or any error path. Used by clientgame
+        to decide whether right-click opens the order context menu or
+        falls through to ``cmd_default`` (move/attack). Defensive: any
+        exception becomes ``None`` so the click flow keeps working.
+        """
+        try:
+            obj = self.object_from_mousepos(pos)
+            if obj is None:
+                return None
+            own_player = getattr(self.interface, "player", None)
+            if own_player is None:
+                return None
+            if getattr(obj, "player", None) is own_player:
+                return obj
+            return None
+        except Exception:
+            return None
+
     def units_from_mouserect(self, pos, pos2):
         result = []
         self._update_coefs()

@@ -61,3 +61,19 @@ tooltip_unit_row_nohp {label} - {status}
 tooltip_bottom_time Tempo di gioco: {time}
 tooltip_bottom_speed Velocita di gioco: {speed}
 tooltip_map_empty_cell Cella ({col},{row})
+; UI-SIGHTED-01 SI-01 context menu
+ctx_move Muovi
+ctx_attack Attacca
+ctx_stop Ferma
+ctx_patrol Pattuglia
+ctx_build Costruisci
+ctx_train Addestra
+ctx_research Ricerca
+ctx_repair Ripara
+ctx_use Usa
+ctx_default Predefinito
+ctx_cancel_training Annulla addestramento
+ctx_cancel_upgrading Annulla ricerca
+ctx_cancel_building Annulla costruzione
+ctx_join_group Unisci al gruppo
+ctx_reset_group Reimposta gruppo

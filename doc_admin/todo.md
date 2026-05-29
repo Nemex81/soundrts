@@ -42,6 +42,25 @@ Data: 23 maggio 2026
 - AREA-2 (ActivityRow dataclass) e AREA-1 (FlashEffect dataclass) potranno essere applicate se viene introdotto un secondo flash type o se i 3 dict `_activity_row_*` crescono ulteriormente.
 - Audit di altri test pollution potenziali: applicare lo stesso pattern di fixture `_reset_style_singleton` a `test_clientgamehud.py` come modello, valutare se serve un `conftest.py` di unittests che resetti `style._dict` per tutti i test che dipendono dai default EN.
 
+## UI-SIGHTED-01 (29 maggio 2026) — completato
+
+- [x] MACRO-1: report `doc_admin/report_sighted_ux_01.md` (inventario 18 funzionalità, gap analysis GAP-01..08, roadmap, architettura context menu).
+- [x] SI-01 (ALTA, GAP-01): context menu floating su right-click su unità propria. `clientgamegridview.GridView.entity_at_mousepos(pos)` + dataclass `ContextMenuItem/ContextMenu/OrderFlash` + metodi `show_context_menu`/`hide_context_menu`/`_draw_context_menu`/`handle_context_menu_event`/`_execute_context_menu_item` in `HudPanel`. Hook in `_process_fullscreen_mode_mouse_event` (button==3) e in `handle_mouse_event`/`display()`. LEGGE-7: voci letterali da `interface.orders()`; `nb_args==0` → `send_order` diretto, `nb_args>0` → `_select_order` (left-click successivo). Auto-close in pausa, ESC, click fuori.
+- [SKIP] SI-02 (GAP-02): ALREADY-DONE. Selezione left-click è già implementata nel sorgente esistente.
+- [SKIP] SI-03 (GAP-03): ALREADY-DONE base. Rubber-band selection presente; outline drag visivo rimandato a UI-SIGHTED-02.
+- [x] SI-04 (MEDIA, GAP-04): flash visivi per ordini attack/stop/patrol via `flash_order(keyword, pos)` + `_draw_order_flashes(screen)` con decadimento `time.monotonic()`. Colori `_ORDER_FLASH_COLORS`, durata 0.4s.
+- [x] L10N: 15 chiavi `ctx_*` in `res/ui-it/style.txt`. Fallback EN in `HudPanel._CTX_LABEL_FALLBACK` (LEGGE-4 rispettata via `style.get` diretto per evitare regex T9-L10N-AUDIT su chiave dinamica).
+- [x] Test `soundrts/tests/unittests/test_ui_sighted_01.py`: 13 test (SI-01: 8, SI-04: 3, GridView probe: 2 -- pardon 3). Suite finale: **487 passed, 1 skipped, 0 failed** (da baseline 473/1, +14 nuovi test, 0 regressioni).
+
+### Aperture per UI-SIGHTED-02
+
+- GAP-03 outline drag visivo durante rubber-band selection.
+- GAP-05 minimap radar.
+- GAP-06 mini-portrait unità selezionata nel HUD.
+- GAP-07 pannello ordini per riga unità (in alternativa al context menu floating).
+- GAP-08 indicatore di range (visibility/attack/sight) on-hover su unità propria.
+- Estendere `lib/encoding.py` a tutti i file di testo se il progetto introdurrà encoding eterogenei. (riportato da UI-MASTER-06/07)
+
 ## Stato fasi
 
 ### [x] Fase 0 - Analisi totale

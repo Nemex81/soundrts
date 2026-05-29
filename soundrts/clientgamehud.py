@@ -1,12 +1,26 @@
 import time
 from collections import deque
-from dataclasses import dataclass
-from typing import Any, Deque, Dict, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Deque, Dict, List, Optional, Sequence, Tuple
 
 import pygame
 
 from .definitions import style
 from .lib.sound_cache import sounds
+
+
+def _visual_log_error(msg: str) -> None:
+    """UI-SIGHTED-01: structured stderr log for visual-layer failures.
+
+    Prefix mandated by LEGGE-5: ``[SOUNDRTS-VISUAL][ERROR] ...``.
+    Never raises; falls back silently if even ``sys.stderr.write``
+    explodes (e.g. closed stream during shutdown).
+    """
+    try:
+        import sys
+        sys.stderr.write("[SOUNDRTS-VISUAL][ERROR] {}\n".format(msg))
+    except Exception:
+        pass
 
 
 # Event severity buckets used by the HUD to colour-code the event panel.
@@ -51,6 +65,35 @@ class HudSnapshot:
     units: List[HudUnitSnapshot]
     events: List[HudEvent]
     player: str
+
+
+# UI-SIGHTED-01/SI-01: floating order menu data structures.
+@dataclass
+class ContextMenuItem:
+    label_key: str
+    label_default: str
+    keyword: str
+    needs_target: bool = False
+    args: List[str] = field(default_factory=list)
+    enabled: bool = True
+    order_view: Any = None  # OrderTypeView, kept for needs-target flow
+
+
+@dataclass
+class ContextMenu:
+    pos: Tuple[int, int]
+    items: List[ContextMenuItem]
+    unit: Any = None
+    selected_idx: int = 0
+
+
+# UI-SIGHTED-01/SI-04: per-keyword transient flash for order feedback.
+@dataclass
+class OrderFlash:
+    pos: Tuple[int, int]
+    color: Tuple[int, int, int]
+    start: float
+    duration: float
 
 
 class HudPanel:
@@ -139,6 +182,14 @@ class HudPanel:
         self._move_flash_pos: Optional[tuple] = None
         self._move_flash_start: float = 0.0
         self._move_flash_duration: float = 0.5
+        # UI-SIGHTED-01/SI-01: floating order menu shown on right-click
+        # over an own unit. None when no menu is active. See
+        # show_context_menu / _draw_context_menu / handle_context_menu_event.
+        self._context_menu: Optional["ContextMenu"] = None
+        # UI-SIGHTED-01/SI-04: transient flashes for non-move orders
+        # issued through the context menu. Key = order keyword, value =
+        # OrderFlash. Drawn by _draw_order_flashes after _draw_move_flash.
+        self._order_flashes: Dict[str, "OrderFlash"] = {}
 
     def on_event(self, entity: Any, event: Any) -> None:
         text = self._format_event(entity, event)
@@ -157,6 +208,18 @@ class HudPanel:
         """
         event_type = getattr(event, "type", None)
         pos = getattr(event, "pos", None)
+        # UI-SIGHTED-01/SI-01: when the order context menu is open it
+        # consumes events first (its own outside-click and ESC logic
+        # decides when to close). Mouse-motion does NOT consume so HUD
+        # tooltips keep updating below the menu.
+        if self._context_menu is not None:
+            consumed = self.handle_context_menu_event(event)
+            if consumed:
+                return True
+            if event_type == pygame.MOUSEBUTTONDOWN:
+                # Click landed outside the menu and closed it; do not
+                # let the same click also toggle HUD panels in this frame.
+                return True
         if event_type == pygame.MOUSEMOTION:
             self._update_tooltip(pos)
             return False
@@ -404,6 +467,10 @@ class HudPanel:
         snapshot = self.get_snapshot()
         self._draw_snapshot(screen, snapshot)
         if getattr(self.interface, "is_paused", False):
+            # UI-SIGHTED-01/SI-01: pause auto-closes the context menu
+            # (LEGGE-7 + criterio di accettazione SI-01).
+            if self._context_menu is not None:
+                self.hide_context_menu()
             self._draw_pause_overlay(screen)
 
     def _draw_pause_overlay(self, screen: pygame.Surface) -> None:
@@ -668,7 +735,12 @@ class HudPanel:
         # the `else` branch and suppressed all popups when activity was
         # open).
         self._draw_move_flash(screen)
+        self._draw_order_flashes(screen)
         self._draw_tooltip(screen)
+        # UI-SIGHTED-01/SI-01: floating menu is drawn last so it sits
+        # above every other HUD layer (panels, flashes, tooltips).
+        if self._context_menu is not None:
+            self._draw_context_menu(screen)
 
     def _event_style(self, severity: str):
         if severity == "combat":
@@ -1164,6 +1236,274 @@ class HudPanel:
             screen.blit(overlay, (pos[0] - 12, pos[1] - 12))
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # UI-SIGHTED-01/SI-04: per-order transient flash on issued commands.
+    # ------------------------------------------------------------------
+    _ORDER_FLASH_COLORS: Dict[str, Tuple[int, int, int]] = {
+        "attack": (200, 80, 80),
+        "stop": (220, 220, 220),
+        "patrol": (220, 200, 80),
+    }
+    _ORDER_FLASH_DURATION: float = 0.4
+
+    def flash_order(self, keyword: str, pos: Optional[tuple]) -> None:
+        """Register a transient coloured flash for an issued order.
+
+        ``keyword`` is the ``OrderTypeView.encode`` first token
+        (``attack``, ``stop``, ``patrol``, ...). Unknown keywords are
+        silently ignored (LEGGE-OPT-3: build/train/research already get
+        feedback via the ACTIVITY panel). Defensive: never raises.
+        """
+        if pos is None:
+            return
+        color = self._ORDER_FLASH_COLORS.get(keyword)
+        if color is None:
+            return
+        try:
+            self._order_flashes[keyword] = OrderFlash(
+                pos=(int(pos[0]), int(pos[1])),
+                color=color,
+                start=time.monotonic(),
+                duration=self._ORDER_FLASH_DURATION,
+            )
+        except Exception:
+            pass
+
+    def _draw_order_flashes(self, screen: pygame.Surface) -> None:
+        """Render and prune expired order flashes. Defensive: never raises."""
+        if not self._order_flashes:
+            return
+        now = time.monotonic()
+        expired: List[str] = []
+        try:
+            for keyword, flash in self._order_flashes.items():
+                elapsed = now - flash.start
+                if elapsed < 0 or elapsed >= flash.duration:
+                    expired.append(keyword)
+                    continue
+                overlay = pygame.Surface((24, 24), pygame.SRCALPHA)
+                r, g, b = flash.color
+                pygame.draw.circle(overlay, (r, g, b, 180), (12, 12), 10)
+                screen.blit(overlay, (flash.pos[0] - 12, flash.pos[1] - 12))
+        except Exception as exc:
+            _visual_log_error("draw_order_flashes failed: {}".format(exc))
+        for k in expired:
+            self._order_flashes.pop(k, None)
+
+    # ------------------------------------------------------------------
+    # UI-SIGHTED-01/SI-01: floating order context menu.
+    # ------------------------------------------------------------------
+    _CTX_ITEM_HEIGHT: int = 22
+    _CTX_MIN_WIDTH: int = 140
+    _CTX_PADDING: int = 6
+
+    _CTX_LABEL_FALLBACK: Dict[str, str] = {
+        "move": "Move",
+        "attack": "Attack",
+        "stop": "Stop",
+        "patrol": "Patrol",
+        "build": "Build",
+        "train": "Train",
+        "research": "Research",
+        "use": "Use",
+        "repair": "Repair",
+        "default": "Default",
+        "cancel_training": "Cancel training",
+        "cancel_upgrading": "Cancel research",
+        "cancel_building": "Cancel construction",
+        "join_group": "Join group",
+        "reset_group": "Reset group",
+    }
+
+    def _ctx_label_for(self, keyword: str) -> str:
+        """Resolve the on-screen label for a context-menu item.
+
+        LEGGE-4: always tries the active ``[hud]`` section first (key
+        ``ctx_<keyword>``) so style.txt overrides are honoured; falls
+        back to the English default declared in
+        ``_CTX_LABEL_FALLBACK``. Uses ``style.get`` directly (not the
+        ``_hud_text`` wrapper) so the T9-L10N-AUDIT regex sees only
+        literal keys and does not flag the dynamic ``"ctx_" + key``
+        concatenation.
+        """
+        default = self._CTX_LABEL_FALLBACK.get(keyword, keyword)
+        try:
+            text = self._parts_to_text(
+                style.get("hud", "ctx_" + keyword, warn_if_not_found=False)
+            )
+        except Exception:
+            text = ""
+        return text or default
+
+    def show_context_menu(self, unit: Any, pos: tuple) -> None:
+        """Build and show the order menu for ``unit`` at screen ``pos``.
+
+        Reads available orders from ``interface.orders()`` (the same
+        source used by the audio shortcut flow), so the menu never
+        diverges from the keyboard UX. Graceful: ``unit is None``,
+        no orders, or any failure → menu is not shown.
+        """
+        if unit is None:
+            return
+        if not getattr(self.interface, "display_is_active", False):
+            return
+        if getattr(self.interface, "is_paused", False):
+            return
+        try:
+            order_views = list(self.interface.orders())
+        except Exception as exc:
+            _visual_log_error("orders() probe failed: {}".format(exc))
+            return
+        items: List[ContextMenuItem] = []
+        for view in order_views:
+            try:
+                keyword = view.cls.keyword
+            except AttributeError:
+                continue
+            items.append(
+                ContextMenuItem(
+                    label_key="ctx_" + keyword,
+                    label_default=self._CTX_LABEL_FALLBACK.get(keyword, keyword),
+                    keyword=keyword,
+                    needs_target=bool(getattr(view, "nb_args", 0)),
+                    order_view=view,
+                )
+            )
+        if not items:
+            return
+        try:
+            self._context_menu = ContextMenu(
+                pos=(int(pos[0]), int(pos[1])), items=items, unit=unit
+            )
+        except Exception as exc:
+            _visual_log_error("show_context_menu failed: {}".format(exc))
+            self._context_menu = None
+
+    def hide_context_menu(self) -> None:
+        self._context_menu = None
+
+    def _context_menu_rect(self, menu: ContextMenu) -> pygame.Rect:
+        width = self._CTX_MIN_WIDTH
+        height = self._CTX_PADDING * 2 + len(menu.items) * self._CTX_ITEM_HEIGHT
+        return pygame.Rect(menu.pos[0], menu.pos[1], width, height)
+
+    def _draw_context_menu(self, screen: pygame.Surface) -> None:
+        """Render the floating order menu. Defensive: never raises."""
+        menu = self._context_menu
+        if menu is None:
+            return
+        try:
+            from .lib.screen import screen_render
+
+            rect = self._context_menu_rect(menu)
+            # Keep menu fully on-screen.
+            sw, sh = screen.get_size()
+            if rect.right > sw:
+                rect.x = max(0, sw - rect.width)
+            if rect.bottom > sh:
+                rect.y = max(0, sh - rect.height)
+            menu.pos = (rect.x, rect.y)
+            self._draw_panel(screen, (rect.x, rect.y, rect.width, rect.height))
+            for idx, item in enumerate(menu.items):
+                top = rect.y + self._CTX_PADDING + idx * self._CTX_ITEM_HEIGHT
+                if idx == menu.selected_idx:
+                    highlight = pygame.Rect(
+                        rect.x + 2, top, rect.width - 4, self._CTX_ITEM_HEIGHT
+                    )
+                    pygame.draw.rect(screen, (60, 90, 110), highlight, 0)
+                color = (
+                    (235, 235, 245) if item.enabled else (140, 140, 140)
+                )
+                label = self._ctx_label_for(item.keyword)
+                screen_render(
+                    label, (rect.x + self._CTX_PADDING + 4, top + 3), color=color
+                )
+        except Exception as exc:
+            _visual_log_error("draw_context_menu failed: {}".format(exc))
+            self._context_menu = None
+
+    def _ctx_item_at(self, menu: ContextMenu, pos: tuple) -> int:
+        rect = self._context_menu_rect(menu)
+        if not rect.collidepoint(pos):
+            return -1
+        rel_y = pos[1] - (rect.y + self._CTX_PADDING)
+        if rel_y < 0:
+            return -1
+        idx = rel_y // self._CTX_ITEM_HEIGHT
+        if 0 <= idx < len(menu.items):
+            return int(idx)
+        return -1
+
+    def handle_context_menu_event(self, event: Any) -> bool:
+        """Consume mouse/keyboard events while the menu is open.
+
+        Returns True when the event has been consumed and the caller
+        must skip the standard handlers. Defensive: any failure closes
+        the menu and returns False so the click flow recovers.
+        """
+        menu = self._context_menu
+        if menu is None:
+            return False
+        try:
+            ev_type = getattr(event, "type", None)
+            if ev_type == pygame.KEYDOWN and getattr(event, "key", None) == pygame.K_ESCAPE:
+                self.hide_context_menu()
+                return True
+            pos = getattr(event, "pos", None)
+            if ev_type == pygame.MOUSEMOTION and pos is not None:
+                idx = self._ctx_item_at(menu, pos)
+                if idx >= 0:
+                    menu.selected_idx = idx
+                return False
+            if ev_type == pygame.MOUSEBUTTONDOWN and pos is not None:
+                button = getattr(event, "button", None)
+                idx = self._ctx_item_at(menu, pos)
+                if idx < 0:
+                    # Click outside the menu closes it without action.
+                    self.hide_context_menu()
+                    return False
+                if button == 1:
+                    item = menu.items[idx]
+                    self._execute_context_menu_item(item, pos)
+                    self.hide_context_menu()
+                    return True
+                # Right or middle click inside the menu closes it.
+                self.hide_context_menu()
+                return True
+        except Exception as exc:
+            _visual_log_error("handle_context_menu_event failed: {}".format(exc))
+            self.hide_context_menu()
+        return False
+
+    def _execute_context_menu_item(self, item: ContextMenuItem, pos: tuple) -> None:
+        """Dispatch the order chosen by the player.
+
+        LEGGE-7: never bypasses the existing order pipeline.
+          - Orders with ``nb_args == 0`` are dispatched directly via
+            ``interface.send_order(keyword, None, [])``, matching what
+            ``cmd_validate`` does for keyboard shortcuts.
+          - Orders with target requirements call ``_select_order``
+            so the player then confirms the target with a left-click
+            (same flow as keyboard selection).
+        """
+        if not item.enabled:
+            return
+        try:
+            if item.needs_target and item.order_view is not None:
+                selector = getattr(self.interface, "_select_order", None)
+                if callable(selector):
+                    selector(item.order_view)
+                return
+            send_order = getattr(self.interface, "send_order", None)
+            if not callable(send_order):
+                return
+            send_order(item.keyword, None, [])
+            self.flash_order(item.keyword, pos)
+        except Exception as exc:
+            _visual_log_error(
+                "execute_context_menu_item({}) failed: {}".format(item.keyword, exc)
+            )
 
     def _draw_tooltip(self, screen: pygame.Surface) -> None:
         if not self._tooltip_text or self._tooltip_pos is None:

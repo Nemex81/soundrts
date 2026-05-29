@@ -998,6 +998,23 @@ class GameInterface:
                 # do nothing if the mouse is pointing on nothing
                 right_square = self.grid_view.square_from_mousepos(e.pos)
                 if right_square is not None:
+                    # UI-SIGHTED-01/SI-01: when the cursor sits over an
+                    # own unit, surface the floating order menu instead
+                    # of dispatching cmd_default. LEGGE-7: the menu only
+                    # translates the click into the existing audio order
+                    # pipeline; cmd_default behaviour for empty cells /
+                    # foreign entities is preserved.
+                    entity = None
+                    try:
+                        entity = self.grid_view.entity_at_mousepos(e.pos)
+                    except Exception:
+                        entity = None
+                    if entity is not None and not getattr(self, "is_paused", False):
+                        try:
+                            self.hud_panel.show_context_menu(entity, e.pos)
+                        except Exception:
+                            pass
+                        return
                     args = []
                     if mods & KMOD_SHIFT:
                         args += ["queue_order"]
